@@ -27,6 +27,12 @@
       margin-bottom: 20px;
     }
 
+    .ext-intro {
+      font-size: 15px; color: var(--muted); line-height: 1.7;
+      margin-bottom: 28px;
+    }
+    .ext-intro strong { color: var(--text); }
+
     .cc {
       display: flex; flex-direction: column; align-items: stretch;
       height: 62px;
@@ -39,10 +45,7 @@
     .cc:hover { filter: brightness(1.7); transform: scale(1.1); z-index: 2; }
     .cc.sel   { outline-color: var(--text); }
 
-    .cc-top {
-      display: flex; justify-content: space-between;
-      padding: 3px 3px 0;
-    }
+    .cc-top { display: none; }
     .cc-dec, .cc-hex {
       font-size: 12.5px; line-height: 1; color: var(--dim);
     }
@@ -237,7 +240,8 @@
       background: var(--surface2);
       border-radius: var(--r);
       padding: 22px 24px;
-      min-height: 120px;
+      height: 180px;
+      overflow: hidden;
     }
     .detail-placeholder {
       color: var(--dim); font-size: 14px;
@@ -245,34 +249,41 @@
     }
     .detail-inner {
       display: grid;
-      grid-template-columns: auto 1fr;
+      grid-template-columns: 140px 1fr;
       gap: 24px;
       align-items: start;
+      height: 100%;
     }
     .detail-left {
       display: flex; flex-direction: column;
       align-items: center; gap: 10px;
-      min-width: 80px;
+      width: 140px;
     }
     .detail-glyph {
       font-size: 56px; line-height: 1;
       font-family: 'Consolas', 'Courier New', monospace;
-      min-width: 72px; text-align: center;
+      width: 72px; height: 68px;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
     }
     .detail-glyph-abbr {
       font-size: 22px; font-weight: 700;
       letter-spacing: 2px; text-transform: uppercase;
       color: #f87171;
-      min-width: 72px; text-align: center;
-      padding: 12px 0;
+      width: 72px; height: 68px;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
     }
     .detail-codes {
-      display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;
+      display: flex; flex-wrap: nowrap; gap: 5px; justify-content: center;
     }
     .code-pill {
-      font-size: 10px; font-weight: 700;
-      padding: 2px 8px; border-radius: 100px;
-      background: var(--surface); color: var(--muted);
+      font-size: 14px; font-weight: 700;
+      padding: 3px 10px; border-radius: 100px;
+      background: #000; color: #fff;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.5);
+      white-space: nowrap;
+      min-width: 80px; width: 80px; text-align: center;
     }
     .detail-bits {
       display: flex; gap: 2px;
@@ -283,17 +294,19 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; font-weight: 700;
       border-radius: 4px;
-      background: var(--bg); color: var(--dim);
+      background: var(--bg); color: var(--text);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.5);
     }
     .dbit.hi { color: var(--text); }
 
-    .detail-right {}
+    .detail-right { overflow: hidden; }
     .detail-name {
       font-size: 19px; font-weight: 700;
       color: var(--text); margin-bottom: 9px;
     }
     .detail-note {
       font-size: 14px; color: var(--muted); line-height: 1.75;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -324,6 +337,10 @@
     <div class="legend-item"><span class="legend-dot" style="background:#c084fc"></span>Lowercase (97–122)</div>
     <div class="legend-item"><span class="legend-dot" style="background:#c0d0ff"></span>Punctuation &amp; symbols</div>
     <div class="legend-item" id="extLegendItem" style="display:none"><span class="legend-dot" style="background:#5060b0"></span>Extended (128–255)</div>
+  </div>
+
+  <div class="ext-intro" id="extIntro" style="display:none">
+    Extended ASCII adds 128 characters (codes 128–255) on top of the standard 7-bit ASCII set. These extra codes are <strong>not universal</strong> — different systems use different encodings. The characters shown here use <strong>CP437</strong>, the original IBM PC code page.
   </div>
 
   <div class="char-grid" id="charGrid"></div>
@@ -696,14 +713,17 @@ function placeholder() {
 function buildGrid() {
   const grid = document.getElementById('charGrid');
   const frag = document.createDocumentFragment();
+  const start = mode === 8 ? 128 : 0;
   const count = mode === 7 ? 128 : 256;
+  document.getElementById('extIntro').style.display = mode === 8 ? '' : 'none';
 
-  for (let i = 0; i < count; i++) {
+  for (let i = start; i < count; i++) {
     const c = cat(i);
 
     const cell = document.createElement('div');
     cell.className = `cc cat-${c}`;
     cell.dataset.code = i;
+    cell.title = `Dec ${i}  |  Hex ${i.toString(16).toUpperCase().padStart(2,'0')}  |  Oct ${i.toString(8).padStart(3,'0')}`;
 
     // top row: dec + hex
     const top = document.createElement('div');
@@ -819,7 +839,6 @@ function showDetail(code) {
         <div class="detail-codes">
           <span class="code-pill">Dec&nbsp;${code}</span>
           <span class="code-pill">Hex&nbsp;0x${code.toString(16).toUpperCase().padStart(2,'0')}</span>
-          <span class="code-pill">Oct&nbsp;${code.toString(8).padStart(3,'0')}</span>
         </div>
         ${bitsHtml}
       </div>
