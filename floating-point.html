@@ -278,6 +278,18 @@
       col.append(wt, box);
       grid.appendChild(col);
     });
+    fitGrid(`${type}-grid`, n);
+  }
+
+  function fitGrid(gridId, n) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    const available = grid.parentElement.clientWidth;
+    if (!available) return;
+    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
+    grid.style.setProperty('--box-size', size + 'px');
+    grid.style.setProperty('--box-fs',   Math.round(size * 26 / 56) + 'px');
+    grid.style.setProperty('--wt-fs',    Math.max(9, Math.round(size * 17 / 56)) + 'px');
   }
 
   function toggle(type, i) {
@@ -339,6 +351,15 @@
   renderGrid('m');
   renderGrid('e');
   updateResult();
+
+  let _rfTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rfTimer);
+    _rfTimer = setTimeout(() => {
+      fitGrid('m-grid', S.m.length);
+      fitGrid('e-grid', S.e.length);
+    }, 80);
+  });
 
   /* ══════════════════════════════════════════════════════════════════
      QUIZ MODE
@@ -517,6 +538,7 @@
       col.append(wt, box);
       grid.appendChild(col);
     });
+    fitGrid(`q-${type}-grid`, n);
   }
 
   function checkQuizAnswer() {

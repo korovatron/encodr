@@ -35,6 +35,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ── Header ─────────────────────────────────── */
@@ -184,7 +185,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 .card-sub { font-size: 14px; color: var(--muted); }
 
 /* ── Bit grid ─────────────────────────────────── */
-.grid-wrap { overflow-x: auto; display: flex; justify-content: center; }
+.grid-wrap { overflow-x: auto; max-width: 100%; display: flex; justify-content: center; }
 
 .bit-grid {
   display: inline-flex;
@@ -196,14 +197,15 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 .bit-col {
   display: flex; flex-direction: column; align-items: center;
   gap: 4px; flex-shrink: 0;
+  width: var(--box-size, 56px); overflow: hidden;
 }
 
 .bit-wt {
-  font-size: 17px; color: var(--text);
+  font-size: var(--wt-fs, 17px); color: var(--text);
   font-family: 'Consolas', monospace;
-  min-height: 28px;
+  min-height: 20px;
   display: flex; align-items: center; justify-content: center;
-  text-align: center;
+  text-align: center; white-space: nowrap;
 }
 .bit-wt sup {
   font-size: 12px;
@@ -214,11 +216,11 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 }
 
 .bit-box {
-  width: 56px; height: 56px;
+  width: var(--box-size, 56px); height: var(--box-size, 56px);
   border-radius: var(--r-sm);
   border: 2px solid;
   display: flex; align-items: center; justify-content: center;
-  font-size: 26px; font-weight: 700;
+  font-size: var(--box-fs, 26px); font-weight: 700;
   font-family: 'Consolas', 'Courier New', monospace;
   cursor: pointer;
   user-select: none;
@@ -294,6 +296,11 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   gap: 10px;
 }
 @media (max-width: 500px) { .bk-grid { grid-template-columns: 1fr; } }
+
+@media (max-width: 680px) {
+  main { padding: 24px 12px 60px; }
+  .card { padding: 16px 14px 14px; }
+}
 
 .bk-card {
   background: var(--surface2);
