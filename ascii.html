@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASCII &amp; Unicode – Encodr</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── Legend ──────────────────────────────────── */
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px 18px;
+      margin-bottom: 22px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted); user-select: none;
+    }
+    .legend-dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* ── Character grid ──────────────────────────── */
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(16, minmax(0, 1fr));
+      gap: 3px;
+      margin-bottom: 20px;
+    }
+
+    .cc {
+      display: flex; flex-direction: column; align-items: stretch;
+      border-radius: 6px; cursor: default;
+      transition: filter .1s, transform .1s, outline-color .1s;
+      user-select: none; overflow: hidden;
+      outline: 2px solid transparent; outline-offset: 0;
+    }
+    .cc:hover { filter: brightness(1.45); transform: scale(1.1); z-index: 2; }
+    .cc.sel   { outline-color: var(--text); }
+
+    .cc-top {
+      display: flex; justify-content: space-between;
+      padding: 3px 3px 0;
+    }
+    .cc-dec, .cc-hex {
+      font-size: 8.5px; line-height: 1; color: var(--dim);
+    }
+    .cc-glyph {
+      font-size: 16px; line-height: 1; text-align: center;
+      padding: 3px 0 5px; font-family: 'Consolas', 'Courier New', monospace;
+    }
+    .cc-abbr {
+      font-size: 8px; font-weight: 700; letter-spacing: 0.5px;
+      text-align: center; padding: 3px 0 5px; line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    /* Category backgrounds & glyph colours */
+    .cat-ctrl { background: #1e0a0a; }
+    .cat-ctrl .cc-abbr  { color: #f87171; }
+    .cat-ctrl .cc-dec, .cat-ctrl .cc-hex { color: #6b3333; }
+
+    .cat-space { background: #0e0e1e; }
+    .cat-space .cc-glyph { color: var(--dim); font-size: 10px; line-height: 2.2; }
+
+    .cat-digit { background: #1c1600; }
+    .cat-digit .cc-glyph { color: var(--ml); }
+
+    .cat-upper { background: #081620; }
+    .cat-upper .cc-glyph { color: #7dd3f8; }
+
+    .cat-lower { background: #110828; }
+    .cat-lower .cc-glyph { color: #c084fc; }
+
+    .cat-sym { background: var(--surface2); }
+    .cat-sym .cc-glyph { color: var(--muted); }
+
+    .cat-del { background: #1e0a0a; }
+    .cat-del .cc-abbr { color: #f87171; }
+    .cat-del .cc-dec, .cat-del .cc-hex { color: #6b3333; }
+
+    .cat-ext { background: #0a0818; }
+    .cat-ext .cc-glyph { color: #5060b0; }
+
+    /* ── Detail panel ────────────────────────────── */
+    .char-detail {
+      background: var(--surface2);
+      border-radius: var(--r);
+      padding: 22px 24px;
+      min-height: 120px;
+    }
+    .detail-placeholder {
+      color: var(--dim); font-size: 14px;
+      text-align: center; padding: 28px 0;
+    }
+    .detail-inner {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .detail-left {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+      min-width: 80px;
+    }
+    .detail-glyph {
+      font-size: 56px; line-height: 1;
+      font-family: 'Consolas', 'Courier New', monospace;
+      min-width: 72px; text-align: center;
+    }
+    .detail-glyph-abbr {
+      font-size: 22px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: #f87171;
+      min-width: 72px; text-align: center;
+      padding: 12px 0;
+    }
+    .detail-codes {
+      display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;
+    }
+    .code-pill {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 100px;
+      background: var(--surface); color: var(--muted);
+    }
+    .detail-bits {
+      display: flex; gap: 2px;
+    }
+    .detail-bit-sep { width: 5px; }
+    .dbit {
+      width: 18px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      border-radius: 4px;
+      background: var(--bg); color: var(--dim);
+    }
+    .dbit.hi { color: var(--text); }
+
+    .detail-right {}
+    .detail-name {
+      font-size: 19px; font-weight: 700;
+      color: var(--text); margin-bottom: 9px;
+    }
+    .detail-note {
+      font-size: 14px; color: var(--muted); line-height: 1.75;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">Enc<em>o</em>dr</a>
+  <div class="hdiv"></div>
+  <span class="hsub">ASCII &amp; Unicode</span>
+</header>
+
+<main>
+
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="7">ASCII · 7-bit &nbsp;(0 – 127)</button>
+    <button class="mode-tab" data-mode="8">Extended ASCII · 8-bit &nbsp;(0 – 255)</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#f87171"></span>Control (0–31, 127)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#8090d8"></span>Space (32)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#ffff00"></span>Digits (48–57)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#7dd3f8"></span>Uppercase (65–90)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#c084fc"></span>Lowercase (97–122)</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#c0d0ff"></span>Punctuation &amp; symbols</div>
+    <div class="legend-item" id="extLegendItem" style="display:none"><span class="legend-dot" style="background:#5060b0"></span>Extended (128–255)</div>
+  </div>
+
+  <div class="char-grid" id="charGrid"></div>
+
+  <div class="char-detail" id="charDetail">
+    <p class="detail-placeholder">Hover over a character to see details.</p>
+  </div>
+
+</main>
+
+<script>
+// ─── Control character abbreviations ──────────────────────────────────────────
+const ABBR = [
+  'NUL','SOH','STX','ETX','EOT','ENQ','ACK','BEL',
+  'BS', 'HT', 'LF', 'VT', 'FF', 'CR', 'SO', 'SI',
+  'DLE','DC1','DC2','DC3','DC4','NAK','SYN','ETB',
+  'CAN','EM', 'SUB','ESC','FS', 'GS', 'RS', 'US'
+];
+
+// ─── Per-character notes ───────────────────────────────────────────────────────
+const NOTES = {
+  0:  { name: 'Null',                     note: 'The invisible terminator. In C and every language descended from it, every string ends with NUL (\\0) — it\'s how strlen() and printf() know where to stop. A language-design decision made in 1972 that still shapes code every day.' },
+  1:  { name: 'Start of Heading',          note: 'Used in serial protocols to mark the beginning of a message header block, before the actual payload data. Almost never encountered outside of legacy industrial or telecommunications systems.' },
+  2:  { name: 'Start of Text',             note: 'Followed SOH to signal where the header ends and the payload begins. Part of a layered framing system that predated modern networking stacks by over a decade.' },
+  3:  { name: 'End of Text',               note: 'Marks the end of a data payload. On many terminals, Ctrl+C sends ETX — that\'s the direct origin of the keyboard shortcut for interrupting a running process in Unix.' },
+  4:  { name: 'End of Transmission',       note: 'Signals that a device has finished sending everything. In Unix, Ctrl+D sends EOT to a terminal, which closes stdin — how you terminate input to commands like cat or signal end-of-file in an interactive program.' },
+  5:  { name: 'Enquiry',                   note: '"Are you there?" Sent by one device to check if another is alive and ready. The expected response was ACK. An early heartbeat or ping, long before ICMP was invented.' },
+  6:  { name: 'Acknowledge',               note: 'Positive acknowledgement — "I received that block correctly." Paired with NAK in early error-detecting serial protocols, performing the job that TCP\'s ACK flag now does automatically.' },
+  7:  { name: 'Bell',                      note: 'Made a physical bell ring on teletype machines — the ringer that warned operators of incoming messages. The \\a escape sequence in C still references it, and it still works in many modern terminal emulators, producing a beep, a visual flash, or a system notification.' },
+  8:  { name: 'Backspace',                 note: 'Physically moved the print head one step left on a typewriter or teletype. On old line printers, sending BS followed by a new character would overstrike — a way to create bold text (character + BS + same character) or accented letters without dedicated codes.' },
+  9:  { name: 'Horizontal Tab',            note: 'The \\t you type every day. Tab stops were originally set every 8 characters — a convention inherited from typewriter tab stops, which is why so many legacy systems still default to 8-space indentation, and why the tab-vs-spaces debate has very old roots.' },
+  10: { name: 'Line Feed',                 note: 'Advances the paper (or cursor) down one line — but does not return to the start of the line. Unix chose LF alone as its newline character (\\n). Windows uses CR+LF (codes 13+10) because physical teletypes required both: one to move the paper, one to pull the carriage back.' },
+  11: { name: 'Vertical Tab',              note: 'Moves down to the next vertical tab stop. \\v in C. Vertical tab stops could be set on some high-speed line printers for formatting columns. Rarely encountered today, though it\'s still recognised as whitespace by regex engines and many parsers.' },
+  12: { name: 'Form Feed',                 note: 'Ejects the current page on a printer and begins a new one. \\f in C. Some programmers still use it to visually separate top-level sections in source code — editors like Emacs and Vim render it as a horizontal rule between sections.' },
+  13: { name: 'Carriage Return',           note: 'Returns the cursor (or print head) to the beginning of the current line — but doesn\'t advance to the next line. Mechanical teletypes needed two separate physical movements: CR to pull the carriage back, LF to roll the paper. Windows still uses CR+LF (\\r\\n) as its line ending, which is why files transferred between Unix and Windows can look broken with stray ^M characters, and why git has a line-ending configuration (core.autocrlf).' },
+  14: { name: 'Shift Out',                 note: 'Instructs the receiver to switch to an alternate character set. Used in 7-bit serial links to access characters beyond the base 128 — a precursor to multi-byte encodings and, ultimately, Unicode.' },
+  15: { name: 'Shift In',                  note: 'Returns to the default character set after a Shift Out. The SO/SI pair effectively doubled the character range available over a 7-bit link without changing the wire protocol.' },
+  16: { name: 'Data Link Escape',          note: 'A prefix that changes the interpretation of the characters that follow it. Used in protocols like PPP and X.25 to escape special byte values within a data stream — conceptually the same as a backslash in modern strings.' },
+  17: { name: 'Device Control 1 / XON',    note: 'In software flow control (XON/XOFF), DC1 means "resume sending — I\'m ready for more data." Pressing Ctrl+Q sends XON on most Unix terminals. If you\'ve ever accidentally frozen a terminal with Ctrl+S, Ctrl+Q (XON) is how you unfreeze it.' },
+  18: { name: 'Device Control 2',          note: 'Secondary device control, with meaning defined by the hardware manufacturer. Used on some printers and terminals to enable auxiliary features like paper tape punching.' },
+  19: { name: 'Device Control 3 / XOFF',   note: 'In software flow control, DC3 means "stop sending — my buffer is full." Generated by Ctrl+S, which is why pressing Ctrl+S can freeze a terminal session even today. Some text editors intercept it for Save instead, deliberately overriding this legacy behaviour.' },
+  20: { name: 'Device Control 4',          note: 'The fourth device control character, with device-specific meaning. Often used to switch off the feature that DC2 had enabled, completing a symmetric on/off pair.' },
+  21: { name: 'Negative Acknowledge',      note: '"I received that block but it had errors — please resend it." The complement to ACK in stop-and-wait protocols. NAK-based error detection forced the sender to wait for a reply before sending the next block, making throughput inversely proportional to round-trip latency.' },
+  22: { name: 'Synchronous Idle',          note: 'Sent continuously when there is nothing to transmit, to keep the receiver\'s clock locked to the sender\'s phase. Used in synchronous serial communications — unlike asynchronous RS-232, which embeds timing in each byte\'s start and stop bits.' },
+  23: { name: 'End of Transmission Block', note: 'Marks the end of a sub-block within a larger transmission — a finer-grained boundary than EOT. Used in IBM\'s BSC (Binary Synchronous Communications) protocol for block-structured data transfer over leased lines.' },
+  24: { name: 'Cancel',                    note: 'Tells the receiver to discard all data received since the last ETB or STX. An early form of transaction rollback for corrupted or aborted transmissions, before software-level error handling existed.' },
+  25: { name: 'End of Medium',             note: 'Signals the physical end of a storage medium — the point on a tape or disk beyond which nothing useful is written. Distinguishes "empty space" from "no more data" — an important distinction when media could only be written sequentially.' },
+  26: { name: 'Substitute / EOF',          note: 'Originally marks a character found to be invalid or damaged during transmission, replacing it so parsing can continue. On Windows (inherited from CP/M), Ctrl+Z (SUB) signals end-of-file in text mode — which is why some Windows tools stop reading a file when they encounter 0x1A. Ctrl+Z is also the universal Undo shortcut, a coincidence of keyboard assignment unrelated to its ASCII heritage.' },
+  27: { name: 'Escape',                    note: 'The gateway to modern terminal control. ANSI escape sequences — the codes that colour terminal output, move the cursor, clear the screen, and set titles — all begin with ESC (0x1B) followed by [. Every time you see coloured text in a terminal, git\'s diff output, or a progress bar, ESC is at the start of each sequence.' },
+  28: { name: 'File Separator',            note: 'The top of a four-level data-separator hierarchy (FS > GS > RS > US) designed to structure records, groups, and fields in a continuous data stream — predating CSV, JSON, and XML by over a decade. RFC 7464 (JSON Text Sequences) revives RS (code 30) as a stream delimiter for ndjson.' },
+  29: { name: 'Group Separator',           note: 'Groups related records within a file. Part of the ASCII separator hierarchy that envisaged structured, schema-less data streams at a time when hierarchical data formats did not yet exist.' },
+  30: { name: 'Record Separator',          note: 'Separates individual records within a group. RFC 7464 (JSON Text Sequences) uses RS as a record boundary character for streaming multiple JSON values safely over a single connection, reviving this 1963 design.' },
+  31: { name: 'Unit Separator',            note: 'The finest-grained separator, dividing individual fields within a record. The four-level hierarchy FS/GS/RS/US is the direct ancestor of every structured data format from CSV to JSON to Protocol Buffers.' },
+  32: { name: 'Space',                     note: 'The first printable character — and the most common character in written English. Placed at 32 (0x20) deliberately: spaces sort before digits, digits before uppercase, uppercase before lowercase. The 0x20 value also has a deeper trick: it\'s the exact bit-distance between uppercase and lowercase letters, making toggling bit 5 the fastest possible case conversion.' },
+  127:{ name: 'Delete',                    note: 'On 7-bit paper tape — the storage medium of the era — DEL was represented as 1111111, all seven holes punched. A typist who made an error could run the tape back and overpunch the wrong character with DEL, because no valid character has all holes punched. It was the world\'s first software "backspace" that worked on immutable media.' },
+};
+
+// ─── Range notes for characters without a per-character entry ────────────────
+function rangeNote(code) {
+  const ch = String.fromCharCode(code);
+  const hex = code.toString(16).toUpperCase().padStart(2,'0');
+  if (code >= 33  && code <= 47)  return 'Punctuation placed between space (32) and the digits (48). The ordering reflects the key layout of 1960s typewriter keyboards, where punctuation keys sat between the numeral row and the letter rows.';
+  if (code >= 48  && code <= 57)  return `Digits start at 48 (0x30), putting each digit\'s numeric value in the lower nibble of its code. '${ch}' is ${code}, and ${code} & 0x0F = ${code & 0xF} — the actual number. Hardware can convert any ASCII digit to its integer value with a single AND operation, which was a deliberate convenience for 1960s arithmetic circuits.`;
+  if (code >= 58  && code <= 64)  return 'Punctuation between the digit range and the uppercase letters: : ; < = > ? @ — these mirror the keys that sat between numerals and letters on typewriter keyboards, keeping related characters contiguous.';
+  if (code >= 65  && code <= 90)  return `Uppercase letters begin at 65 (0x41). '${ch}' (${code} = 0x${hex} = ${code.toString(2).padStart(7,'0')}₂). Subtracting 64 gives its 1-based ordinal position in the alphabet. The gap of 6 symbols between digits (57) and 'A' (65) accounts for : ; < = > ? @ and was left deliberately rather than padding with unused codes.`;
+  if (code >= 91  && code <= 96)  return 'The six symbols between uppercase and lowercase: [ \\ ] ^ _ `. Their positions were set by the typewriter keys that sat between the upper-case and lower-case letter groups.';
+  if (code >= 97  && code <= 122) return `Lowercase letters are exactly 32 (0x20) higher than their uppercase partners — a single bit difference: bit 5. '${ch}' is ${code} (0x${hex}); '${ch.toUpperCase()}' is ${code-32} (0x${(code-32).toString(16).toUpperCase()}). This means: ch | 0x20 always lowercases a letter; ch & 0xDF always uppercases; ch ^ 0x20 toggles case. A deliberate design choice enabling case conversion without a lookup table.`;
+  if (code >= 123 && code <= 126) return 'The last four symbols of standard ASCII: { | } ~. Placed after the lowercase letters to complete the printable character set.';
+  if (code >= 128 && code <= 255) return 'Extended ASCII (128–255) is not standardised — the same byte value means different things in different code pages. The most famous is IBM Code Page 437 (the original IBM PC), which packed in box-drawing characters, Greek letters, and accented Latin letters. Windows-1252, Latin-1 (ISO-8859-1), and hundreds of other code pages each map these codes differently. Unicode was created specifically to replace all of these with a single universal standard: every character in human history gets one unambiguous code point.';
+  return '';
+}
+
+// ─── Category ─────────────────────────────────────────────────────────────────
+function cat(code) {
+  if (code < 32)                  return 'ctrl';
+  if (code === 32)                return 'space';
+  if (code >= 48 && code <= 57)  return 'digit';
+  if (code >= 65 && code <= 90)  return 'upper';
+  if (code >= 97 && code <= 122) return 'lower';
+  if (code === 127)               return 'del';
+  if (code >= 128)                return 'ext';
+  return 'sym';
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let mode = 7;
+let activeCel = null;
+
+// ─── Build grid ───────────────────────────────────────────────────────────────
+function buildGrid() {
+  const grid = document.getElementById('charGrid');
+  const frag = document.createDocumentFragment();
+  const count = mode === 7 ? 128 : 256;
+
+  for (let i = 0; i < count; i++) {
+    const c = cat(i);
+
+    const cell = document.createElement('div');
+    cell.className = `cc cat-${c}`;
+    cell.dataset.code = i;
+
+    // top row: dec + hex
+    const top = document.createElement('div');
+    top.className = 'cc-top';
+    const dec = document.createElement('span');
+    dec.className = 'cc-dec';
+    dec.textContent = i;
+    const hex = document.createElement('span');
+    hex.className = 'cc-hex';
+    hex.textContent = i.toString(16).toUpperCase().padStart(2,'0');
+    top.appendChild(dec);
+    top.appendChild(hex);
+    cell.appendChild(top);
+
+    // glyph / abbreviation
+    const gl = document.createElement('div');
+    if (c === 'ctrl') {
+      gl.className = 'cc-abbr';
+      gl.textContent = ABBR[i];
+    } else if (c === 'del') {
+      gl.className = 'cc-abbr';
+      gl.textContent = 'DEL';
+    } else if (c === 'space') {
+      gl.className = 'cc-glyph';
+      gl.textContent = '·';
+    } else {
+      gl.className = 'cc-glyph';
+      gl.textContent = String.fromCharCode(i);
+    }
+    cell.appendChild(gl);
+
+    cell.addEventListener('mouseenter', () => showDetail(i));
+
+    frag.appendChild(cell);
+  }
+
+  grid.innerHTML = '';
+  grid.appendChild(frag);
+}
+
+// ─── Detail panel ─────────────────────────────────────────────────────────────
+function showDetail(code) {
+  // Highlight active cell
+  if (activeCel) activeCel.classList.remove('sel');
+  activeCel = document.querySelector(`.cc[data-code="${code}"]`);
+  if (activeCel) activeCel.classList.add('sel');
+
+  const c = cat(code);
+  const data = NOTES[code];
+
+  // Character name
+  let name = data ? data.name : (
+    c === 'ctrl'  ? `${ABBR[code]} — Control` :
+    c === 'digit' ? `Digit '${String.fromCharCode(code)}'` :
+    c === 'upper' ? `Uppercase '${String.fromCharCode(code)}'` :
+    c === 'lower' ? `Lowercase '${String.fromCharCode(code)}'` :
+    c === 'sym'   ? `Symbol '${String.fromCharCode(code)}'` :
+    c === 'ext'   ? `Extended ASCII ${code}` :
+    `Character ${code}`
+  );
+
+  const note = data ? data.note : rangeNote(code);
+
+  // Glyph display
+  const glyphColour = {
+    digit: 'var(--ml)',
+    upper: '#7dd3f8',
+    lower: '#c084fc',
+    ext:   '#5060b0',
+    sym:   'var(--muted)',
+    space: 'var(--dim)',
+  }[c] || 'var(--text)';
+
+  let glyphHtml;
+  if (c === 'ctrl' || c === 'del') {
+    const abbr = c === 'del' ? 'DEL' : ABBR[code];
+    glyphHtml = `<div class="detail-glyph-abbr">${abbr}</div>`;
+  } else if (c === 'space') {
+    glyphHtml = `<div class="detail-glyph" style="color:var(--dim);font-size:18px;padding:16px 0 8px;letter-spacing:3px">SPACE</div>`;
+  } else {
+    glyphHtml = `<div class="detail-glyph" style="color:${glyphColour}">${String.fromCharCode(code)}</div>`;
+  }
+
+  // Binary display
+  const bits = mode === 8 ? 8 : 7;
+  const bin = code.toString(2).padStart(bits, '0');
+  let bitsHtml = '<div class="detail-bits">';
+  for (let b = 0; b < bits; b++) {
+    if (bits === 8 && b === 4) bitsHtml += '<div class="detail-bit-sep"></div>';
+    bitsHtml += `<div class="dbit${bin[b] === '1' ? ' hi' : ''}">${bin[b]}</div>`;
+  }
+  bitsHtml += '</div>';
+
+  document.getElementById('charDetail').innerHTML = `
+    <div class="detail-inner">
+      <div class="detail-left">
+        ${glyphHtml}
+        <div class="detail-codes">
+          <span class="code-pill">Dec&nbsp;${code}</span>
+          <span class="code-pill">Hex&nbsp;0x${code.toString(16).toUpperCase().padStart(2,'0')}</span>
+          <span class="code-pill">Oct&nbsp;${code.toString(8).padStart(3,'0')}</span>
+        </div>
+        ${bitsHtml}
+      </div>
+      <div class="detail-right">
+        <div class="detail-name">${name}</div>
+        <div class="detail-note">${note || 'No additional notes.'}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Mode toggle ──────────────────────────────────────────────────────────────
+document.getElementById('modeTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.mode-tab');
+  if (!btn || btn.dataset.mode == mode) return;
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  mode = parseInt(btn.dataset.mode);
+  activeCel = null;
+  document.getElementById('extLegendItem').style.display = mode === 8 ? '' : 'none';
+  buildGrid();
+  document.getElementById('charDetail').innerHTML = '<p class="detail-placeholder">Hover over a character to see details.</p>';
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+buildGrid();
+</script>
+</body>
+</html>
