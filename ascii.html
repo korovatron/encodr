@@ -154,8 +154,41 @@
     .bit-sig-inline {
       color: #f87171; font-family: 'Consolas', monospace; font-weight: 700;
     }
-    @media (max-width: 640px) {
+    @media (max-width: 1040px) {
       .utf8-row { grid-template-columns: 1fr; }
+      .uni-card { padding: 16px 12px 14px; }
+      .uni-hero { padding: 18px 14px 14px; }
+      .uni-hero-num { font-size: 38px; }
+      .utf8-bytes { flex-wrap: wrap; }
+      .utf8-bits { font-size: 11px; letter-spacing: 1px; padding: 4px 6px; }
+    }
+
+    /* ── Short tab labels on narrow screens ──── */
+    .tab-short { display: none; }
+    @media (max-width: 560px) {
+      .tab-long  { display: none; }
+      .tab-short { display: inline; }
+    }
+
+    /* ── Narrow-screen ASCII grid ────────────────── */
+    @media (max-width: 700px) {
+      .char-grid {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 3px;
+      }
+      .cc { height: 48px; border-radius: 4px; }
+      .cc-glyph { font-size: 17px; }
+      .cc-abbr  { font-size: 10px; }
+    }
+    @media (max-width: 700px) {
+      .cc-dec, .cc-hex { display: none; }
+      .cc-top { display: none; }
+    }
+    @media (max-width: 420px) {
+      .char-grid { gap: 2px; }
+      .cc { height: 38px; border-radius: 3px; }
+      .cc-glyph { font-size: 14px; }
+      .cc-abbr  { font-size: 9px; }
     }
 
     /* ── Unicode info panel ─────────────────────── */
@@ -178,7 +211,7 @@
     }
     .uni-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
       gap: 12px;
     }
     .uni-card {
@@ -276,8 +309,8 @@
 
   <h1>ASCII &amp; Unicode</h1>
   <div class="mode-tabs" id="modeTabs">
-    <button class="mode-tab active" data-mode="7">ASCII · 7-bit</button>
-    <button class="mode-tab" data-mode="8">Extended ASCII · 8-bit</button>
+    <button class="mode-tab active" data-mode="7"><span class="tab-long">ASCII · 7-bit</span><span class="tab-short">ASCII</span></button>
+    <button class="mode-tab" data-mode="8"><span class="tab-long">Extended ASCII · 8-bit</span><span class="tab-short">Ext ASCII</span></button>
     <button class="mode-tab" data-mode="p">PETSCII</button>
     <button class="mode-tab" data-mode="u">Unicode</button>
   </div>
@@ -295,7 +328,7 @@
   <div class="char-grid" id="charGrid"></div>
 
   <div class="char-detail" id="charDetail">
-    <p class="detail-placeholder">Hover over a character to see details.</p>
+    <p class="detail-placeholder" id="detailPlaceholder">Hover over a character to see details.</p>
   </div>
 
   <div id="petsciiPanel" style="display:none">
@@ -648,8 +681,13 @@ function cat(code) {
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
+const isTouch = window.matchMedia('(hover: none)').matches;
 let mode = 7;
 let activeCel = null;
+
+function placeholder() {
+  return `<p class="detail-placeholder">${isTouch ? 'Tap a character to see details.' : 'Hover over a character to see details.'}</p>`;
+}
 
 // ─── Build grid ───────────────────────────────────────────────────────────────
 function buildGrid() {
@@ -697,7 +735,15 @@ function buildGrid() {
     }
     cell.appendChild(gl);
 
-    cell.addEventListener('mouseenter', () => showDetail(i));
+    if (isTouch) {
+      cell.addEventListener('click', () => {
+        if (activeCel === cell) return; // already selected, do nothing
+        showDetail(i);
+        cell.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    } else {
+      cell.addEventListener('mouseenter', () => showDetail(i));
+    }
 
     frag.appendChild(cell);
   }
@@ -801,11 +847,13 @@ document.getElementById('modeTabs').addEventListener('click', e => {
   document.getElementById('petsciiPanel').style.display = isPetscii ? '' : 'none';
   if (!isPanel) {
     buildGrid();
-    document.getElementById('charDetail').innerHTML = '<p class="detail-placeholder">Hover over a character to see details.</p>';
+    document.getElementById('charDetail').innerHTML = placeholder();
   }
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById('detailPlaceholder')?.remove();
+document.getElementById('charDetail').innerHTML = placeholder();
 buildGrid();
 </script>
 </body>
