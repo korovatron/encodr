@@ -30,13 +30,16 @@
   --r-sm: 8px;
 }
 
+html { overflow-x: hidden; }
 body {
   font-family: 'Consolas', 'Courier New', monospace;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
-  overflow-x: hidden;
 }
+
+/* Prevent iOS double-tap zoom on all interactive elements */
+button, input, a, [role="button"] { touch-action: manipulation; }
 
 /* ── Header ─────────────────────────────────── */
 header {
