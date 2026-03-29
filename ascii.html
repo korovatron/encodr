@@ -23,18 +23,19 @@
     .char-grid {
       display: grid;
       grid-template-columns: repeat(16, minmax(0, 1fr));
-      gap: 3px;
+      gap: 5px;
       margin-bottom: 20px;
     }
 
     .cc {
       display: flex; flex-direction: column; align-items: stretch;
+      height: 62px;
       border-radius: 6px; cursor: default;
       transition: filter .1s, transform .1s, outline-color .1s;
       user-select: none; overflow: hidden;
       outline: 2px solid transparent; outline-offset: 0;
     }
-    .cc:hover { filter: brightness(1.45); transform: scale(1.1); z-index: 2; }
+    .cc:hover { filter: brightness(1.7); transform: scale(1.1); z-index: 2; }
     .cc.sel   { outline-color: var(--text); }
 
     .cc-top {
@@ -42,44 +43,160 @@
       padding: 3px 3px 0;
     }
     .cc-dec, .cc-hex {
-      font-size: 8.5px; line-height: 1; color: var(--dim);
+      font-size: 12.5px; line-height: 1; color: var(--dim);
     }
     .cc-glyph {
-      font-size: 16px; line-height: 1; text-align: center;
-      padding: 3px 0 5px; font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 22px; line-height: 1; text-align: center;
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      font-family: 'Consolas', 'Courier New', monospace;
     }
     .cc-abbr {
-      font-size: 8px; font-weight: 700; letter-spacing: 0.5px;
-      text-align: center; padding: 3px 0 5px; line-height: 1.2;
+      font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+      text-align: center; flex: 1; display: flex; align-items: center;
+      justify-content: center; line-height: 1.2;
       text-transform: uppercase;
     }
 
     /* Category backgrounds & glyph colours */
-    .cat-ctrl { background: #1e0a0a; }
+    .cat-ctrl  { background: #000; box-shadow: 0 0 0 1px #f87171; }
     .cat-ctrl .cc-abbr  { color: #f87171; }
-    .cat-ctrl .cc-dec, .cat-ctrl .cc-hex { color: #6b3333; }
+    .cat-ctrl .cc-dec, .cat-ctrl .cc-hex { color: #7a3030; }
 
-    .cat-space { background: #0e0e1e; }
-    .cat-space .cc-glyph { color: var(--dim); font-size: 10px; line-height: 2.2; }
+    .cat-space { background: #000; box-shadow: 0 0 0 1px var(--dim); }
+    .cat-space .cc-glyph { color: var(--dim); font-size: 13px; }
+    .cat-space .cc-dec, .cat-space .cc-hex { color: #3a4070; }
 
-    .cat-digit { background: #1c1600; }
+    .cat-digit { background: #000; box-shadow: 0 0 0 1px var(--ml); }
     .cat-digit .cc-glyph { color: var(--ml); }
+    .cat-digit .cc-dec, .cat-digit .cc-hex { color: #6a5e00; }
 
-    .cat-upper { background: #081620; }
+    .cat-upper { background: #000; box-shadow: 0 0 0 1px #7dd3f8; }
     .cat-upper .cc-glyph { color: #7dd3f8; }
+    .cat-upper .cc-dec, .cat-upper .cc-hex { color: #2a5060; }
 
-    .cat-lower { background: #110828; }
+    .cat-lower { background: #000; box-shadow: 0 0 0 1px #c084fc; }
     .cat-lower .cc-glyph { color: #c084fc; }
+    .cat-lower .cc-dec, .cat-lower .cc-hex { color: #5a2880; }
 
-    .cat-sym { background: var(--surface2); }
+    .cat-sym { background: #000; box-shadow: 0 0 0 1px var(--dim); }
     .cat-sym .cc-glyph { color: var(--muted); }
+    .cat-sym .cc-dec, .cat-sym .cc-hex { color: #3a4070; }
 
-    .cat-del { background: #1e0a0a; }
+    .cat-del { background: #000; box-shadow: 0 0 0 1px #f87171; }
     .cat-del .cc-abbr { color: #f87171; }
-    .cat-del .cc-dec, .cat-del .cc-hex { color: #6b3333; }
+    .cat-del .cc-dec, .cat-del .cc-hex { color: #7a3030; }
 
-    .cat-ext { background: #0a0818; }
-    .cat-ext .cc-glyph { color: #5060b0; }
+    .cat-ext { background: #000; box-shadow: 0 0 0 1px #7a8fff; }
+    .cat-ext .cc-glyph { color: #7a8fff; }
+    .cat-ext .cc-dec, .cat-ext .cc-hex { color: #2a3070; }
+
+    .uni-card-wide {
+      grid-column: 1 / -1;
+    }
+    .utf8-table {
+      margin-top: 18px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .utf8-row {
+      display: grid;
+      grid-template-columns: 140px auto 1fr;
+      align-items: center;
+      gap: 14px;
+    }
+    .utf8-range {
+      font-size: 11px; color: var(--dim);
+      font-family: 'Consolas', monospace;
+      letter-spacing: .3px;
+    }
+    .utf8-bytes {
+      display: flex; gap: 5px;
+    }
+    .utf8-byte {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .utf8-bits {
+      background: var(--bg);
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+    .utf8-byte-lbl {
+      font-size: 9px; color: var(--dim); letter-spacing: .5px;
+    }
+    .bit-sig { color: #f87171; margin-right: 4px; }
+    .bit-dat { color: var(--muted); }
+    .utf8-info {
+      font-size: 12.5px; color: var(--dim); line-height: 1.5;
+    }
+    .utf8-payload {
+      color: var(--ml); font-weight: 700;
+    }
+    .utf8-info em { color: var(--muted); font-style: normal; }
+    .utf8-legend {
+      display: flex; flex-wrap: wrap; gap: 8px 20px;
+      margin-top: 14px;
+    }
+    .utf8-legend-item {
+      font-size: 11.5px; color: var(--dim);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .bit-sig-dot {
+      width: 10px; height: 10px; border-radius: 2px;
+      background: #f87171; flex-shrink: 0;
+    }
+    .bit-dat-dot {
+      width: 10px; height: 10px; border-radius: 2px;
+      background: var(--muted); flex-shrink: 0;
+    }
+    .bit-sig-inline {
+      color: #f87171; font-family: 'Consolas', monospace; font-weight: 700;
+    }
+    @media (max-width: 640px) {
+      .utf8-row { grid-template-columns: 1fr; }
+    }
+
+    /* ── Unicode info panel ─────────────────────── */
+    .uni-hero {
+      background: var(--surface2);
+      border-radius: var(--r);
+      padding: 28px 28px 22px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .uni-hero-num {
+      font-size: 52px; font-weight: 800;
+      font-family: 'Consolas', monospace;
+      color: var(--ml); letter-spacing: -1px;
+      line-height: 1; margin-bottom: 8px;
+    }
+    .uni-hero-lbl {
+      font-size: 13px; color: var(--dim);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .uni-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+    }
+    .uni-card {
+      background: var(--surface2);
+      border-radius: var(--r);
+      padding: 20px 22px 18px;
+    }
+    .uni-card-head {
+      font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--ml); margin-bottom: 10px;
+    }
+    .uni-card-body {
+      font-size: 14px; color: var(--muted);
+      line-height: 1.75;
+    }
+    .uni-card-body em { color: #c084fc; font-style: normal; font-weight: 700; }
+    .uni-card-body code { color: var(--ml); font-family: 'Consolas', monospace; }
 
     /* ── Detail panel ────────────────────────────── */
     .char-detail {
@@ -150,18 +267,22 @@
 
 <header>
   <a class="logo" href="index.html">Enc<em>o</em>dr</a>
-  <div class="hdiv"></div>
+  <span class="breadcrumb-sep">›</span>
   <span class="hsub">ASCII &amp; Unicode</span>
+  <a class="home-btn" href="index.html">Home</a>
 </header>
 
 <main>
 
+  <h1>ASCII &amp; Unicode</h1>
   <div class="mode-tabs" id="modeTabs">
-    <button class="mode-tab active" data-mode="7">ASCII · 7-bit &nbsp;(0 – 127)</button>
-    <button class="mode-tab" data-mode="8">Extended ASCII · 8-bit &nbsp;(0 – 255)</button>
+    <button class="mode-tab active" data-mode="7">ASCII · 7-bit</button>
+    <button class="mode-tab" data-mode="8">Extended ASCII · 8-bit</button>
+    <button class="mode-tab" data-mode="p">PETSCII</button>
+    <button class="mode-tab" data-mode="u">Unicode</button>
   </div>
 
-  <div class="legend">
+  <div class="legend" id="legend">
     <div class="legend-item"><span class="legend-dot" style="background:#f87171"></span>Control (0–31, 127)</div>
     <div class="legend-item"><span class="legend-dot" style="background:#8090d8"></span>Space (32)</div>
     <div class="legend-item"><span class="legend-dot" style="background:#ffff00"></span>Digits (48–57)</div>
@@ -177,9 +298,282 @@
     <p class="detail-placeholder">Hover over a character to see details.</p>
   </div>
 
+  <div id="petsciiPanel" style="display:none">
+
+    <div class="uni-hero" style="background:var(--surface2)">
+      <div class="uni-hero-num" style="font-size:36px;letter-spacing:2px">PETSCII</div>
+      <div class="uni-hero-lbl">PET Standard Code of Information Interchange &nbsp;·&nbsp; Commodore, 1977</div>
+    </div>
+
+    <div class="uni-grid">
+
+      <div class="uni-card">
+        <div class="uni-card-head">Why Commodore built their own encoding</div>
+        <div class="uni-card-body">When Commodore designed the PET in 1977, standard ASCII gave them 95 printable characters. That was not enough. The PET had no separate graphics chip — everything on screen, including the user interface, had to be drawn using characters. Commodore needed box-drawing shapes, geometric fills, card suits, and other graphic symbols to make software look good on a character-mapped display. Rather than leave those needs unmet, they replaced a large portion of the ASCII table with their own graphic characters, creating PETSCII. The decision made commercial sense in 1977. The incompatibility cost would compound for decades.</div>
+      </div>
+
+      <div class="uni-card">
+        <div class="uni-card-head">The upside-down alphabet</div>
+        <div class="uni-card-body">The most immediately jarring difference: in PETSCII’s default mode, <em>uppercase and lowercase are swapped</em> relative to ASCII. Typing a letter key produces an uppercase letter — just as ASCII specifies. But pressing Shift produces a graphic symbol, not a lowercase letter. Lowercase letters do not exist in the default mode at all. A second character set, switchable at runtime, provides uppercase and lowercase together — but at the cost of losing the graphic characters. This swap was deliberate: Commodore expected most users to work in uppercase with graphics, not to write prose. The PETSCII code for lowercase A (97 in ASCII) maps to a completely different graphic symbol.</div>
+      </div>
+
+      <div class="uni-card">
+        <div class="uni-card-head">Control codes: same bytes, different meanings</div>
+        <div class="uni-card-body">The codes 0–31 — ASCII control characters — are reassigned in PETSCII to Commodore-specific screen functions. Code 5 does not send an ENQ; it changes the text colour to white. Code 28 is not File Separator; it switches text to red. Code 18 enables reverse video. The cursor movement keys, function keys, and colour keys all transmit PETSCII control codes in this range. A terminal expecting ASCII control codes receives nonsense. An ASCII terminal expecting CR (code 13) gets it — that one survived — but almost nothing else maps cleanly. The shared byte values with completely different meanings are exactly the kind of incompatibility that makes cross-system communication fail silently rather than visibly.</div>
+      </div>
+
+      <div class="uni-card">
+        <div class="uni-card-head">The graphic characters (96–127 and 160–223)</div>
+        <div class="uni-card-body">Where ASCII has punctuation and symbols, PETSCII packs in a set of geometric and graphic characters unique to Commodore hardware: filled and unfilled corners, diagonal lines, cross-hatches, playing card suits (♥ ♦ ♣ ♠), horizontal and vertical bars at various weights, and a pi symbol. These characters were designed to align perfectly with adjacent cells, enabling smooth borders and fills without gaps — exactly what box-drawing characters in CP437 also achieved, but using completely different byte values. A ╚ (CP437 bottom-left double corner, byte 0xC8) is an entirely different character to whatever byte 0xC8 means on a C64. The same visual goal, incompatible implementations.</div>
+      </div>
+
+      <div class="uni-card">
+        <div class="uni-card-head">Real consequences: reading old files today</div>
+        <div class="uni-card-body">A .SEQ or .PRG file saved on a Commodore 64 and transferred to a modern PC cannot be opened in a standard text editor and read correctly. Every graphic character appears as a garbled symbol or question mark. Every control code that set a colour or moved the cursor is interpreted as a different control character or printable symbol by the receiving system. To read Commodore files correctly today you need software that loads a PETSCII–to–Unicode mapping table and substitutes each byte value for its correct modern equivalent — exactly the kind of translation layer that Unicode was designed to make unnecessary going forward. This is not a historical curiosity: anyone archiving old Commodore software, converting BASIC listings, or preserving game level data still encounters this problem.</div>
+      </div>
+
+      <div class="uni-card">
+        <div class="uni-card-head">PETSCII’s contribution to the chaos</div>
+        <div class="uni-card-body">PETSCII was one of dozens of national and manufacturer variants that fragmented the 1970s–80s computing world. IBM had CP437. Atari had ATASCII. Texas Instruments had their own. Every European country had an ISO 646 variant that replaced certain ASCII symbols with local characters (the UK variant replaced # with £; the French variant replaced @ with à). None of these were compatible with each other. Text that looked correct on the machine it was written on was unreadable elsewhere. PETSCII is a concrete, tangible example of the exact problem Unicode was created to eliminate. Every incompatible encoding was a reasonable local decision. The global cost of all of them together is why a single universal standard eventually became non-negotiable.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="unicodePanel" style="display:none">
+
+    <div class="uni-hero">
+      <div class="uni-hero-num">1,114,112</div>
+      <div class="uni-hero-lbl">total code points &nbsp;·&nbsp; U+000000 to U+10FFFF</div>
+    </div>
+
+    <div class="uni-grid">
+
+      <div class="uni-card">
+        <div class="uni-card-head">What is Unicode?</div>
+        <div class="uni-card-body">Unicode is a universal standard that assigns a unique number — called a <em>code point</em> — to every character in every human writing system. U+0041 is always the letter A. U+4E2D is always 中. U+1F600 is always 😀. There are 1,114,112 possible code points (U+000000 to U+10FFFF), of which around 150,000 are currently assigned. A code point is just a number — it says nothing about how to store it as bytes. That is the job of an <em>encoding</em> such as UTF-8.</div>
+      </div>
+
+      <div class="uni-card">
+        <div class="uni-card-head">Why it was introduced</div>
+        <div class="uni-card-body">By the late 1980s, the world had hundreds of incompatible 8-bit code pages — CP437, Windows-1252, Latin-1, KOI8-R, Shift-JIS, Big5, GB2312 — each covering a different region. The same byte value meant something completely different depending on which code page the software assumed. A document created on one system displayed as garbage on another. Email and the early web were broken by design. Unicode replaced all of them with a single standard: one number per character, agreed globally, forever.</div>
+      </div>
+
+      <div class="uni-card uni-card-wide">
+        <div class="uni-card-head">UTF-8 encoding — how bits are shared between signalling and data</div>
+        <div class="uni-card-body">UTF-8 is variable-length: each character uses 1 to 4 bytes depending on its code point. But how does the decoder know how many bytes to read? The leading bits of the first byte carry the length signal — which means fewer bits are available for the actual character data.</div>
+        <div class="utf8-table">
+          <div class="utf8-row">
+            <div class="utf8-range">U+0000 – U+007F</div>
+            <div class="utf8-bytes">
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">0</span><span class="bit-dat">x x x x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 1</div>
+              </div>
+            </div>
+            <div class="utf8-info"><span class="utf8-payload">7 data bits</span> · 128 characters · identical to ASCII · e.g. <em>A</em> = 0x41</div>
+          </div>
+          <div class="utf8-row">
+            <div class="utf8-range">U+0080 – U+07FF</div>
+            <div class="utf8-bytes">
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 1 0</span><span class="bit-dat">x x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 1</div>
+              </div>
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 0</span><span class="bit-dat">x x x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 2</div>
+              </div>
+            </div>
+            <div class="utf8-info"><span class="utf8-payload">5 + 6 = 11 data bits</span> · 1,920 characters · e.g. <em>é</em> = 0xC3 0xA9</div>
+          </div>
+          <div class="utf8-row">
+            <div class="utf8-range">U+0800 – U+FFFF</div>
+            <div class="utf8-bytes">
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 1 1 0</span><span class="bit-dat">x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 1</div>
+              </div>
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 0</span><span class="bit-dat">x x x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 2</div>
+              </div>
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 0</span><span class="bit-dat">x x x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 3</div>
+              </div>
+            </div>
+            <div class="utf8-info"><span class="utf8-payload">4 + 6 + 6 = 16 data bits</span> · 61,440 characters · e.g. <em>中</em> = 0xE4 0xB8 0xAD</div>
+          </div>
+          <div class="utf8-row">
+            <div class="utf8-range">U+10000 – U+10FFFF</div>
+            <div class="utf8-bytes">
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 1 1 1 0</span><span class="bit-dat">x x x</span></div>
+                <div class="utf8-byte-lbl">byte 1</div>
+              </div>
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 0</span><span class="bit-dat">x x x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 2</div>
+              </div>
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 0</span><span class="bit-dat">x x x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 3</div>
+              </div>
+              <div class="utf8-byte">
+                <div class="utf8-bits"><span class="bit-sig">1 0</span><span class="bit-dat">x x x x x x</span></div>
+                <div class="utf8-byte-lbl">byte 4</div>
+              </div>
+            </div>
+            <div class="utf8-info"><span class="utf8-payload">3 + 6 + 6 + 6 = 21 data bits</span> · emoji &amp; rare scripts · e.g. <em>😀</em> = 0xF0 0x9F 0x98 0x80</div>
+          </div>
+        </div>
+        <div class="utf8-legend">
+          <span class="utf8-legend-item"><span class="bit-sig-dot"></span> signalling bits — consumed by the encoding, not available for data</span>
+          <span class="utf8-legend-item"><span class="bit-dat-dot"></span> data bits — carry the actual code point value</span>
+        </div>
+        <div class="uni-card-body" style="margin-top:14px">A continuation byte always begins with <span class="bit-sig-inline">10</span>, which means it can never be mistaken for a leading byte. Any byte that does <em>not</em> start with <span class="bit-sig-inline">10</span> is the start of a new character. This lets a decoder instantly resynchronise after a corrupted byte — it simply skips forward until it finds a non-continuation byte.</div>
+      </div>
+
+    </div>
+  </div>
+
 </main>
 
 <script>
+// ─── CP437 extended character map (codes 128–255) ────────────────────────────
+// Each entry is [unicodeGlyph, name, note]
+const CP437 = [
+  ['Ç','Latin Capital C cedilla','One of the accented Latin characters IBM needed for French and Portuguese support on the original PC. CP437 was designed to cover as many Western European languages as possible within a single 256-character set.'],
+  ['ü','Latin Small U umlaut','German umlaut — essential for IBM\'s large German-speaking market. The PC had to serve all of Western Europe, so accented vowels took priority over some of the mathematical symbols that would appear in later code pages.'],
+  ['é','Latin Small E acute','The most common accented character in French. Its placement early in the extended range reflects the commercial importance of the French market to IBM in the early 1980s.'],
+  ['â','Latin Small A circumflex','French circumflex vowel, used in words like château and rôle. CP437 systematically covered the major Latin diacritics needed for French, German, Spanish, Portuguese, and Italian.'],
+  ['ä','Latin Small A umlaut','German umlaut. The four German umlauts (ä, ö, ü) and the sharp S (ß) were all included — Germany was a major market for the IBM PC from launch.'],
+  ['à','Latin Small A grave','French grave accent, found in à (to/at) and où (where). One of the most frequent characters in French prose after the acute e.'],
+  ['å','Latin Small A ring','Scandinavian — used in Swedish and Norwegian. Signals that CP437 was designed with Northern Europe in mind as well as the major Romance and Germanic languages.'],
+  ['ç','Latin Small C cedilla','The cedilla turns C into an S sound in French (ça, garçon) and Portuguese. Its uppercase partner Ç is at position 128.'],
+  ['ê','Latin Small E circumflex','French circumflex, used in words like être and forêt. The five circumflex vowels (â ê î ô û) all appear in CP437.'],
+  ['ë','Latin Small E umlaut','Used in French (Noël, naïve when on i) and in Dutch loanwords. Less common than the acute but still needed for correct typography.'],
+  ['è','Latin Small E grave','French and Italian grave accent. In French, è appears in words like père and mère; in Italian it marks stressed syllables.'],
+  ['ï','Latin Small I umlaut','Used in French (naïf, Noël) and Dutch. The umlaut on i indicates the vowel is pronounced separately from the preceding vowel, not as a diphthong.'],
+  ['î','Latin Small I circumflex','French circumflex. Used in words like île and maître. CP437 includes all five circumflex vowels.'],
+  ['ì','Latin Small I grave','Italian grave accent. Less common in French but frequent in Italian, where it distinguishes grammatical forms.'],
+  ['Ä','Latin Capital A umlaut','German uppercase umlaut. CP437 includes both cases of each umlaut, as German nouns are capitalised.'],
+  ['Å','Latin Capital A ring','Scandinavian uppercase. Å is a separate letter in Swedish, Norwegian, and Danish alphabets — not just a diacritic — and sorts independently.'],
+  ['É','Latin Capital E acute','Uppercase of é. Needed for French words beginning with É (État, École) which are capitalised in correct French typography, unlike in English practice.'],
+  ['æ','Latin Small AE ligature','The ligature used as a single letter in Danish and Norwegian alphabets. Also appears in Old English and some loanwords (encyclopædia).'],
+  ['Æ','Latin Capital AE ligature','Uppercase of æ. In Danish and Norwegian this is a distinct letter, sorting after Z — not interchangeable with the two-letter sequence AE.'],
+  ['ô','Latin Small O circumflex','French circumflex; in words like côte, rôle, château. Also used in Romanian and some Portuguese words.'],
+  ['ö','Latin Small O umlaut','German umlaut, used in words like schön and Österreich. Also the standard Swedish/Finnish letter (not just a diacritic) that sorts after Z.'],
+  ['ò','Latin Small O grave','Italian and French grave. In Italian, ò distinguishes verb forms; in French it appears in words like or (gold, archaic) and some proper names.'],
+  ['û','Latin Small U circumflex','French circumflex; in words like sûr, dû. The fifth and last circumflex vowel included in CP437.'],
+  ['ù','Latin Small U grave','French grave accent. Most common in où (where). One of the least frequent grave vowels but still needed for correct French.'],
+  ['ÿ','Latin Small Y umlaut','Used in French (rare), and as a historical form of the thorn letter Þ in Old and Middle English — \"ye\" in \"Ye Olde\" is actually \"þe\", with ÿ/y substituted for the unavailable thorn.'],
+  ['Ö','Latin Capital O umlaut','German uppercase umlaut. Appears in proper nouns (Österreich) and is a distinct letter in Swedish/Finnish, sorting after Z.'],
+  ['Ü','Latin Capital U umlaut','German uppercase umlaut. Present in words like Über, which has entered international usage in tech culture.'],
+  ['¢','Cent sign','The US cent symbol. Essential for American retail price displays — $0.99 vs 99¢. Its inclusion reflects the PC\'s primary US market, where price tags commonly used the cent sign.'],
+  ['£','Pound sign','British pound sterling. Needed for UK localisation. The pound sign\'s inclusion alongside $ reflects IBM\'s UK market — the BBC Micro, launched the same year, also wrestled with fitting £ into a 7-bit character set.'],
+  ['¥','Yen sign','Japanese yen. Included despite CP437 having no other Japanese characters, purely for currency display in international financial contexts. The ¥ symbol also doubles as the path separator in Japanese Windows localizations.'],
+  ['₧','Peseta sign','Spanish peseta, the currency of Spain before the euro. One of the most obscure symbols in CP437, rarely seen outside of Spanish financial documents of the 1980s. The peseta was replaced by the euro in 2002.'],
+  ['ƒ','Florin / Function sign','The Dutch guilder currency symbol, but also used in mathematics as the symbol for a function — ƒ(x). In modern usage it appears as the filename notation in some documentation styles.'],
+  ['á','Latin Small A acute','Spanish acute accent — one of the five Spanish vowels with accents (á é í ó ú). Together with ñ, these define the minimum set for correct Spanish typography.'],
+  ['í','Latin Small I acute','Spanish acute. In Spanish, written accent marks indicate stress and distinguish word pairs like sí (yes) from si (if).'],
+  ['ó','Latin Small O acute','Spanish acute. CP437 includes all five Spanish acute vowels, making it usable for Spanish text production on the original IBM PC.'],
+  ['ú','Latin Small U acute','Spanish acute. Completes the set. The inclusion of the full Spanish acute vowel set reflects the large Spanish-speaking market in the Americas.'],
+  ['ñ','Latin Small N tilde','The Spanish letter ñ — a completely distinct letter in the Spanish alphabet, not just an N with decoration, sorting between N and O. Its inclusion was essential for Spanish and Portuguese text.'],
+  ['Ñ','Latin Capital N tilde','Uppercase of ñ. Appears at the beginning of Spanish words (Ñoño) and proper nouns.'],
+  ['ª','Feminine ordinal indicator','Used in Spanish and Italian to abbreviate feminine ordinal numbers: 1ª (primera). Looks like a superscript a. Its partner º appears at position 167.'],
+  ['º','Masculine ordinal indicator','Spanish and Italian masculine ordinal abbreviation: 1º (primero), No. (número). Often confused with the degree symbol °, which appears later in the table.'],
+  ['¿','Inverted question mark','Spanish-language opening question mark. Spanish (and some other languages) require a matching inverted mark at the start of a question, so the reader knows to apply question intonation from the beginning of the sentence.'],
+  ['⌐','Reversed not sign','IBM used this as a reversed logical NOT symbol. Sometimes seen in technical documentation for complementation notation. Rarely encountered outside of CP437 contexts.'],
+  ['¬','Not sign','Logical negation operator ¬P means "not P". Used in formal logic, set theory, and circuit diagrams. In programming it appears in languages that use ¬ rather than ! for negation.'],
+  ['½','Vulgar fraction one half','One of three common vulgar fractions IBM included. Fractions were essential for recipe books, imperial measurements, and financial documents — all major use cases for early PC word processors.'],
+  ['¼','Vulgar fraction one quarter','One quarter. Together with ½ and ¾ these cover the most common fractions in English recipes and imperial measurements.'],
+  ['¡','Inverted exclamation mark','Spanish-language opening exclamation mark. Like ¿, it signals to the reader that what follows is an exclamation, allowing expression to be conveyed from the first word.'],
+  ['«','Left-pointing double angle quotation mark','French and many European language quotation marks (guillemets). In French, text is quoted «like this» rather than \"like this\". Also used in German, Italian, Spanish, Russian, and many others.'],
+  ['»','Right-pointing double angle quotation mark','Closing guillemet. Pairs with «. In some languages (Swiss French, German) the direction is reversed, using »like this«, but CP437 includes both for flexibility.'],
+  ['░','Light shade block','Box-drawing character. CP437 included 48 box-drawing and shading characters specifically for drawing text-mode user interfaces — menus, borders, progress bars, and panels — on the IBM PC before graphical interfaces existed. DOS applications like Borland\'s Turbo Pascal IDE were built entirely from these characters.'],
+  ['▒','Medium shade block','50% stipple pattern. Used to indicate inactive or disabled UI regions, grayed-out areas, or background fills in text-mode applications. Games like Nethack and Rogue also used these for terrain.'],
+  ['▓','Dark shade block','75% stipple. Together with ░ ▒ ▓ and █, these four shading characters created the illusion of gradient fills entirely in character-mapped display memory.'],
+  ['│','Box drawings light vertical','Single vertical line, used to draw the sides of UI panels and table borders. The full set includes single/double lines in all four directions and all twelve junction types, enabling complex table layouts without bitmap graphics.'],
+  ['┤','Box drawings light vertical and left','Right-side T-junction for single-line box drawing. Essential for drawing bordered panels with interior vertical dividers.'],
+  ['╡','Box drawings vertical single and left double','Mixed single/double junction. CP437 included hybrid junctions precisely because some UI frameworks used double lines for outer borders and single lines for inner dividers.'],
+  ['╢','Box drawings vertical double and left single','The reverse — double vertical, single left junction. Part of the systematic coverage of all junction types in the mixed single/double line set.'],
+  ['╖','Box drawings down double and left single','Top-right corner for a box with a double-line top and single-line sides. IBM\'s systematic approach means every corner and junction combination is present somewhere in the table.'],
+  ['╕','Box drawings down single and left double','Top-right corner, single vertical with double horizontal. Used when a box has a bolder top/bottom border.'],
+  ['╣','Box drawings double vertical and left','Right-side T-junction for pure double-line boxes. Double-line boxes were commonly used for dialog boxes in DOS applications to make them visually prominent against single-line background panels.'],
+  ['║','Box drawings double vertical','Double vertical line — the prominent side border of a dialog or important panel. One of the most recognised CP437 characters, frequently seen in DOS software UI.'],
+  ['╗','Box drawings double down and left','Top-right corner for a double-line box. Along with ╔ ╚ ╝, these four corners define a complete double-line rectangle — the staple of DOS dialog box design.'],
+  ['╝','Box drawings double up and left','Bottom-right corner of a double-line box.'],
+  ['╜','Box drawings up double and left single','Mixed junction for the bottom-right of a hybrid box.'],
+  ['╛','Box drawings up single and left double','The complementary mixed junction.'],
+  ['┐','Box drawings light down and left','Top-right corner of a single-line box.'],
+  ['└','Box drawings light up and right','Bottom-left corner of a single-line box.'],
+  ['┴','Box drawings light up and horizontal','Bottom T-junction for single-line box drawing.'],
+  ['┬','Box drawings light down and horizontal','Top T-junction.'],
+  ['├','Box drawings light vertical and right','Left-side T-junction.'],
+  ['─','Box drawings light horizontal','Single horizontal line. Together with │, these two characters form the simplest possible box-drawing system.'],
+  ['┼','Box drawings light vertical and horizontal','Full cross-junction — four lines meeting in the centre. Used wherever two dividers cross, such as inside a data table.'],
+  ['╞','Box drawings vertical single and right double','Left T-junction, mixed single/double.'],
+  ['╟','Box drawings vertical double and right single','The complementary mixed left junction.'],
+  ['╚','Box drawings double up and right','Bottom-left corner of a double-line box.'],
+  ['╔','Box drawings double down and right','Top-left corner of a double-line box — the start of almost every DOS dialog border.'],
+  ['╩','Box drawings double up and horizontal','Bottom T-junction for double-line boxes.'],
+  ['╦','Box drawings double down and horizontal','Top T-junction for double-line boxes.'],
+  ['╠','Box drawings double vertical and right','Left T-junction for double-line boxes.'],
+  ['═','Box drawings double horizontal','Double horizontal line — paired with ║ to form the iconic DOS dialog border.'],
+  ['╬','Box drawings double vertical and horizontal','Full cross-junction for double-line boxes — where two interior dividers meet inside a double-bordered panel.'],
+  ['╧','Box drawings up single and horizontal double','Mixed bottom T-junction.'],
+  ['╨','Box drawings up double and horizontal single','Mixed bottom T-junction, reversed orientation.'],
+  ['╤','Box drawings down single and horizontal double','Mixed top T-junction.'],
+  ['╥','Box drawings down double and horizontal single','Mixed top T-junction, reversed.'],
+  ['╙','Box drawings up double and right single','Bottom-left corner, mixed.'],
+  ['╘','Box drawings up single and right double','Bottom-left corner, mixed reversed.'],
+  ['╒','Box drawings down single and right double','Top-left corner, mixed.'],
+  ['╓','Box drawings down double and right single','Top-left corner, mixed reversed.'],
+  ['╫','Box drawings vertical double and horizontal single','Full cross, mixed — double vertical through single horizontal.'],
+  ['╪','Box drawings vertical single and horizontal double','Full cross, mixed reversed.'],
+  ['┘','Box drawings light up and left','Bottom-right corner of a single-line box.'],
+  ['┌','Box drawings light down and right','Top-left corner of a single-line box.'],
+  ['█','Full block','100% filled block — used for solid-fill progress bars, health meters in games, and binary-coloured graphics. In Unicode this same character is used in terminal progress bars to this day.'],
+  ['▄','Lower half block','Bottom 50% filled. Combined with ▀ and colour attribute switching, programs could achieve double vertical resolution — two \"pixels\" per character cell — a technique called "half-block graphics".'],
+  ['▌','Left half block','Left 50% filled. With ▐ (right half), this doubled the horizontal resolution. Combined with the half-block set, this allowed 160×100 pseudo-pixel graphics on an 80×25 text screen.'],
+  ['▐','Right half block','Right 50% filled.'],
+  ['▀','Upper half block','Top 50% filled. The full set of directional half-blocks (▄▌▐▀) was used by ANSI art — the BBS-era art form built entirely from CP437 characters.'],
+  ['α','Greek Small Alpha','The first Greek letter — α is used universally in science and mathematics. CP437 included a small subset of Greek letters specifically because they appear in physics and engineering formulae.'],
+  ['ß','Latin Small Sharp S','The German Eszett — a single letter representing a double-S sound, used in words like Straße and heiß. In 2017 Germany officially added the uppercase ẞ to the language, but ß has existed since medieval times.'],
+  ['Γ','Greek Capital Gamma','Γ appears in mathematics as the Gamma function Γ(n) = (n−1)!, in physics for relativistic Lorentz factor, and in graph theory for graph notation.'],
+  ['π','Greek Small Pi','Perhaps the most famous mathematical constant. CP437\'s inclusion of π was essential for any scientific or engineering word processing — its presence here predates Unicode by 8 years.'],
+  ['Σ','Greek Capital Sigma','Summation notation — Σ is used in every branch of mathematics and physics. Essential for scientific document preparation.'],
+  ['σ','Greek Small Sigma','Standard deviation in statistics. Also used in particle physics for cross-section, and in orbital mechanics.'],
+  ['µ','Micro Sign','The SI prefix for one millionth (10⁻⁶) — µs (microseconds), µm (micrometres), µA (microamps). Essential for any technical or scientific document. Note: this is the micro sign (U+00B5), not the Greek lowercase mu (U+03BC), though they look identical.'],
+  ['τ','Greek Small Tau','τ = 2π, increasingly preferred as the fundamental circle constant. Also the time constant in RC circuits, and used throughout physics and engineering.'],
+  ['Φ','Greek Capital Phi','The golden ratio φ ≈ 1.618 (often written with capital Φ). Also used in physics for electric flux and for wave functions in quantum mechanics.'],
+  ['Θ','Greek Capital Theta','Big-Theta notation Θ(n) in computational complexity theory — representing tight (both upper and lower) asymptotic bounds on algorithm performance.'],
+  ['Ω','Greek Capital Omega','The SI unit of electrical resistance — the ohm (Ω). Also used for angular velocity. Electrical engineering absolutely required this symbol; CP437 without Ω would have been useless for electronics documentation.'],
+  ['δ','Greek Small Delta','In calculus, δ appears in the formal definition of a limit: for every ε > 0, there exists δ > 0... Also used for small changes and in Dirac\'s delta function.'],
+  ['∞','Infinity','The lemniscate ∞, introduced by John Wallis in 1655. Essential for calculus limits (lim x→∞), set theory (ℵ₀ is the cardinality of ∞ countable sets), and displayed prominently in nearly every branch of mathematics.'],
+  ['φ','Greek Small Phi','Lowercase phi — the golden ratio (φ ≈ 1.618…), Euler\'s totient function φ(n) in number theory, and the most common variable for angles in polar coordinates and physics.'],
+  ['ε','Greek Small Epsilon','In calculus, ε is the arbitrarily small quantity in the epsilon-delta definition of a limit. Also used for: machine epsilon in floating-point arithmetic, energy in physics, and the Levi-Civita symbol in tensor notation.'],
+  ['∩','Intersection','Set intersection — A ∩ B is the set of elements in both A and B. One of the fundamental operations of set theory, which is foundational to databases, probability, and formal logic.'],
+  ['≡','Identical to','Congruence or logical equivalence. In modular arithmetic, a ≡ b (mod n) means a and b have the same remainder when divided by n. In logic, ≡ means if and only if (biconditional).'],
+  ['±','Plus-minus sign','Used in measurements (9.81 ± 0.01 m/s²), quadratic formula solutions, and tolerance specifications in engineering. Its inclusion alongside the mathematical Greek set makes CP437 genuinely useful for science.'],
+  ['≥','Greater than or equal to','One of the six fundamental comparison operators. Less common in typed text than > but essential for mathematical writing and algorithm description.'],
+  ['≤','Less than or equal to','The complement to ≥. In algorithm analysis, loop invariants and boundary conditions are typically expressed with ≤.'],
+  ['⌠','Top half integral','The upper half of the integral sign ∫ when rendered across two character rows — a charming reminder that CP437 had to fake large mathematical symbols by stacking two characters.'],
+  ['⌡','Bottom half integral','The lower half of the two-character integral sign. These two characters together display ∫ at double height in text mode. A purely typographic workaround for the 8×8 pixel character cell limitation.'],
+  ['÷','Division sign','The obelus ÷, used as the division operator in elementary arithmetic. Different from the forward slash / in semantic meaning — ÷ specifically denotes division, while / serves many purposes in computing.'],
+  ['≈','Almost equal to','Approximately equals — used when an exact value is not known or is irrational: π ≈ 3.14159. Appears heavily in engineering and physics where measurements and constants are given to finite precision.'],
+  ['°','Degree sign','Temperature (°C, °F), angles (360°), and geographic coordinates. One of the most frequently needed symbols in everyday documents that CP437 provided where standard ASCII could not.'],
+  ['∙','Bullet operator','A middle dot used as a multiplication operator in physics notation, distinct from the interpunct ·. Appears in vector dot products F = ma and in crystallographic notation.'],
+  ['·','Middle dot','Interpunct — used as a multiplication sign in some European countries (2·3 = 6), as a syllable separator in Catalan (col·legi), and as a list bullet. Superficially similar to ∙ but semantically different.'],
+  ['√','Square root','The radical sign √, used for square roots (√2 ≈ 1.414). CP437\'s inclusion of √ alongside the Greek letters and operators makes it remarkably capable for mathematical typesetting in a 256-character set.'],
+  ['ⁿ','Superscript Latin Small N','Allows expressions like xⁿ in text mode. Combined with the two-character integral and the radical, CP437 made a genuine attempt at mathematical superscript support within the constraints of fixed character cells.'],
+  ['²','Superscript Two','Square notation — cm², m², km². Essential for area measurements and for expressing squared terms simply. Appears in scientific and engineering documents constantly.'],
+  ['■','Black medium square','A solid square block, smaller than █. Used as a bullet point, a checkbox placeholder, and a page-fill element in text-mode design. Appears at the very top of the extended range of Unicode\'s geometric shapes block.'],
+  [' ','Non-breaking Space','Looks like a space but prevents a line break at that position. Used in typesetting to keep values and their units together (10 km, $5 each) without splitting across lines. In HTML, this is &nbsp;.']
+];
+
 // ─── Control character abbreviations ──────────────────────────────────────────
 const ABBR = [
   'NUL','SOH','STX','ETX','EOT','ENQ','ACK','BEL',
@@ -294,6 +688,9 @@ function buildGrid() {
     } else if (c === 'space') {
       gl.className = 'cc-glyph';
       gl.textContent = '·';
+    } else if (c === 'ext') {
+      gl.className = 'cc-glyph';
+      gl.textContent = CP437[i - 128][0];
     } else {
       gl.className = 'cc-glyph';
       gl.textContent = String.fromCharCode(i);
@@ -320,24 +717,26 @@ function showDetail(code) {
   const data = NOTES[code];
 
   // Character name
+  const cp437entry = c === 'ext' ? CP437[code - 128] : null;
+
   let name = data ? data.name : (
+    cp437entry ? cp437entry[1] :
     c === 'ctrl'  ? `${ABBR[code]} — Control` :
     c === 'digit' ? `Digit '${String.fromCharCode(code)}'` :
     c === 'upper' ? `Uppercase '${String.fromCharCode(code)}'` :
     c === 'lower' ? `Lowercase '${String.fromCharCode(code)}'` :
     c === 'sym'   ? `Symbol '${String.fromCharCode(code)}'` :
-    c === 'ext'   ? `Extended ASCII ${code}` :
     `Character ${code}`
   );
 
-  const note = data ? data.note : rangeNote(code);
+  const note = data ? data.note : (cp437entry ? cp437entry[2] : rangeNote(code));
 
   // Glyph display
   const glyphColour = {
     digit: 'var(--ml)',
     upper: '#7dd3f8',
     lower: '#c084fc',
-    ext:   '#5060b0',
+    ext:   '#7a8fff',
     sym:   'var(--muted)',
     space: 'var(--dim)',
   }[c] || 'var(--text)';
@@ -348,6 +747,8 @@ function showDetail(code) {
     glyphHtml = `<div class="detail-glyph-abbr">${abbr}</div>`;
   } else if (c === 'space') {
     glyphHtml = `<div class="detail-glyph" style="color:var(--dim);font-size:18px;padding:16px 0 8px;letter-spacing:3px">SPACE</div>`;
+  } else if (c === 'ext') {
+    glyphHtml = `<div class="detail-glyph" style="color:${glyphColour}">${cp437entry[0]}</div>`;
   } else {
     glyphHtml = `<div class="detail-glyph" style="color:${glyphColour}">${String.fromCharCode(code)}</div>`;
   }
@@ -387,11 +788,21 @@ document.getElementById('modeTabs').addEventListener('click', e => {
   if (!btn || btn.dataset.mode == mode) return;
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  mode = parseInt(btn.dataset.mode);
+  mode = btn.dataset.mode === 'u' ? 'u' : btn.dataset.mode === 'p' ? 'p' : parseInt(btn.dataset.mode);
   activeCel = null;
+  const isPanel = mode === 'u' || mode === 'p';
+  const isUnicode = mode === 'u';
+  const isPetscii = mode === 'p';
   document.getElementById('extLegendItem').style.display = mode === 8 ? '' : 'none';
-  buildGrid();
-  document.getElementById('charDetail').innerHTML = '<p class="detail-placeholder">Hover over a character to see details.</p>';
+  document.getElementById('legend').style.display = isPanel ? 'none' : '';
+  document.getElementById('charGrid').style.display = isPanel ? 'none' : '';
+  document.getElementById('charDetail').style.display = isPanel ? 'none' : '';
+  document.getElementById('unicodePanel').style.display = isUnicode ? '' : 'none';
+  document.getElementById('petsciiPanel').style.display = isPetscii ? '' : 'none';
+  if (!isPanel) {
+    buildGrid();
+    document.getElementById('charDetail').innerHTML = '<p class="detail-placeholder">Hover over a character to see details.</p>';
+  }
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────

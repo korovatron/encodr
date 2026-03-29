@@ -59,7 +59,25 @@ header {
 
 .hdiv { width: 1px; height: 18px; background: var(--border); }
 
-.hsub { font-size: 15px; color: var(--muted); }
+.breadcrumb-sep { font-size: 20px; color: var(--text); line-height: 1; }
+
+.home-btn {
+  margin-left: auto;
+  display: flex; align-items: center;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  background: #000;
+  color: #fff; text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 100px;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.50);
+  transition: box-shadow .15s;
+  flex-shrink: 0;
+}
+.home-btn:hover {
+  box-shadow: 0 0 0 2px rgba(255,255,255,1);
+}
+
+.hsub { font-size: 15px; color: var(--text); }
 
 /* ── Main layout ─────────────────────────────── */
 main {
@@ -68,7 +86,7 @@ main {
   padding: 40px 24px 80px;
 }
 
-h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 
 .intro {
   font-size: 16px;
