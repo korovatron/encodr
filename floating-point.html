@@ -40,15 +40,14 @@
       <button class="step" id="e-plus"  aria-label="More exponent bits">+</button>
       <span class="chip-lbl chip-lbl-u">bits</span>
     </div>
-    <button class="reset-btn" id="reset">Reset to zero</button>
   </div>
 
   <!-- Mantissa -->
   <div class="card">
-    <div class="card-head">
-      <span class="badge badge-m">Mantissa</span>
-    </div>
     <div class="res-block">
+      <div class="card-head">
+        <span class="badge badge-m">Mantissa</span>
+      </div>
       <div class="grid-wrap">
         <div class="bit-grid" id="m-grid"></div>
       </div>
@@ -57,10 +56,10 @@
 
   <!-- Exponent -->
   <div class="card">
-    <div class="card-head">
-      <span class="badge badge-e">Exponent</span>
-    </div>
     <div class="res-block">
+      <div class="card-head">
+        <span class="badge badge-e">Exponent</span>
+      </div>
       <div class="grid-wrap">
         <div class="bit-grid" id="e-grid"></div>
       </div>
@@ -69,14 +68,14 @@
 
   <!-- Result -->
   <div class="result-card">
-    <div class="card-head">
-      <span class="badge badge-r">Denary value</span>
-    </div>
     <div class="res-block">
+      <div class="card-head">
+        <span class="badge badge-r">Denary value</span>
+      </div>
       <div class="res-big" id="res-big">0</div>
       <div class="res-eq"  id="res-eq"></div>
+      <div id="norm-area" style="display:flex;justify-content:flex-end;margin-top:8px"></div>
     </div>
-    <div id="norm-area" style="display:flex;justify-content:flex-end;"></div>
   </div><!-- /.result-card -->
   </div><!-- /#explore-section -->
 
@@ -92,29 +91,28 @@
       </div>
       <div class="quiz-score-area">
         <span class="quiz-score-txt">Score:&ensp;<span id="q-correct">0</span>&thinsp;/&thinsp;<span id="q-total">0</span></span>
-        <button class="btn btn-sm" id="q-reset-score">Reset score</button>
+        <button class="btn btn-sm" id="q-reset-score">Restart</button>
       </div>
     </div>
 
     <div class="card quiz-q-card">
-      <div class="quiz-q-header">
-        <span class="quiz-q-num" id="q-num">Question 1</span>
-        <span class="badge" id="q-type-badge"></span>
-      </div>
-      <div class="quiz-q-text" id="q-text"></div>
-      <div id="q-target-wrap" hidden>
-        <div class="res-lbl">Represent this denary value:</div>
-        <div class="quiz-denary-target" id="q-denary-target"></div>
-        <div class="quiz-format-hint" id="quiz-format-hint">8-bit mantissa &middot; 4-bit exponent &middot; both two&rsquo;s complement</div>
+      <div class="res-block">
+        <div class="quiz-q-header">
+          <span class="quiz-q-num" id="q-num">Question 1</span>
+          <span class="badge" id="q-type-badge"></span>
+        </div>
+        <div class="quiz-q-text" id="q-text"></div>
+        <div id="q-target-wrap" hidden>
+          <div class="quiz-denary-target" id="q-denary-target"></div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-head">
-        <span class="badge badge-m">Mantissa</span>
-        <span class="card-sub">Two&rsquo;s complement &middot; sign bit = &minus;1 &middot; remaining: &frac12; &frac14; &frac18;&nbsp;&hellip;</span>
-      </div>
       <div class="res-block">
+        <div class="card-head">
+          <span class="badge badge-m">Mantissa</span>
+        </div>
         <div class="grid-wrap">
           <div class="bit-grid" id="q-m-grid"></div>
         </div>
@@ -122,11 +120,10 @@
     </div>
 
     <div class="card">
-      <div class="card-head">
-        <span class="badge badge-e">Exponent</span>
-        <span class="card-sub">Two&rsquo;s complement integer</span>
-      </div>
       <div class="res-block">
+        <div class="card-head">
+          <span class="badge badge-e">Exponent</span>
+        </div>
         <div class="grid-wrap">
           <div class="bit-grid" id="q-e-grid"></div>
         </div>
@@ -134,23 +131,27 @@
     </div>
 
     <div class="card" id="q-t1-area" hidden>
-      <div class="q-answer-lbl">Your answer (denary)</div>
-      <input class="q-denary-input" type="text" id="q-denary-input"
-             placeholder="e.g. &minus;0.75" autocomplete="off" spellcheck="false" />
+      <div class="res-block">
+        <div class="q-answer-lbl">Your answer (denary)</div>
+        <input class="q-denary-input" type="text" id="q-denary-input"
+               placeholder="e.g. &minus;0.75" autocomplete="off" spellcheck="false" />
+      </div>
     </div>
 
     <div class="card" id="q-err-area" hidden>
-      <div class="q-err-notice" id="q-err-notice"></div>
-      <div class="err-grid">
-        <div>
-          <div class="q-err-lbl">Absolute error</div>
-          <input class="q-denary-input q-err-input" type="text" id="q-abs-err"
-                 placeholder="e.g. 0.0625" autocomplete="off" spellcheck="false" />
-        </div>
-        <div>
-          <div class="q-err-lbl">Percentage relative error (%)</div>
-          <input class="q-denary-input q-err-input" type="text" id="q-rel-err"
-                 placeholder="e.g. 2.34" autocomplete="off" spellcheck="false" />
+      <div class="res-block">
+        <div class="q-err-notice" id="q-err-notice"></div>
+        <div class="err-grid">
+          <div>
+            <div class="q-err-lbl">Absolute error</div>
+            <input class="q-denary-input q-err-input" type="text" id="q-abs-err"
+                   placeholder="e.g. 0.0625" autocomplete="off" spellcheck="false" />
+          </div>
+          <div>
+            <div class="q-err-lbl">Relative Error (%)</div>
+            <input class="q-denary-input q-err-input" type="text" id="q-rel-err"
+                   placeholder="e.g. 2.34" autocomplete="off" spellcheck="false" />
+          </div>
         </div>
       </div>
     </div>
@@ -342,11 +343,6 @@
   document.getElementById('e-minus').addEventListener('click', () => changeBits('e', -1));
   document.getElementById('e-plus' ).addEventListener('click', () => changeBits('e', +1));
 
-  document.getElementById('reset').addEventListener('click', () => {
-    S.m.fill(0); S.e.fill(0);
-    renderGrid('m'); renderGrid('e'); updateResult();
-  });
-
   /* ── Init ──────────────────────────────────────────────────────── */
   renderGrid('m');
   renderGrid('e');
@@ -484,9 +480,6 @@
         errArea.hidden = true;
       }
     }
-
-    document.getElementById('quiz-format-hint').textContent =
-      `${QS.mLen}-bit mantissa \u00B7 ${QS.eLen}-bit exponent \u00B7 both two\u2019s complement`;
 
     renderQuizGrid('m', t === 1 ? QS.mBits : QS.studentM, t === 2);
     renderQuizGrid('e', t === 1 ? QS.eBits : QS.studentE, t === 2);
@@ -707,9 +700,13 @@
 
   document.querySelectorAll('.qtype-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (btn.classList.contains('active')) return;
       document.querySelectorAll('.qtype-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       QS.questionType = btn.dataset.qt;
+      document.getElementById('q-modal').classList.remove('open');
+      QS.questionNum++;
+      generateQuizQuestion();
     });
   });
 
