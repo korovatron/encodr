@@ -32,7 +32,7 @@
 
 html { overflow-x: hidden; }
 body {
-  font-family: 'Consolas', 'Courier New', monospace;
+  font-family: system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -64,6 +64,7 @@ header {
   border-radius: 8px;
   box-shadow: 0 0 0 2px #fff;
   user-select: none;
+  font-family: 'Courier New', 'Consolas', monospace;
 }
 .logo em { color: #ff0000; font-style: normal; }
 
@@ -356,7 +357,6 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 .mode-tab {
   padding: 10px 26px;
   font-size: 14px; font-weight: 700;
-  font-family: 'Consolas', 'Courier New', monospace;
   background: none; border: none;
   border-bottom: 3px solid transparent;
   color: var(--dim); cursor: pointer;
@@ -377,7 +377,6 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 .qtype-btn {
   padding: 6px 16px;
   font-size: 14px; font-weight: 600;
-  font-family: 'Consolas', monospace;
   border: 1px solid rgba(255,255,255,.30);
   border-radius: 100px;
   background: rgba(255,255,255,.04);
@@ -465,7 +464,6 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   border-radius: var(--r-sm);
   background: var(--surface2);
   color: var(--text); font-size: 15px; font-weight: 700;
-  font-family: 'Consolas', monospace;
   cursor: pointer; letter-spacing: .3px;
   transition: background .12s;
 }
@@ -546,8 +544,8 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 @media (max-width: 680px) {
   .site-credit { flex-direction: column; gap: 4px; }
 }
-.site-credit a { color: var(--text); text-decoration: underline; }
-.site-credit a:hover { color: var(--ml); }
+.site-credit a { color: var(--ml); text-decoration: underline; }
+.site-credit a:hover { color: var(--text); }
 
 /* ══════════════════════════════════════════════════════
    HOME PAGE — Topic picker
