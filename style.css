@@ -36,7 +36,9 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  user-select: none;
 }
+input, textarea { user-select: text; }
 
 /* Prevent iOS double-tap zoom on all interactive elements */
 button, input, a, [role="button"] { touch-action: manipulation; }
@@ -61,6 +63,7 @@ header {
   padding: 2px 12px 4px;
   border-radius: 8px;
   box-shadow: 0 0 0 2px #fff;
+  user-select: none;
 }
 .logo em { color: #ff0000; font-style: normal; }
 
@@ -90,7 +93,7 @@ header {
 main {
   max-width: 980px;
   margin: 0 auto;
-  padding: 40px 24px 80px;
+  padding: 40px 24px 48px;
 }
 
 h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
@@ -306,6 +309,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 @media (max-width: 680px) {
   main { padding: 24px 12px 60px; }
   .card { padding: 16px 14px 14px; }
+  .home-btn { font-size: 14px; padding: 4px 10px; letter-spacing: 1px; }
 }
 
 .bk-card {
@@ -381,6 +385,12 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   transition: background .12s, color .12s, border-color .12s;
 }
 .qtype-btn:hover { background: rgba(255,255,255,.09); color: var(--text); }
+.qt-short { display: none; }
+@media (max-width: 540px) {
+  .qt-long  { display: none; }
+  .qt-short { display: inline; }
+}
+
 .qtype-btn.active {
   background: rgba(232,232,0,.13);
   border-color: rgba(232,232,0,.60);
@@ -523,6 +533,21 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   box-shadow: 0 0 0 2px #fff;
 }
 .q-err-input { font-size: 26px; }
+
+/* ── Site footer ─────────────────────────────── */
+.site-credit {
+  display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: nowrap;
+  margin: 40px 0 0; padding-top: 20px;
+  border-top: 2px solid rgba(255,255,255,.15);
+  color: var(--text); font-size: 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+  text-align: center;
+}
+@media (max-width: 680px) {
+  .site-credit { flex-direction: column; gap: 4px; }
+}
+.site-credit a { color: var(--text); text-decoration: underline; }
+.site-credit a:hover { color: var(--ml); }
 
 /* ══════════════════════════════════════════════════════
    HOME PAGE — Topic picker

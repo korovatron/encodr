@@ -85,9 +85,9 @@
     <div class="quiz-topbar">
       <div class="qtype-group">
         <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
-        <button class="qtype-btn active" data-qt="mixed">Mixed</button>
-        <button class="qtype-btn" data-qt="1">Binary &rarr; Denary</button>
-        <button class="qtype-btn" data-qt="2">Denary &rarr; Binary</button>
+        <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
+        <button class="qtype-btn" data-qt="1"><span class="qt-long">Binary &rarr; Denary</span><span class="qt-short">BIN &rarr; DEN</span></button>
+        <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">DEN &rarr; BIN</span></button>
       </div>
       <div class="quiz-score-area">
         <span class="quiz-score-txt">Score:&ensp;<span id="q-correct">0</span>&thinsp;/&thinsp;<span id="q-total">0</span></span>
@@ -171,6 +171,8 @@
     </div>
 
   </div><!-- /#quiz-section -->
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More <span style="color:#ff0000">@</span> <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 
 </main>
 
@@ -729,5 +731,6 @@
     generateQuizQuestion();
   });
 </script>
+
 </body>
 </html>
