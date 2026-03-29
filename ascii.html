@@ -13,7 +13,7 @@
     }
     .legend-item {
       display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--muted); user-select: none;
+      font-size: 12px; color: var(--muted); -webkit-user-select: none; user-select: none;
     }
     .legend-dot {
       width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
@@ -38,7 +38,7 @@
       height: 62px;
       border-radius: 6px; cursor: default;
       transition: filter .1s, transform .1s, outline-color .1s;
-      user-select: none; overflow: hidden;
+      -webkit-user-select: none; user-select: none; overflow: hidden;
       outline: 2px solid transparent; outline-offset: 0;
       touch-action: manipulation;
     }

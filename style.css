@@ -36,9 +36,10 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  -webkit-user-select: none;
   user-select: none;
 }
-input, textarea { user-select: text; }
+input, textarea { -webkit-user-select: text; user-select: text; }
 
 /* Prevent iOS double-tap zoom on all interactive elements */
 button, input, a, [role="button"] { touch-action: manipulation; }
