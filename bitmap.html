@@ -146,6 +146,7 @@
       padding: 6px;
       cursor: pointer;
       transition: border-color .15s;
+      position: relative;
     }
     .sprite-thumb:hover  { border-color: rgba(255,255,255,.4); }
     .sprite-thumb.selected { border-color: var(--ml); }
@@ -156,6 +157,23 @@
       letter-spacing: 1px;
       color: var(--muted);
     }
+    .thumb-delete {
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,80,80,.85);
+      color: #fff;
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .sprite-thumb:hover .thumb-delete { opacity: 1; }
 
     /* ── Narrow: gallery moves below, horizontal ─── */
     @media (max-width: 1248px) {
@@ -213,6 +231,7 @@
     <div class="bitmap-controls">
       <button class="btn" id="btn-clear">Clear</button>
       <button class="btn" id="btn-invert">Invert</button>
+      <button class="btn" id="btn-save">Save</button>
       <button class="btn seg-btn" id="btn-mode"><span id="mode-1bit">1-bit</span> | <span id="mode-2bit">2-bit</span></button>
       <button class="btn seg-btn" id="btn-labels">Labels <span id="lbl-on">on</span> | <span id="lbl-off">off</span></button>
       <div class="swatch-group">
@@ -287,6 +306,20 @@
     </div>
 
   </div><!-- /#test-section -->
+
+  <!-- ── Name dialog ──────────────────────────────────────────────── -->
+  <dialog id="save-dialog">
+    <div class="modal">
+      <div class="modal-feedback" style="font-size:15px;margin-bottom:12px;">Name this sprite:</div>
+      <input type="text" id="save-name-inp" class="q-denary-input"
+             style="width:100%;margin-bottom:16px;" maxlength="24"
+             placeholder="e.g. My Rocket" autocomplete="off" spellcheck="false" />
+      <div class="modal-footer" style="gap:8px;">
+        <button class="btn" id="save-cancel">Cancel</button>
+        <button class="btn btn-submit" id="save-confirm">Save</button>
+      </div>
+    </div>
+  </dialog>
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
@@ -630,6 +663,110 @@
 
     gallery.appendChild(btn);
   });
+
+  // ── User sprites (localStorage) ───────────────────────────────────
+  const LS_KEY = 'encodr-user-sprites';
+
+  function loadUserSprites() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+    catch { return []; }
+  }
+
+  function saveUserSprites(list) {
+    localStorage.setItem(LS_KEY, JSON.stringify(list));
+  }
+
+  function addUserThumb(sprite, index) {
+    const btn = document.createElement('button');
+    btn.className = 'sprite-thumb';
+    btn.title = sprite.name;
+    btn.dataset.userIdx = index;
+
+    const canvas = document.createElement('canvas');
+    // Use the sprite's own colours for the thumbnail
+    const thumbSprite = { color: sprite.colours[1], data: sprite.data };
+    thumbEntries.push({ canvas, sprite: thumbSprite });
+
+    const label = document.createElement('span');
+    label.textContent = sprite.name;
+
+    const del = document.createElement('button');
+    del.className = 'thumb-delete';
+    del.title = 'Delete';
+    del.textContent = '×';
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const list = loadUserSprites();
+      list.splice(index, 1);
+      saveUserSprites(list);
+      // Remove from thumbEntries
+      const ti = thumbEntries.findIndex(t => t.canvas === canvas);
+      if (ti !== -1) thumbEntries.splice(ti, 1);
+      btn.remove();
+      // Re-index remaining user thumbs
+      gallery.querySelectorAll('[data-user-idx]').forEach((b, i) => { b.dataset.userIdx = i; });
+      resizeGallery();
+    });
+
+    btn.appendChild(del);
+    btn.appendChild(canvas);
+    btn.appendChild(label);
+
+    btn.addEventListener('click', () => {
+      gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      // Restore colours + mode then load data
+      sprite.colours.forEach((hex, i) => {
+        colours[i] = hex;
+        const swBtn = document.getElementById(`btn-c${i}`);
+        const swInp = document.getElementById(`inp-c${i}`);
+        swBtn.style.background = hex;
+        swInp.value = hex;
+      });
+      multicolour = sprite.multicolour;
+      document.documentElement.classList.toggle('mc', multicolour);
+      updateModeBtn();
+      updateSwatchLabels();
+      loadSprite(sprite.data);
+    });
+
+    // Insert before the first non-user thumb
+    const firstBuiltin = gallery.querySelector('.sprite-thumb:not([data-user-idx])');
+    gallery.insertBefore(btn, firstBuiltin);
+    return btn;
+  }
+
+  // Populate gallery with saved sprites on load
+  loadUserSprites().forEach((sprite, i) => addUserThumb(sprite, i));
+
+  // ── Save button & dialog ──────────────────────────────────────────
+  const saveDialog  = document.getElementById('save-dialog');
+  const saveNameInp = document.getElementById('save-name-inp');
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    saveNameInp.value = '';
+    saveDialog.showModal();
+    saveNameInp.focus();
+  });
+  document.getElementById('save-cancel').addEventListener('click', () => saveDialog.close());
+  saveNameInp.addEventListener('keydown', e => { if (e.key === 'Enter') confirmSave(); });
+  document.getElementById('save-confirm').addEventListener('click', confirmSave);
+
+  function confirmSave() {
+    const name = saveNameInp.value.trim() || 'Untitled';
+    saveDialog.close();
+    const list = loadUserSprites();
+    const entry = {
+      name,
+      data: Array.from(state),
+      colours: [...colours],
+      multicolour,
+    };
+    list.push(entry);
+    saveUserSprites(list);
+    addUserThumb(entry, list.length - 1);
+    resizeGallery();
+  }
 
   // ── Dismiss keyboard when tapping outside inputs ──────────────────
   document.addEventListener('touchstart', (e) => {
