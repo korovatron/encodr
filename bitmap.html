@@ -86,31 +86,6 @@
       .card.bitmap-card { overflow-x: auto; }
       .bitmap-grid { min-width: 520px; }
     }
-    /* ── Mobile portrait: hide inputs, expand pixel panel, show hint ── */
-    @media (max-width: 680px) and (orientation: portrait) {
-      .byte-inp { display: none; }
-      .bitmap-grid { display: block; }
-      .pixel-panel {
-        aspect-ratio: 24 / 21;
-        width: 100%;
-        position: relative;
-        grid-row: unset;
-        grid-column: unset;
-      }
-      .pixel-panel::after {
-        content: 'Rotate to landscape to edit';
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.55);
-        color: #fff;
-        font-size: 13px;
-        letter-spacing: 0.5px;
-        pointer-events: none;
-      }
-    }
   </style>
 </head>
 <body>
