@@ -124,15 +124,16 @@
 
     /* ── Sliders ─────────────────────────────── */
     .sliders-card {
-      background: var(--surface);
+      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
       border: 1px solid var(--border);
       border-radius: var(--r);
-      padding: 10px;
+      padding: 18px 18px 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.45);
     }
     .sliders-inner {
-      background: var(--surface2);
+      background: transparent;
       border-radius: var(--r-sm);
-      padding: 18px 18px 14px;
+      padding: 0;
       display: flex;
       flex-direction: column;
       gap: 22px;
@@ -328,15 +329,16 @@
 
     /* ── File size card ──────────────────────── */
     .filesize-card {
-      background: var(--surface);
+      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
       border: 1px solid var(--border);
       border-radius: var(--r);
-      padding: 10px;
+      padding: 18px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.45);
     }
     .filesize-inner {
-      background: var(--surface2);
+      background: transparent;
       border-radius: var(--r-sm);
-      padding: 18px 18px 18px;
+      padding: 0;
     }
     .filesize-title {
       font-size: 13px; text-transform: uppercase;
@@ -403,7 +405,7 @@
 
     .sq-input {
       display: block; width: 100%;
-      background: var(--surface2);
+      background: #000;
       border: 2px solid rgba(255,255,255,.20);
       border-radius: var(--r-sm);
       color: var(--text);
