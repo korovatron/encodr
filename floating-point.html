@@ -678,11 +678,12 @@
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fbEl.innerHTML = html;
     if (document.activeElement) document.activeElement.blur();
-    // Delay one frame so iOS viewport finishes adjusting after keyboard dismissal
-    // before the fixed-position modal is shown
-    requestAnimationFrame(() => {
+    // Double-rAF: first frame lets the browser process the blur/keyboard-dismiss
+    // viewport change; second frame paints the modal. Needed on iPhone Safari
+    // where a single rAF is not always sufficient.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       document.getElementById('q-modal').classList.add('open');
-    });
+    }));
   }
 
   /* ── Mode-switch ─────────────────────────────── */

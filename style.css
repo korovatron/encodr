@@ -488,15 +488,27 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 
 /* ── Feedback modal ────────────────────────────── */
 .modal-backdrop {
-  display: none;
-  position: fixed; inset: 0;
+  display: flex;
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: rgba(0,0,0,.72);
   z-index: 100;
   align-items: center;
   justify-content: center;
   padding: 24px;
+  /* Use opacity/visibility instead of display:none — toggling display on
+     position:fixed fails to repaint on iPhone Safari */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
-.modal-backdrop.open { display: flex; }
+.modal-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 .modal {
   background: #000;
   border: 1px solid var(--border);
