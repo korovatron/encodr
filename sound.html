@@ -26,6 +26,7 @@
       border-radius: var(--r-sm);
       padding: 4px;
       width: 100%;
+      min-width: 0;
     }
     #wave-canvas {
       display: block;
@@ -230,12 +231,18 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
       gap: 6px;
-      padding: 4px 6px;
+      padding: 4px 4px;
       width: 76px;
       flex-shrink: 0;
+      overflow: hidden;
       border-left: 1px solid rgba(255,255,255,.12);
+    }
+    .vert-slider-wrap {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 80px;
     }
     .wave-ctrl-lbl {
       font-size: 13px;
@@ -245,16 +252,49 @@
       white-space: nowrap;
     }
     #res-slider {
-      -webkit-appearance: slider-vertical !important;
-      appearance: slider-vertical !important;
-      writing-mode: vertical-lr !important;
-      direction: rtl !important;
-      width: 22px !important;
-      height: auto !important;
-      flex: 1 !important;
-      min-height: 100px !important;
-      padding: 0 !important;
-      background: rgba(255,255,255,.12) !important;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      height: 22px;
+      width: 150px;
+      transform: translate(-50%, -50%) rotate(-90deg);
+      appearance: none;
+      -webkit-appearance: none;
+      writing-mode: horizontal-tb;
+      direction: ltr;
+      background: transparent;
+      outline: none;
+      cursor: pointer;
+      touch-action: none;
+      padding: 0;
+      margin: 0;
+    }
+    #res-slider::-webkit-slider-runnable-track {
+      height: 6px;
+      background: rgba(255,255,255,.18);
+      border-radius: 3px;
+    }
+    #res-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      margin-top: -5px;
+      cursor: pointer;
+    }
+    #res-slider::-moz-range-track {
+      height: 6px;
+      background: rgba(255,255,255,.18);
+      border-radius: 3px;
+    }
+    #res-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: none;
+      cursor: pointer;
     }
     .wave-sr-row {
       display: flex;
@@ -449,9 +489,11 @@
             <canvas id="wave-canvas" width="900" height="420"></canvas>
           </div>
           <div class="wave-res-col">
-            <div style="display:flex;align-items:center;flex:1;gap:6px;">
-              <input type="range" orient="vertical" id="res-slider" min="1" max="8" step="1" value="4" />
-              <span class="wave-ctrl-lbl" style="writing-mode:vertical-rl;letter-spacing:2px;color:var(--ml);">Sample Resolution</span>
+            <div style="display:flex;flex:1;flex-direction:row;align-items:stretch;gap:20px;">
+              <div class="vert-slider-wrap" id="res-wrap">
+                <input type="range" id="res-slider" min="1" max="8" step="1" value="4" />
+              </div>
+              <span class="wave-ctrl-lbl" style="writing-mode:vertical-rl;letter-spacing:2px;color:var(--ml);flex-shrink:0;display:flex;justify-content:center;align-items:center;">Sample Resolution</span>
             </div>
             <div class="slider-val" id="res-val" style="font-size:16px;">4 bits</div>
           </div>
@@ -631,8 +673,9 @@
   }
 
   function drawWave() {
-    const W = canvas.width;
-    const H = canvas.height;
+    const scale = window.devicePixelRatio || 1;
+    const W = canvas.width / scale;
+    const H = canvas.height / scale;
     ctx.clearRect(0, 0, W, H);
 
     // ── Layout with axis margins ─────────────────────────────────────
@@ -939,9 +982,15 @@
     canvas.style.width  = cssW + 'px';
     canvas.style.height = '420px';
     ctx.scale(scale, scale);
+    // Size rotated res-slider to match wrapper height for vertical appearance
+    const resWrap = document.getElementById('res-wrap');
+    if (resWrap) resSlider.style.width = Math.max(80, resWrap.clientHeight) + 'px';
     drawWave();
   }
-  window.addEventListener('resize', resizeCanvas);
+  let _resizeTimer;
+  function scheduleResize() { clearTimeout(_resizeTimer); _resizeTimer = setTimeout(resizeCanvas, 150); }
+  window.addEventListener('resize', scheduleResize);
+  window.addEventListener('orientationchange', scheduleResize);
 
   /* ═══════════════════════════════════════════════════════
      QUIZ ENGINE
