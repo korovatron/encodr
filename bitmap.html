@@ -69,6 +69,7 @@
       -webkit-user-select: text;
       user-select: text;
       transition: border-color .15s;
+      appearance: textfield;
       -moz-appearance: textfield;
     }
     .byte-inp::-webkit-outer-spin-button,
@@ -457,13 +458,14 @@
     for (let col = 0; col < BYTES_PER_ROW; col++) {
       const idx = row * BYTES_PER_ROW + col;
       const inp = document.createElement('input');
-      inp.type = 'number';
-      inp.min = '0';
-      inp.max = '255';
+      inp.type = 'text';
       inp.className = 'byte-inp';
       inp.placeholder = '0';
       inp.autocomplete = 'off';
       inp.inputMode = 'numeric';
+      inp.pattern = '[0-9]*';
+      inp.setAttribute('enterkeyhint', 'next');
+      inp.setAttribute('spellcheck', 'false');
       inp.setAttribute('aria-label', `Row ${row + 1}, byte ${col + 1}`);
       inp.addEventListener('input', () => handleInput(inp, idx));
       inp.addEventListener('keydown', (e) => {
