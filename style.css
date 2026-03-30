@@ -506,8 +506,10 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
    interfere with the dialog's own internal scroll. */
 html.modal-open, body.modal-open,
 html:has(#q-modal[open]),
-body:has(#q-modal[open]) { overflow: hidden; }
-#q-modal {
+html:has(#bq-modal[open]),
+body:has(#q-modal[open]),
+body:has(#bq-modal[open]) { overflow: hidden; }
+#q-modal, #bq-modal {
   border: none;
   padding: 0;
   background: transparent;
@@ -515,7 +517,7 @@ body:has(#q-modal[open]) { overflow: hidden; }
 }
 /* Only style layout when open — display:flex here would override the
    browser's display:none for the closed state */
-#q-modal[open] {
+#q-modal[open], #bq-modal[open] {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -527,7 +529,7 @@ body:has(#q-modal[open]) { overflow: hidden; }
   align-items: center;
   justify-content: center;
 }
-#q-modal::backdrop {
+#q-modal::backdrop, #bq-modal::backdrop {
   background: rgba(0,0,0,.72);
 }
 .modal {
