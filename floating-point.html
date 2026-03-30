@@ -371,8 +371,11 @@
   let _modalScrollY = 0;
   function openModal() {
     _modalScrollY = window.scrollY;
-    // Lock scroll on both html AND body — iOS Safari requires both to be
-    // non-visible so that position:fixed still anchors to the viewport.
+    // Scroll to top first so the fixed modal (top:0) lands in the visible
+    // viewport. On iPhone Safari, position:fixed at top:0 renders at the
+    // document origin — if the page is scrolled down, that's off-screen.
+    // Locking overflow AFTER scrolling to 0 keeps it there.
+    window.scrollTo(0, 0);
     document.documentElement.classList.add('modal-open');
     document.body.classList.add('modal-open');
     document.getElementById('q-modal').classList.add('open');
