@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>ASCII &amp; Unicode – Encodr</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
   <style>
     /* ── Legend ──────────────────────────────────── */
     .legend {
@@ -877,12 +878,6 @@ document.getElementById('modeTabs').addEventListener('click', e => {
 document.getElementById('detailPlaceholder')?.remove();
 document.getElementById('charDetail').innerHTML = placeholder();
 buildGrid();
-
-// Suppress pull-to-refresh and rubber-band when page has no scrollable overflow.
-window.addEventListener('touchmove', (e) => {
-  if (e.touches && e.touches.length > 1) return;
-  if (document.documentElement.scrollHeight <= document.documentElement.clientHeight) e.preventDefault();
-}, { passive: false, capture: true });
 </script>
 
 </body>
