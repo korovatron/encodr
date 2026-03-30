@@ -201,11 +201,13 @@
 
     /* ── Unicode info panel ─────────────────────── */
     .uni-hero {
-      background: var(--surface2);
+      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
+      border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 28px 28px 22px;
       margin-bottom: 18px;
       text-align: center;
+      box-shadow: 0 4px 18px rgba(0,0,0,.45);
     }
     .uni-hero-num {
       font-size: 52px; font-weight: 800;
@@ -242,11 +244,13 @@
 
     /* ── Detail panel ────────────────────────────── */
     .char-detail {
-      background: var(--surface2);
+      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
+      border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 22px 24px;
       height: 180px;
       overflow: hidden;
+      box-shadow: 0 4px 18px rgba(0,0,0,.45);
     }
     .detail-placeholder {
       color: var(--dim); font-size: 14px;
@@ -356,7 +360,7 @@
 
   <div id="petsciiPanel" style="display:none">
 
-    <div class="uni-hero" style="background:var(--surface2)">
+    <div class="uni-hero">
       <div class="uni-hero-num" style="font-size:36px;letter-spacing:2px">PETSCII</div>
       <div class="uni-hero-lbl">PET Standard Code of Information Interchange &nbsp;·&nbsp; Commodore, 1977</div>
     </div>
