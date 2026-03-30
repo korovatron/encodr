@@ -74,12 +74,78 @@
       flex-wrap: wrap;
       margin-bottom: 20px;
     }
-    /* ── Cap card width so pixels stay square ───────── */
-    /* Calculation: 24px pixels × 25px height + 23px gaps = 623px strip
-       + 3 inputs (59px each) + 3 col-gaps (10px) + card/res-block padding = ~880px */
-    .card.bitmap-card {
-      max-width: 880px;
-      margin-inline: auto;
+    /* ── Outer layout: CSS grid, 2 cols, 2 rows ───
+       col 1: [controls row 1] [card row 2]
+       col 2: [gallery spans rows 1+2]
+       Gallery is always exactly as tall as controls + card. */
+    .bitmap-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 880px) 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 10px 20px;
+      align-items: start;
+    }
+    .bitmap-controls { grid-column: 1; grid-row: 1; }
+    .card.bitmap-card { grid-column: 1; grid-row: 2; max-width: 880px; }
+
+    /* ── Sprite gallery ──────────────────────────── */
+    .sprite-gallery {
+      grid-column: 2;
+      grid-row: 2;            /* card row only */
+      align-self: stretch;    /* fill card height exactly */
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: safe center;
+      gap: 8px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 2px;
+    }
+    .sprite-thumb {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 6px;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .sprite-thumb:hover  { border-color: rgba(255,255,255,.4); }
+    .sprite-thumb.selected { border-color: var(--ml); }
+    .sprite-thumb canvas { display: block; image-rendering: pixelated; }
+    .sprite-thumb span {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+    }
+
+    /* ── Narrow: gallery moves below, horizontal ─── */
+    @media (max-width: 1248px) {
+      .bitmap-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      .bitmap-controls { grid-column: 1; grid-row: 1; }
+      .card.bitmap-card { grid-column: 1; grid-row: 2; }
+      .sprite-gallery {
+        grid-column: 1;
+        grid-row: 3;
+        flex-direction: row;
+        overflow-y: visible;
+        overflow-x: auto;
+        align-self: auto;
+        max-width: unset;
+        width: 100%;
+        margin: 0;
+      }
     }
     /* ── Mobile landscape: horizontal scroll if needed ── */
     @media (max-width: 680px) and (orientation: landscape) {
@@ -104,23 +170,28 @@
     Three bytes fill one row of 24 pixels — the same format as a <strong>Commodore 64 sprite</strong>.
   </p>
 
-  <div class="bitmap-controls">
-    <button class="btn" id="btn-clear">Clear</button>
-    <button class="btn" id="btn-invert">Invert</button>
-    <button class="btn" id="btn-example">Example</button>
-  </div>
+  <div class="bitmap-layout">
 
-  <div class="card bitmap-card">
-    <div class="res-block">
-      <div class="card-head">
-        <span class="badge badge-m">Image (24 &times; 21)</span>
-        <span style="margin-left:auto;display:flex;gap:8px">
-          <span class="badge badge-e">Byte values (denary)</span>
-        </span>
-      </div>
-      <div class="bitmap-grid" id="bitmap-grid"></div>
+    <div class="bitmap-controls">
+      <button class="btn" id="btn-clear">Clear</button>
+      <button class="btn" id="btn-invert">Invert</button>
     </div>
-  </div>
+
+    <div class="card bitmap-card">
+      <div class="res-block">
+        <div class="card-head">
+          <span class="badge badge-m">Image (24 &times; 21)</span>
+          <span style="margin-left:auto;display:flex;gap:8px">
+            <span class="badge badge-e">Byte values (denary)</span>
+          </span>
+        </div>
+        <div class="bitmap-grid" id="bitmap-grid"></div>
+      </div>
+    </div>
+
+    <div class="sprite-gallery" id="sprite-gallery"></div>
+
+  </div><!-- /.bitmap-layout -->
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
@@ -224,54 +295,142 @@
     renderPixels();
   });
 
-  // Example: a simple smiley face sprite
-  const EXAMPLE = [
-    0,60,0,  0,66,0,  0,66,0,
-    129,0,129, 129,0,129, 0,129,0,
-    0,60,0,  0,66,0,  0,66,0,
-    129,0,129, 129,0,129, 0,129,0,
-    0,60,0,  0,66,0,  0,66,0,
-    129,0,129, 129,0,129, 0,129,0,
-    0,60,0,  0,0,0,   0,0,0,
-  ];
-  // Better example: C64-style face (hand-crafted 24×21)
-  const FACE = [
-    0,126,0,    // row  1
-    1,255,128,  // row  2
-    3,255,192,  // row  3
-    7,219,224,  // row  4
-    7,219,224,  // row  5
-    15,255,240, // row  6
-    15,255,240, // row  7
-    15,60,240,  // row  8
-    15,60,240,  // row  9
-    15,255,240, // row 10
-    7,231,224,  // row 11
-    7,129,224,  // row 12
-    3,255,192,  // row 13
-    1,255,128,  // row 14
-    0,126,0,    // row 15
-    0,60,0,     // row 16
-    0,126,0,    // row 17
-    0,195,0,    // row 18
-    1,129,128,  // row 19
-    3,0,192,    // row 20
-    0,0,0,      // row 21
+  // ── Sprite library ────────────────────────────────────────────────
+  const SPRITES = [
+    {
+      name: 'Face',
+      color: '#ffff00',
+      data: [
+        0,126,0,    1,255,128,  3,255,192,  7,219,224,  7,219,224,
+        15,255,240, 15,255,240, 15,60,240,  15,60,240,  15,255,240,
+        7,231,224,  7,129,224,  3,255,192,  1,255,128,  0,126,0,
+        0,60,0,     0,126,0,    0,195,0,    1,129,128,  3,0,192,
+        0,0,0,
+      ],
+    },
+    {
+      name: 'Heart',
+      color: '#ff4466',
+      data: [
+        0,0,0,      0,0,0,      0,0,0,
+        31,129,248, 63,129,252, 127,231,254,
+        255,255,255,127,255,254,63,255,252,
+        31,255,248, 15,255,240, 7,255,224,
+        3,255,192,  1,255,128,  0,255,0,
+        0,126,0,    0,60,0,     0,24,0,
+        0,0,0,      0,0,0,      0,0,0,
+      ],
+    },
+    {
+      name: 'Diamond',
+      color: '#44ffbb',
+      data: [
+        0,0,0,      0,0,0,      0,0,0,
+        0,24,0,     0,60,0,     0,126,0,
+        0,255,0,    1,255,128,  3,255,192,
+        7,255,224,  15,255,240, 7,255,224,
+        3,255,192,  1,255,128,  0,255,0,
+        0,126,0,    0,60,0,     0,24,0,
+        0,0,0,      0,0,0,      0,0,0,
+      ],
+    },
+    {
+      name: 'Rocket',
+      color: '#44aaff',
+      data: [
+        0,24,0,     0,60,0,     0,126,0,
+        0,255,0,    1,255,128,  3,255,192,
+        3,255,192,  3,255,192,  3,255,192,
+        3,255,192,  7,255,224,  15,255,240,
+        3,255,192,  3,255,192,  0,255,0,
+        0,255,0,    3,195,192,  7,129,224,
+        15,0,240,   31,0,248,   62,0,124,
+      ],
+    },
   ];
 
-  document.getElementById('btn-example').addEventListener('click', () => {
-    FACE.forEach((v, i) => {
+  // ── Build sprite gallery ───────────────────────────────────────────
+  // Canvas size derives from the gallery column's rendered width so there
+  // is never a horizontal scrollbar regardless of zoom or column width.
+  // Overhead per thumb: padding 6px×2 + border 2px×2 + gallery padding 2px×2 = 20px
+  const gallery = document.getElementById('sprite-gallery');
+  const thumbEntries = []; // { canvas, sprite }
+
+  function drawThumb(canvas, sprite, px) {
+    canvas.width  = COLS * px;
+    canvas.height = ROWS * px;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let byteIdx = 0; byteIdx < TOTAL_BYTES; byteIdx++) {
+      const val       = sprite.data[byteIdx];
+      const row       = Math.floor(byteIdx / BYTES_PER_ROW);
+      const byteInRow = byteIdx % BYTES_PER_ROW;
+      for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
+        const col = byteInRow * BITS_PER_BYTE + bit;
+        const on  = (val >> (7 - bit)) & 1;
+        ctx.fillStyle = on ? sprite.color : '#444';
+        ctx.fillRect(col * px, row * px, px - 1, px - 1);
+      }
+    }
+  }
+
+  const narrowMQ = window.matchMedia('(max-width: 1248px)');
+
+  function resizeGallery() {
+    // In horizontal (narrow) mode the gallery spans the full width, so we use
+    // a fixed thumb width (~160px) instead of filling the gallery width.
+    const available = narrowMQ.matches ? 160 : gallery.clientWidth - 20;
+    const px = Math.max(1, Math.floor(available / COLS));
+    thumbEntries.forEach(({ canvas, sprite }) => drawThumb(canvas, sprite, px));
+  }
+
+  narrowMQ.addEventListener('change', resizeGallery);
+
+  function loadSprite(data) {
+    data.forEach((v, i) => {
       state[i] = v;
       inputs[i].value = v === 0 ? '' : v;
       inputs[i].classList.remove('err');
     });
     renderPixels();
+  }
+
+  SPRITES.forEach((sprite) => {
+    const btn = document.createElement('button');
+    btn.className = 'sprite-thumb';
+    btn.title = sprite.name;
+
+    const canvas = document.createElement('canvas');
+    thumbEntries.push({ canvas, sprite });
+
+    const label = document.createElement('span');
+    label.textContent = sprite.name;
+
+    btn.appendChild(canvas);
+    btn.appendChild(label);
+
+    btn.addEventListener('click', () => {
+      gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      loadSprite(sprite.data);
+    });
+
+    gallery.appendChild(btn);
   });
 
   // ── Dismiss keyboard when tapping outside inputs ──────────────────
   document.addEventListener('touchstart', (e) => {
     if (e.target.tagName !== 'INPUT') document.activeElement?.blur();
   }, { passive: true });
+
+  // ── Keep gallery height = card height & canvases sized to column ──
+  const bitmapCard = document.querySelector('.bitmap-card');
+  const ro = new ResizeObserver(() => {
+    gallery.style.maxHeight = bitmapCard.offsetHeight + 'px';
+  });
+  ro.observe(bitmapCard);
+  new ResizeObserver(resizeGallery).observe(gallery);
 
   // ── Init ──────────────────────────────────────────────────────────
   renderPixels();
