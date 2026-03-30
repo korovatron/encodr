@@ -1148,7 +1148,7 @@
     const ans   = freq * 2;
     return {
       badge: 'Nyquist',
-      text:  `The Nyquist theorem states that a signal must be sampled at <strong>at least twice</strong> its highest frequency component.\n\nA sound has a highest frequency of <strong>${fmtHz(freq)}</strong>. What is the <strong>minimum sampling rate</strong> required to represent it accurately?`,
+      text:  `A sound has a highest frequency component of <strong>${fmtHz(freq)}</strong>.\n\nWhat is the <strong>minimum sampling rate</strong> required to accurately represent it digitally?`,
       answerNum: ans,
       unitLabel: 'Hz',
     };
