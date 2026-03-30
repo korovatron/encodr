@@ -16,13 +16,13 @@
 
     /* ── Canvas card ─────────────────────────── */
     .wave-card {
-      background: var(--surface);
+      background: #000;
       border: 1px solid var(--border);
       border-radius: var(--r);
       padding: 10px;
     }
     .wave-canvas-wrap {
-      background: var(--surface2);
+      background: #000;
       border-radius: var(--r-sm);
       padding: 4px;
       width: 100%;
@@ -64,6 +64,62 @@
       border-radius: 0;
       flex-shrink: 0;
     }
+
+    /* ── Component strip ────────────────────────── */
+    .comp-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+    .comp-pill {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #000;
+      border-radius: 100px;
+      padding: 7px 14px;
+      box-shadow: 0 0 0 1.5px var(--comp-col, rgba(255,255,255,.40));
+      transition: opacity .15s;
+    }
+    .comp-pill.inactive {
+      opacity: .38;
+    }
+    .comp-lbl {
+      font-size: 14px; font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--comp-col, #fff);
+      font-family: 'Consolas', monospace;
+      min-width: 16px; text-align: center;
+    }
+    .comp-toggle {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: #000;
+      background: var(--comp-col, #fff);
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      padding: 3px 10px;
+      line-height: 1.4;
+      transition: opacity .12s, background .12s;
+      flex-shrink: 0;
+    }
+    .comp-toggle:hover { opacity: .80; }
+    .comp-pill.inactive .comp-toggle {
+      background: transparent;
+      color: var(--comp-col, #fff);
+      box-shadow: 0 0 0 1.5px var(--comp-col, #fff);
+    }
+    .comp-freq-val {
+      font-size: 15px; font-weight: 700;
+      font-family: 'Consolas', monospace;
+      color: var(--comp-col, #fff);
+      min-width: 44px; text-align: center;
+    }
+    .comp-pill-a { --comp-col: #c0a0ff; }
+    .comp-pill-b { --comp-col: #ff9944; }
+    .comp-pill-c { --comp-col: #44ddaa; }
 
     /* ── Sliders ─────────────────────────────── */
     .sliders-card {
@@ -152,7 +208,8 @@
 
     /* Nyquist warning */
     .nyquist-warn {
-      display: none;
+      display: block;
+      visibility: hidden;
       background: rgba(255,80,0,.10);
       border: 1px solid rgba(255,80,0,.50);
       border-radius: var(--r-sm);
@@ -161,7 +218,63 @@
       color: #ff9944;
       line-height: 1.6;
     }
-    .nyquist-warn.visible { display: block; }
+    .nyquist-warn.visible { visibility: visible; }
+
+    /* ── Wave card inner layout ──────────────── */
+    .wave-main-row {
+      display: flex;
+      align-items: stretch;
+      gap: 4px;
+    }
+    .wave-res-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 6px;
+      width: 76px;
+      flex-shrink: 0;
+      border-left: 1px solid rgba(255,255,255,.12);
+    }
+    .wave-ctrl-lbl {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,.65);
+      white-space: nowrap;
+    }
+    #res-slider {
+      -webkit-appearance: slider-vertical !important;
+      appearance: slider-vertical !important;
+      writing-mode: vertical-lr !important;
+      direction: rtl !important;
+      width: 22px !important;
+      height: auto !important;
+      flex: 1 !important;
+      min-height: 100px !important;
+      padding: 0 !important;
+      background: rgba(255,255,255,.12) !important;
+    }
+    .wave-sr-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 4px 4px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .wave-sr-lbl {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,.65);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .wave-sr-row #sr-slider {
+      flex: 1 !important;
+      width: auto !important;
+    }
 
     /* ── File size card ──────────────────────── */
     .filesize-card {
@@ -298,10 +411,60 @@
 
     <div class="sound-layout">
 
-      <!-- Canvas -->
+      <!-- Component strip -->
+      <div class="comp-strip">
+
+        <!-- A: always on -->
+        <div class="comp-pill comp-pill-a" id="comp-a-pill">
+          <span class="comp-lbl">A</span>
+          <button class="step" id="comp-a-minus" aria-label="Lower frequency A">−</button>
+          <span class="comp-freq-val" id="comp-a-freq">4 Hz</span>
+          <button class="step" id="comp-a-plus"  aria-label="Raise frequency A">+</button>
+        </div>
+
+        <!-- B: optional -->
+        <div class="comp-pill comp-pill-b inactive" id="comp-b-pill">
+          <span class="comp-lbl">B</span>
+          <button class="comp-toggle" id="comp-b-toggle">OFF</button>
+          <button class="step" id="comp-b-minus" aria-label="Lower frequency B">−</button>
+          <span class="comp-freq-val" id="comp-b-freq">7 Hz</span>
+          <button class="step" id="comp-b-plus"  aria-label="Raise frequency B">+</button>
+        </div>
+
+        <!-- C: optional -->
+        <div class="comp-pill comp-pill-c inactive" id="comp-c-pill">
+          <span class="comp-lbl">C</span>
+          <button class="comp-toggle" id="comp-c-toggle">OFF</button>
+          <button class="step" id="comp-c-minus" aria-label="Lower frequency C">−</button>
+          <span class="comp-freq-val" id="comp-c-freq">13 Hz</span>
+          <button class="step" id="comp-c-plus"  aria-label="Raise frequency C">+</button>
+        </div>
+
+      </div><!-- /.comp-strip -->
+
+      <!-- Canvas + embedded sliders -->
       <div class="wave-card">
-        <div class="wave-canvas-wrap">
-          <canvas id="wave-canvas" width="900" height="320"></canvas>
+        <div class="wave-main-row">
+          <div class="wave-canvas-wrap">
+            <canvas id="wave-canvas" width="900" height="420"></canvas>
+          </div>
+          <div class="wave-res-col">
+            <div style="display:flex;align-items:center;flex:1;gap:6px;">
+              <input type="range" orient="vertical" id="res-slider" min="1" max="8" step="1" value="4" />
+              <span class="wave-ctrl-lbl" style="writing-mode:vertical-rl;letter-spacing:2px;color:var(--ml);">Sample Resolution</span>
+            </div>
+            <div class="slider-val" id="res-val" style="font-size:16px;">4 bits</div>
+          </div>
+        </div>
+        <div class="wave-sr-row">
+          <span class="wave-sr-lbl" style="color:#44aaff;">Sample Rate</span>
+          <input type="range" id="sr-slider" min="0" max="30" step="1" value="18" />
+          <div class="slider-val slider-val-sr" id="sr-val" style="font-size:17px;min-width:58px;text-align:right;">18 Hz</div>
+        </div>
+        <div class="nyquist-warn" id="nyquist-warn" style="margin:6px 0 0;">
+          <strong>Below Nyquist threshold</strong> — the sample rate must be at least
+          <strong>twice</strong> the highest frequency in the signal (<strong id="nyquist-min"></strong>).
+          At this rate the reconstructed wave is incorrect (aliasing).
         </div>
         <div class="wave-legend">
           <div class="legend-item">
@@ -320,37 +483,6 @@
             <div class="legend-swatch" style="background:none;border-top:2px solid #ffff00;"></div>
             Reconstructed signal
           </div>
-        </div>
-      </div>
-
-      <!-- Sliders -->
-      <div class="sliders-card">
-        <div class="sliders-inner">
-
-          <div class="slider-row">
-            <div class="slider-lbl">
-              Sampling rate
-              <span class="slider-lbl-sub">samples per second (Hz)</span>
-            </div>
-            <input type="range" id="sr-slider" min="0" max="30" step="1" value="18" />
-            <div class="slider-val slider-val-sr" id="sr-val">18 Hz</div>
-          </div>
-
-          <div class="nyquist-warn" id="nyquist-warn">
-            <strong>Below Nyquist threshold</strong> — the sample rate must be at least
-            <strong>twice</strong> the highest frequency in the signal (<strong id="nyquist-min"></strong>).
-            At this rate the reconstructed wave is incorrect (aliasing).
-          </div>
-
-          <div class="slider-row">
-            <div class="slider-lbl">
-              Sample resolution
-              <span class="slider-lbl-sub">bits per sample</span>
-            </div>
-            <input type="range" id="res-slider" min="1" max="8" step="1" value="4" />
-            <div class="slider-val" id="res-val">4 bits</div>
-          </div>
-
         </div>
       </div>
 
@@ -454,9 +586,6 @@
   const canvas = document.getElementById('wave-canvas');
   const ctx    = canvas.getContext('2d');
 
-  // The analogue wave: composite of two sinusoids
-  // Base frequency = 4 Hz (so Nyquist = 8 Hz), shown over 1 second
-  const WAVE_FREQ = 4;   // Hz — fundamental frequency of our wave
   const WAVE_SECS = 1;   // seconds displayed
 
   // Slider step values (non-linear for sample rate to give fine control at low end)
@@ -467,12 +596,28 @@
     22, 24, 26, 28, 32, 36, 40, 48, 64, 96, 128
   ];
 
-  function waveAt(t) {
-    // Composite: sin(2π·4t) + 0.45·sin(2π·9t) — two frequencies
-    // Highest component = 9 Hz → Nyquist = 18 Hz
-    return (Math.sin(2 * Math.PI * 4 * t) + 0.45 * Math.sin(2 * Math.PI * 9 * t)) / 1.45;
+  // ── Wave components ────────────────────────────────────────────────
+  const COMP_RANGES = [
+    { min: 2,  max: 8,  step: 1 },   // A
+    { min: 5,  max: 14, step: 1 },   // B
+    { min: 10, max: 20, step: 1 },   // C
+  ];
+  const components = [
+    { freq: 4,  active: true  },   // A — always on
+    { freq: 7,  active: false },   // B
+    { freq: 13, active: false },   // C
+  ];
+
+  function getMaxFreq() {
+    return Math.max(...components.filter(c => c.active).map(c => c.freq));
   }
-  const NYQUIST_FREQ = 9; // highest component in waveAt()
+
+  function waveAt(t) {
+    const active = components.filter(c => c.active);
+    if (!active.length) return 0;
+    const sum = active.reduce((s, c) => s + Math.sin(2 * Math.PI * c.freq * t), 0);
+    return sum / active.length;  // normalise by count to stay in [-1, 1]
+  }
 
   let sampleRate = SR_VALUES[18]; // 18 Hz default
   let sampleBits = 4;             // 4 bits default
@@ -490,24 +635,108 @@
     const H = canvas.height;
     ctx.clearRect(0, 0, W, H);
 
-    const midY   = H / 2;
-    const ampPx  = midY * 0.82;
+    // ── Layout with axis margins ─────────────────────────────────────
+    const PAD_L = 52, PAD_R = 8, PAD_T = 10, PAD_B = 30;
+    const plotW  = W - PAD_L - PAD_R;
+    const plotH  = H - PAD_T - PAD_B;
+    const midY   = PAD_T + plotH / 2;
+    const ampPx  = plotH / 2 * 0.82;
     const levels = Math.pow(2, sampleBits);
 
-    // ── Quantisation grid ───────────────────────────────────────────
+    // Coordinate helpers
+    const tx  = t => PAD_L + (t / WAVE_SECS) * plotW;
+    const ay  = a => midY - a * ampPx;
+    // Y position where quantisation level i's dot actually lands (matches ay())
+    const dotY = i => levels <= 1 ? midY : midY - ((i / (levels - 1)) * 2 - 1) * ampPx;
+
+    // ── Quantisation grid (capped at 5-bit density) ─────────────────
     ctx.save();
     ctx.strokeStyle = 'rgba(255,255,255,.10)';
     ctx.lineWidth   = 1;
     ctx.setLineDash([4, 6]);
-    for (let i = 0; i <= levels; i++) {
-      const norm = i / levels;
-      const y    = midY + ampPx - norm * ampPx * 2;
+    const gridLevels = Math.min(levels, 32); // cap at 2^5 lines
+    for (let i = 0; i <= gridLevels; i++) {
+      const y = midY + ampPx - (i / gridLevels) * ampPx * 2;
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(W, y);
+      ctx.moveTo(PAD_L, y);
+      ctx.lineTo(PAD_L + plotW, y);
       ctx.stroke();
     }
     ctx.setLineDash([]);
+    ctx.restore();
+
+    // ── Axis lines ───────────────────────────────────────────────────
+    ctx.save();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 1.5;
+    // Y axis
+    ctx.beginPath();
+    ctx.moveTo(PAD_L, PAD_T);
+    ctx.lineTo(PAD_L, PAD_T + plotH + 6);
+    ctx.stroke();
+    // X axis (at amplitude = 0)
+    ctx.beginPath();
+    ctx.moveTo(PAD_L - 4, ay(0));
+    ctx.lineTo(PAD_L + plotW, ay(0));
+    ctx.stroke();
+    ctx.restore();
+
+    // ── Y axis labels (signed integers, auto-thinned) ────────────────
+    ctx.save();
+    ctx.font      = `${Math.round(11 * (W / 900))}px 'Consolas', monospace`;
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    // Step size: keep ~7 labels maximum; always include extremes
+    const step = Math.max(1, Math.pow(2, Math.ceil(Math.log2(levels / 8))));
+    const tickSet = new Set();
+    tickSet.add(0);
+    tickSet.add(levels - 1);
+    for (let i = 0; i < levels; i += step) tickSet.add(i);
+    for (const i of [...tickSet].sort((a, b) => a - b)) {
+      const label = i - levels / 2;   // signed integer value
+      const y     = dotY(i);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(PAD_L - 3, y);
+      ctx.lineTo(PAD_L,     y);
+      ctx.stroke();
+      ctx.fillText(label, PAD_L - 6, y);
+    }
+    // Y axis title
+    ctx.save();
+    ctx.translate(Math.round(11 * (W / 900)) + 2, PAD_T + plotH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle    = '#ffffff';
+    ctx.font         = `${Math.round(13 * (W / 900))}px system-ui, sans-serif`;
+    ctx.fillText('Amplitude', 0, 0);
+    ctx.restore();
+    ctx.restore();
+
+    // ── X axis labels (time) ─────────────────────────────────────────
+    ctx.save();
+    ctx.font         = `${Math.round(11 * (W / 900))}px 'Consolas', monospace`;
+    ctx.fillStyle    = '#ffffff';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'top';
+    const timeTicks = [0, 0.25, 0.5, 0.75, 1.0];
+    for (const t of timeTicks) {
+      const x = tx(t);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, PAD_T + plotH);
+      ctx.lineTo(x, PAD_T + plotH + 5);
+      ctx.stroke();
+      ctx.fillText(t === 1 ? '1 s' : t + ' s', x, PAD_T + plotH + 7);
+    }
+    // X axis title
+    ctx.fillStyle = '#ffffff';
+    ctx.font      = `${Math.round(10 * (W / 900))}px system-ui, sans-serif`;
+    ctx.fillText('Time (seconds)', PAD_L + plotW / 2, PAD_T + plotH + 18);
     ctx.restore();
 
     // ── Analogue wave ────────────────────────────────────────────────
@@ -518,9 +747,8 @@
     const STEPS = 800;
     for (let i = 0; i <= STEPS; i++) {
       const t = (i / STEPS) * WAVE_SECS;
-      const a = waveAt(t);
-      const x = (i / STEPS) * W;
-      const y = midY - a * ampPx;
+      const x = tx(t);
+      const y = ay(waveAt(t));
       if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.stroke();
@@ -538,36 +766,23 @@
       sampleQs.push(quantise(waveAt(t), sampleBits));
     }
 
-    // Reconstructed signal — connect sample dots with horizontal then vertical steps
     if (sampleTs.length > 0) {
       ctx.save();
       ctx.strokeStyle = '#ffff00';
       ctx.lineWidth   = 2;
-
-      // Below Nyquist: reconstruct by linear interpolation (shows aliasing clearly)
-      // Above Nyquist: step function (more faithful pedagogical representation)
-      const belowNyquist = sampleRate < NYQUIST_FREQ * 2;
-
+      const belowNyquist = sampleRate < getMaxFreq() * 2;
       ctx.beginPath();
       for (let i = 0; i < sampleTs.length; i++) {
-        const x0 = sampleTs[i] / WAVE_SECS * W;
-        const y0 = midY - sampleQs[i] * ampPx;
-        const x1 = i + 1 < sampleTs.length
-          ? sampleTs[i + 1] / WAVE_SECS * W
-          : W;
-
+        const x0 = tx(sampleTs[i]);
+        const y0 = ay(sampleQs[i]);
+        const x1 = i + 1 < sampleTs.length ? tx(sampleTs[i + 1]) : PAD_L + plotW;
         if (i === 0) ctx.moveTo(x0, y0);
-
         if (belowNyquist) {
-          // Draw straight lines between points to reveal reconstruction errors
           ctx.lineTo(x0, y0);
           if (i + 1 < sampleTs.length) {
-            const xn = sampleTs[i + 1] / WAVE_SECS * W;
-            const yn = midY - sampleQs[i + 1] * ampPx;
-            ctx.lineTo(xn, yn);
+            ctx.lineTo(tx(sampleTs[i + 1]), ay(sampleQs[i + 1]));
           }
         } else {
-          // Step function: hold amplitude until next sample
           ctx.lineTo(x0, y0);
           ctx.lineTo(x1, y0);
         }
@@ -579,8 +794,8 @@
     // ── Sample dots ─────────────────────────────────────────────────
     ctx.save();
     for (let i = 0; i < sampleTs.length; i++) {
-      const x = sampleTs[i] / WAVE_SECS * W;
-      const y = midY - sampleQs[i] * ampPx;
+      const x = tx(sampleTs[i]);
+      const y = ay(sampleQs[i]);
       ctx.beginPath();
       ctx.arc(x, y, 5, 0, Math.PI * 2);
       ctx.fillStyle   = '#44aaff';
@@ -595,7 +810,8 @@
   function updateNyquistWarning() {
     const warn    = document.getElementById('nyquist-warn');
     const minEl   = document.getElementById('nyquist-min');
-    const minRate = NYQUIST_FREQ * 2;
+    const maxFreq = getMaxFreq();
+    const minRate = maxFreq * 2;
     minEl.textContent = `${minRate} Hz`;
     if (sampleRate < minRate) {
       warn.classList.add('visible');
@@ -603,6 +819,44 @@
       warn.classList.remove('visible');
     }
   }
+
+  /* ── Component controls ───────────────────────────────────────── */
+  const COMP_IDS = ['a', 'b', 'c'];
+
+  function refreshComp(idx) {
+    const id   = COMP_IDS[idx];
+    const comp = components[idx];
+    const r    = COMP_RANGES[idx];
+    document.getElementById(`comp-${id}-freq`).textContent = comp.freq + ' Hz';
+    if (idx > 0) {
+      document.getElementById(`comp-${id}-pill`).classList.toggle('inactive', !comp.active);
+      document.getElementById(`comp-${id}-toggle`).textContent = comp.active ? 'ON' : 'OFF';
+    }
+    document.getElementById(`comp-${id}-minus`).disabled = comp.freq <= r.min;
+    document.getElementById(`comp-${id}-plus` ).disabled = comp.freq >= r.max;
+    updateNyquistWarning();
+    drawWave();
+  }
+
+  COMP_IDS.forEach((id, idx) => {
+    // Toggle (B and C only)
+    if (idx > 0) {
+      document.getElementById(`comp-${id}-toggle`).addEventListener('click', () => {
+        components[idx].active = !components[idx].active;
+        refreshComp(idx);
+      });
+    }
+    // Steppers
+    document.getElementById(`comp-${id}-minus`).addEventListener('click', () => {
+      const r = COMP_RANGES[idx];
+      if (components[idx].freq > r.min) { components[idx].freq -= r.step; refreshComp(idx); }
+    });
+    document.getElementById(`comp-${id}-plus`).addEventListener('click', () => {
+      const r = COMP_RANGES[idx];
+      if (components[idx].freq < r.max) { components[idx].freq += r.step; refreshComp(idx); }
+    });
+    refreshComp(idx);
+  });
 
   /* ── Slider: sample rate ─────────────────────────────────────────── */
   const srSlider = document.getElementById('sr-slider');
@@ -681,9 +935,9 @@
     const cssW = wrap.clientWidth - 8; // account for padding
     const scale = window.devicePixelRatio || 1;
     canvas.width  = Math.round(cssW * scale);
-    canvas.height = Math.round(320 * scale);
+    canvas.height = Math.round(420 * scale);
     canvas.style.width  = cssW + 'px';
-    canvas.style.height = '320px';
+    canvas.style.height = '420px';
     ctx.scale(scale, scale);
     drawWave();
   }
