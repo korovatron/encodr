@@ -7,65 +7,45 @@
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
   <style>
-    /* ── Two-panel layout ────────────────────────────────────────────
-       flex row: left card flex:1 (pixel grid), right card auto (inputs).
-       align-items:stretch makes both cards the same height so the pixel
-       grid can fill exactly to match the byte-table height.
-       Mobile: stack vertically. */
-    .bitmap-wrap {
-      display: flex;
-      gap: 24px;
+    /* ── Unified bitmap grid ────────────────────────────────────────
+       4 columns: [pixel strip 1fr] [byte1 auto] [byte2 auto] [byte3 auto]
+       align-items:stretch → each row height is set by the tallest item
+       (the input). Pixel strip fills that height, so rows align exactly. */
+    .bitmap-grid {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 2px 10px;
       align-items: stretch;
     }
-    .bitmap-wrap > .card:first-child {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
-    .bitmap-wrap > .card:first-child .res-block {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
 
-    /* ── Pixel grid ──────────────────────────────── */
-    .pixel-grid {
+    /* ── Pixel strip (one per row) ───────────────── */
+    .pixel-strip {
       display: grid;
       grid-template-columns: repeat(24, 1fr);
-      grid-template-rows: repeat(21, 1fr); /* fills card height evenly */
       gap: 1px;
-      flex: 1;         /* stretch to fill left card height */
-      min-height: 0;   /* allow shrink inside flex column */
-      background: #111;
-      border: 2px solid var(--border);
-      border-radius: var(--r-sm);
-      padding: 4px;
+      min-width: 0;
     }
     .pixel {
       border-radius: 1px;
       background: #1a1a1a;
       transition: background .07s;
       min-width: 0;
-      min-height: 0;  /* allow grid rows to shrink freely */
+      min-height: 0;
     }
     .pixel.on { background: #ffff00; }
 
-    /* ── Byte table ──────────────────────────────── */
-    .byte-table {
-      display: grid;
-      grid-template-columns: repeat(3, auto);
-      gap: 4px 8px;
-      align-items: center;
-    }
+    /* ── Column headers ──────────────────────────── */
     .byte-col-head {
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 1.5px;
       color: var(--muted);
       text-align: center;
+      align-self: end;
       padding-bottom: 2px;
     }
+
+    /* ── Byte inputs ─────────────────────────────── */
     .byte-inp {
       width: 56px;
       background: #0a0a0a;
@@ -75,7 +55,7 @@
       font-family: 'Consolas', 'Courier New', monospace;
       font-size: 15px;
       text-align: center;
-      padding: 5px 4px;
+      padding: 2px 4px;
       -webkit-user-select: text;
       user-select: text;
       transition: border-color .15s;
@@ -94,12 +74,10 @@
       margin-bottom: 20px;
     }
 
-    /* ── Mobile: stack vertically ────────────────── */
+    /* ── Mobile: horizontal scroll ───────────────── */
     @media (max-width: 680px) {
-      .bitmap-wrap { flex-direction: column; }
-      .bitmap-wrap > .card:first-child { flex: none; }
-      /* pixel grid: fall back to aspect-ratio sizing */
-      .pixel-grid { flex: none; aspect-ratio: 24 / 21; width: 100%; }
+      .card.bitmap-card { overflow-x: auto; }
+      .bitmap-grid { min-width: 520px; }
     }
   </style>
 </head>
@@ -125,32 +103,16 @@
     <button class="btn" id="btn-example">Example</button>
   </div>
 
-  <div class="bitmap-wrap">
-
-    <!-- Left: pixel display -->
-    <div class="card">
-      <div class="res-block">
-        <div class="card-head">
-          <span class="badge badge-m">Image (24 &times; 21)</span>
-        </div>
-        <div class="pixel-grid" id="pixel-grid"></div>
-      </div>
-    </div>
-
-    <!-- Right: byte inputs -->
-    <div class="card">
-      <div class="res-block">
-        <div class="card-head">
+  <div class="card bitmap-card">
+    <div class="res-block">
+      <div class="card-head">
+        <span class="badge badge-m">Image (24 &times; 21)</span>
+        <span style="margin-left:auto;display:flex;gap:8px">
           <span class="badge badge-e">Byte values (denary)</span>
-        </div>
-        <div class="byte-table" id="byte-table">
-          <div class="byte-col-head">Byte 1</div>
-          <div class="byte-col-head">Byte 2</div>
-          <div class="byte-col-head">Byte 3</div>
-        </div>
+        </span>
       </div>
+      <div class="bitmap-grid" id="bitmap-grid"></div>
     </div>
-
   </div>
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
@@ -163,20 +125,34 @@
   // ── State ─────────────────────────────────────────────────────────
   const state = new Uint8Array(TOTAL_BYTES);
 
-  // ── Build pixel grid (441 divs) ───────────────────────────────────
-  const pixelGrid = document.getElementById('pixel-grid');
-  const pixels = [];
-  for (let i = 0; i < ROWS * COLS; i++) {
-    const div = document.createElement('div');
-    div.className = 'pixel';
-    pixelGrid.appendChild(div);
-    pixels.push(div);
-  }
+  // ── Build unified grid: header + 21 data rows ─────────────────────
+  const bitmapGrid = document.getElementById('bitmap-grid');
+  const pixels = [];  // 441 pixel divs, row-major
+  const inputs = [];  // 63 inputs, row-major
 
-  // ── Build byte inputs (63 inputs) ─────────────────────────────────
-  const byteTable = document.getElementById('byte-table');
-  const inputs = [];
+  // Header row (empty strip spacer + 3 column labels)
+  bitmapGrid.appendChild(document.createElement('div'));
+  ['Byte 1','Byte 2','Byte 3'].forEach(label => {
+    const h = document.createElement('div');
+    h.className = 'byte-col-head';
+    h.textContent = label;
+    bitmapGrid.appendChild(h);
+  });
+
+  // Data rows
   for (let row = 0; row < ROWS; row++) {
+    // Pixel strip for this row
+    const strip = document.createElement('div');
+    strip.className = 'pixel-strip';
+    for (let col = 0; col < COLS; col++) {
+      const px = document.createElement('div');
+      px.className = 'pixel';
+      strip.appendChild(px);
+      pixels.push(px);
+    }
+    bitmapGrid.appendChild(strip);
+
+    // 3 byte inputs
     for (let col = 0; col < BYTES_PER_ROW; col++) {
       const idx = row * BYTES_PER_ROW + col;
       const inp = document.createElement('input');
@@ -196,7 +172,7 @@
         else if (e.key === 'ArrowLeft'  && inp.selectionStart === 0)               next = inputs[idx - 1] ?? null;
         if (next) { e.preventDefault(); next.focus(); next.select(); }
       });
-      byteTable.appendChild(inp);
+      bitmapGrid.appendChild(inp);
       inputs.push(inp);
     }
   }
