@@ -741,6 +741,16 @@
     document.getElementById('q-total').textContent   = '0';
     generateQuizQuestion();
   });
+
+  // Prevent iOS rubber-band only when the page has no scrollable content.
+  // If the page IS scrollable, allow normal bounce at scroll edges.
+  // Must be non-passive to call preventDefault.
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches.length > 1) return; // allow pinch-zoom
+    if (document.getElementById('q-modal').open) return; // dialog handles its own scroll
+    const root = document.documentElement;
+    if (root.scrollHeight <= root.clientHeight) e.preventDefault();
+  }, { passive: false, capture: true });
 </script>
 
 </body>
