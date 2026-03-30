@@ -7,6 +7,14 @@
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
   <style>
+    @font-face {
+      font-family: 'C64 Pro Mono Web';
+      src: url('fonts/C64_Pro_Mono-STYLE.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
     /* ── Legend ──────────────────────────────────── */
     .legend {
       display: flex; flex-wrap: wrap; gap: 10px 18px;
@@ -30,9 +38,31 @@
 
     .ext-intro {
       font-size: 15px; color: var(--muted); line-height: 1.7;
-      margin-bottom: 28px;
+      margin-bottom: 18px;
     }
     .ext-intro strong { color: var(--text); }
+    .enc-selector {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 14px;
+    }
+    .enc-btn {
+      font-size: 13px; font-weight: 700; letter-spacing: .5px;
+      padding: 6px 14px; border-radius: 100px;
+      border: 1.5px solid rgba(255,255,255,.25);
+      background: transparent; color: var(--muted);
+      cursor: pointer; transition: border-color .12s, color .12s, background .12s;
+    }
+    .enc-btn:hover { border-color: rgba(255,255,255,.50); color: var(--text); }
+    .enc-btn.active {
+      background: #000; color: var(--ml);
+      border-color: var(--ml);
+      box-shadow: 0 0 8px rgba(255,255,0,.25);
+    }
+    .enc-pill {
+      background: rgba(122,143,255,.15);
+      border: 1px solid rgba(122,143,255,.40);
+      color: #7a8fff;
+    }
 
     .cc {
       display: flex; flex-direction: column; align-items: stretch;
@@ -54,6 +84,10 @@
       font-size: 22px; line-height: 1; text-align: center;
       flex: 1; display: flex; align-items: center; justify-content: center;
       font-family: 'Consolas', 'Courier New', monospace;
+    }
+    .petscii-font {
+      font-family: 'C64 Pro Mono Web', 'Consolas', 'Courier New', monospace !important;
+      letter-spacing: 0;
     }
     .cc-abbr {
       font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
@@ -334,7 +368,6 @@
   <div class="mode-tabs" id="modeTabs">
     <button class="mode-tab active" data-mode="7"><span class="tab-long">ASCII · 7-bit</span><span class="tab-short">ASCII</span></button>
     <button class="mode-tab" data-mode="8"><span class="tab-long">Extended ASCII · 8-bit</span><span class="tab-short">Ext ASCII</span></button>
-    <button class="mode-tab" data-mode="p">PETSCII</button>
     <button class="mode-tab" data-mode="u">Unicode</button>
   </div>
 
@@ -345,59 +378,21 @@
     <div class="legend-item"><span class="legend-dot" style="background:#7dd3f8"></span>Uppercase (65–90)</div>
     <div class="legend-item"><span class="legend-dot" style="background:#c084fc"></span>Lowercase (97–122)</div>
     <div class="legend-item"><span class="legend-dot" style="background:#c0d0ff"></span>Punctuation &amp; symbols</div>
-    <div class="legend-item" id="extLegendItem" style="display:none"><span class="legend-dot" style="background:#5060b0"></span>Extended (128–255)</div>
   </div>
 
   <div class="ext-intro" id="extIntro" style="display:none">
-    Extended ASCII adds 128 characters (codes 128–255) on top of the standard 7-bit ASCII set. These extra codes are <strong>not universal</strong> — different systems use different encodings. The characters shown here use <strong>CP437</strong>, the original IBM PC code page.
+    <p>Extended ASCII adds 128 characters (codes 128–255) on top of standard ASCII. These codes are <strong>not universal</strong> — every manufacturer used them differently. Switch between encodings below to see exactly the same byte values mapped to completely different characters.</p>
+    <div class="enc-selector" id="encSelector">
+      <button class="enc-btn active" data-enc="cp437">IBM PC &middot; CP437</button>
+      <button class="enc-btn" data-enc="win1252">Windows &middot; 1252</button>
+      <button class="enc-btn" data-enc="petscii">Commodore &middot; PETSCII</button>
+    </div>
   </div>
 
   <div class="char-grid" id="charGrid"></div>
 
   <div class="char-detail" id="charDetail">
     <p class="detail-placeholder" id="detailPlaceholder">Hover over a character to see details.</p>
-  </div>
-
-  <div id="petsciiPanel" style="display:none">
-
-    <div class="uni-hero">
-      <div class="uni-hero-num" style="font-size:36px;letter-spacing:2px">PETSCII</div>
-      <div class="uni-hero-lbl">PET Standard Code of Information Interchange &nbsp;·&nbsp; Commodore, 1977</div>
-    </div>
-
-    <div class="uni-grid">
-
-      <div class="uni-card">
-        <div class="uni-card-head">Why Commodore built their own encoding</div>
-        <div class="uni-card-body">When Commodore designed the PET in 1977, standard ASCII gave them 95 printable characters. That was not enough. The PET had no separate graphics chip — everything on screen, including the user interface, had to be drawn using characters. Commodore needed box-drawing shapes, geometric fills, card suits, and other graphic symbols to make software look good on a character-mapped display. Rather than leave those needs unmet, they replaced a large portion of the ASCII table with their own graphic characters, creating PETSCII. The decision made commercial sense in 1977. The incompatibility cost would compound for decades.</div>
-      </div>
-
-      <div class="uni-card">
-        <div class="uni-card-head">The upside-down alphabet</div>
-        <div class="uni-card-body">The most immediately jarring difference: in PETSCII’s default mode, <em>uppercase and lowercase are swapped</em> relative to ASCII. Typing a letter key produces an uppercase letter — just as ASCII specifies. But pressing Shift produces a graphic symbol, not a lowercase letter. Lowercase letters do not exist in the default mode at all. A second character set, switchable at runtime, provides uppercase and lowercase together — but at the cost of losing the graphic characters. This swap was deliberate: Commodore expected most users to work in uppercase with graphics, not to write prose. The PETSCII code for lowercase A (97 in ASCII) maps to a completely different graphic symbol.</div>
-      </div>
-
-      <div class="uni-card">
-        <div class="uni-card-head">Control codes: same bytes, different meanings</div>
-        <div class="uni-card-body">The codes 0–31 — ASCII control characters — are reassigned in PETSCII to Commodore-specific screen functions. Code 5 does not send an ENQ; it changes the text colour to white. Code 28 is not File Separator; it switches text to red. Code 18 enables reverse video. The cursor movement keys, function keys, and colour keys all transmit PETSCII control codes in this range. A terminal expecting ASCII control codes receives nonsense. An ASCII terminal expecting CR (code 13) gets it — that one survived — but almost nothing else maps cleanly. The shared byte values with completely different meanings are exactly the kind of incompatibility that makes cross-system communication fail silently rather than visibly.</div>
-      </div>
-
-      <div class="uni-card">
-        <div class="uni-card-head">The graphic characters (96–127 and 160–223)</div>
-        <div class="uni-card-body">Where ASCII has punctuation and symbols, PETSCII packs in a set of geometric and graphic characters unique to Commodore hardware: filled and unfilled corners, diagonal lines, cross-hatches, playing card suits (♥ ♦ ♣ ♠), horizontal and vertical bars at various weights, and a pi symbol. These characters were designed to align perfectly with adjacent cells, enabling smooth borders and fills without gaps — exactly what box-drawing characters in CP437 also achieved, but using completely different byte values. A ╚ (CP437 bottom-left double corner, byte 0xC8) is an entirely different character to whatever byte 0xC8 means on a C64. The same visual goal, incompatible implementations.</div>
-      </div>
-
-      <div class="uni-card">
-        <div class="uni-card-head">Real consequences: reading old files today</div>
-        <div class="uni-card-body">A .SEQ or .PRG file saved on a Commodore 64 and transferred to a modern PC cannot be opened in a standard text editor and read correctly. Every graphic character appears as a garbled symbol or question mark. Every control code that set a colour or moved the cursor is interpreted as a different control character or printable symbol by the receiving system. To read Commodore files correctly today you need software that loads a PETSCII–to–Unicode mapping table and substitutes each byte value for its correct modern equivalent — exactly the kind of translation layer that Unicode was designed to make unnecessary going forward. This is not a historical curiosity: anyone archiving old Commodore software, converting BASIC listings, or preserving game level data still encounters this problem.</div>
-      </div>
-
-      <div class="uni-card">
-        <div class="uni-card-head">PETSCII’s contribution to the chaos</div>
-        <div class="uni-card-body">PETSCII was one of dozens of national and manufacturer variants that fragmented the 1970s–80s computing world. IBM had CP437. Atari had ATASCII. Texas Instruments had their own. Every European country had an ISO 646 variant that replaced certain ASCII symbols with local characters (the UK variant replaced # with £; the French variant replaced @ with à). None of these were compatible with each other. Text that looked correct on the machine it was written on was unreadable elsewhere. PETSCII is a concrete, tangible example of the exact problem Unicode was created to eliminate. Every incompatible encoding was a reasonable local decision. The global cost of all of them together is why a single universal standard eventually became non-negotiable.</div>
-      </div>
-
-    </div>
   </div>
 
   <div id="unicodePanel" style="display:none">
@@ -636,7 +631,323 @@ const CP437 = [
   [' ','Non-breaking Space','Looks like a space but prevents a line break at that position. Used in typesetting to keep values and their units together (10 km, $5 each) without splitting across lines. In HTML, this is &nbsp;.']
 ];
 
-// ─── Control character abbreviations ──────────────────────────────────────────
+// ─── Windows-1252 extended character map (codes 128–255) ─────────────────────
+// Each entry is [unicodeGlyph, name, note]
+// Codes 129, 141, 143, 144, 157 are undefined in Win-1252 (shown as placeholder)
+const WIN1252 = [
+  ['€','Euro Sign','In CP437 this byte (0x80) is Ç (C-cedilla). In Windows-1252 it is the euro sign — added in 1999 when Microsoft needed to support the new EU currency. A direct demonstration of the problem: same byte, completely different character.'],
+  ['','Undefined','This code point (0x81) is undefined in Windows-1252. Microsoft left several slots empty — a departure from CP437 which used every single byte.'],
+  ['‚','Single Low-9 Quotation Mark','Used as the opening quotation mark in German: „like this". In CP437 this byte is é (e-acute). The same byte, a completely different purpose.'],
+  ['ƒ','Latin Small F with Hook','The florin sign / function notation. One of the few characters that appears in both CP437 and Win-1252 at different positions.'],
+  ['„','Double Low-9 Quotation Mark','German opening double quotation mark „like this". CP437 at this byte has ä (a-umlaut). German speakers got different characters depending on which system they used.'],
+  ['…','Horizontal Ellipsis','The typographic ellipsis … as a single character, rather than three full stops. Word processors use this to distinguish a true ellipsis from three separate periods.'],
+  ['†','Dagger','A reference mark used in footnotes (second footnote marker, after *). Also used to indicate a deceased person\'s name in biographical texts.'],
+  ['‡','Double Dagger','Third-level footnote reference mark. In CP437 this byte is â (a-circumflex) — a French vowel. In Win-1252 it is a typographic symbol. Completely incompatible use of the same byte.'],
+  ['ˆ','Modifier Letter Circumflex Accent','A freestanding circumflex accent for use with composing systems. Not to be confused with the caret ^ (0x5E) used in programming.'],
+  ['‰','Per Mille Sign','One thousandth — ‰ means divide by 1000. Used in statistics, financial documents, and blood alcohol content measurements. CP437 mapped this byte to ê (e-circumflex) instead.'],
+  ['Š','Latin Capital S with Caron','Used in Czech, Slovak, Slovenian, and other Central European languages. Win-1252 added Central European characters that CP437 lacked entirely.'],
+  ['‹','Single Left-Pointing Angle Quotation Mark','French single guillemet ‹. Used in some languages as the inner quotation mark when guillemets are the outer mark.'],
+  ['Œ','Latin Capital OE Ligature','Used in French (œuvre, cœur) and some older English words. A true single character in French typography, not two separate letters.'],
+  ['','Undefined','This code point (0x8D) is undefined in Windows-1252.'],
+  ['Ž','Latin Capital Z with Caron','Used in Czech, Slovenian, and other languages written in Latin script. The caron (háček) indicates a "zh" sound.'],
+  ['','Undefined','This code point (0x8F) is undefined in Windows-1252.'],
+  ['','Undefined','This code point (0x90) is undefined in Windows-1252.'],
+  ['\u2018','Left Single Quotation Mark','"Curly" or "smart" opening single quotation mark \u2018. Word processors automatically substitute this for a straight apostrophe at the start of a quoted phrase.'],
+  ['\u2019','Right Single Quotation Mark','Closing \u2018smart\u2019 single quote, also used as an apostrophe in typeset text. Straight apostrophes (0x27) and curly ones are semantically different characters.'],
+  ['\u201C','Left Double Quotation Mark','Opening \u201Ccurly double quote\u201D — the typographic opening double quotation mark. In CP437 this byte is ô (o-circumflex).'],
+  ['\u201D','Right Double Quotation Mark','Closing curly double quote. Together with \u201C, these replace the neutral quotation mark \u0022 in typeset documents.'],
+  ['•','Bullet','The standard typographic bullet point •. In CP437 this byte is ö (o-umlaut). Another stark example of the same byte serving completely different purposes.'],
+  ['–','En Dash','The en dash — used for ranges (pages 10–20) and as a minus sign in typography. Shorter than the em dash —, longer than a hyphen -.'],
+  ['—','Em Dash','The em dash — used to mark a parenthetical clause or strong break — with no spaces either side in American style. In CP437 this byte is û (u-circumflex).'],
+  ['˜','Small Tilde','A freestanding tilde accent for composing systems. Different from the ASCII tilde ~ (0x7E).'],
+  ['™','Trade Mark Sign','The unregistered trademark symbol ™. Its inclusion in Win-1252 reflects Microsoft\'s commercial focus — CP437 had no trademark symbol.'],
+  ['š','Latin Small S with Caron','Lowercase of Š. Used in Czech, Slovak, Slovenian. The paired uppercase/lowercase coverage shows Win-1252\'s European language focus.'],
+  ['›','Single Right-Pointing Angle Quotation Mark','Closing single guillemet ›. Pairs with ‹.'],
+  ['œ','Latin Small OE Ligature','Lowercase of Œ. Required for French text: d\'œuvre, cœur, œil. Absent from CP437.'],
+  ['','Undefined','This code point (0x9D) is undefined in Windows-1252.'],
+  ['ž','Latin Small Z with Caron','Lowercase of Ž. The final undefined slot in the Win-1252 control range before the standard Latin-1 supplement begins at 0xA0.'],
+  ['Ÿ','Latin Capital Y with Diaeresis','Ÿ appears rarely — in French proper nouns (L\'Haÿ-les-Roses) and in some historical texts. Its code page position at 0x9F is unique to Win-1252.'],
+  ['\u00A0','Non-breaking Space','From here (0xA0) onwards, Windows-1252 and ISO 8859-1 (Latin-1) are identical. The non-breaking space prevents line breaks between adjacent words.'],
+  ['¡','Inverted Exclamation Mark','Spanish opening exclamation ¡. From 0xA0, Win-1252 matches Latin-1 exactly — the chaos was entirely in 0x80–0x9F.'],
+  ['¢','Cent Sign','US cent symbol. In CP437 this was at a different position (0xA2 in Win-1252 vs. 0x9B in CP437). The same character, a different byte value.'],
+  ['£','Pound Sign','British pound sterling £.'],
+  ['¤','Currency Sign','A generic placeholder currency symbol ¤, used when the specific currency symbol was unavailable.'],
+  ['¥','Yen Sign','Japanese yen ¥ / Chinese yuan.'],
+  ['¦','Broken Bar','A vertical bar with a gap ¦. Used in some early typography. Often confused with the pipe character | (0x7C).'],
+  ['§','Section Sign','§ marks legal sections and clauses (§ 42 of the Act). Also used for footnote reference (fourth level, after *, †, ‡).'],
+  ['¨','Diaeresis','A freestanding umlaut/diaeresis accent for composing systems.'],
+  ['©','Copyright Sign','© year Author — the copyright notice symbol. One of the symbols most frequently needed by publishers that ASCII never included.'],
+  ['ª','Feminine Ordinal Indicator','Spanish/Italian feminine ordinal abbreviation: 1ª.'],
+  ['«','Left-Pointing Double Angle Quotation Mark','French opening guillemet «.'],
+  ['¬','Not Sign','Logical negation ¬.'],
+  ['\u00AD','Soft Hyphen','An invisible hyphen that only appears if the word is broken at a line end. Unlike a regular hyphen, it disappears when not needed.'],
+  ['®','Registered Sign','® indicates a registered trademark. Paired with ™ (at 0x99 in Win-1252), these two symbols were commercially essential.'],
+  ['¯','Macron','A freestanding overline accent.'],
+  ['°','Degree Sign','°C, °F, 360° — the degree symbol. In CP437 this appears at 0xF8; in Win-1252 it\'s at 0xB0. Same character, different bytes in the two encodings.'],
+  ['±','Plus-Minus Sign','±tolerance, ±standard deviation.'],
+  ['²','Superscript Two','cm², m² — squared notation.'],
+  ['³','Superscript Three','cm³ — cubed. Win-1252 has ², ³ here; CP437 has ² at 0xFD only.'],
+  ['´','Acute Accent','Freestanding acute accent for composing.'],
+  ['µ','Micro Sign','µs, µm, µA — the SI micro prefix (10⁻⁶).'],
+  ['¶','Pilcrow / Paragraph Mark','¶ marks paragraph breaks in proofreading. In word processors, Show Formatting uses ¶ to make invisible paragraph breaks visible.'],
+  ['·','Middle Dot','Interpunct · used as multiplication in some notations and as a syllable separator in Catalan.'],
+  ['¸','Cedilla','Freestanding cedilla accent.'],
+  ['¹','Superscript One','Footnote marker and first-power notation.'],
+  ['º','Masculine Ordinal Indicator','Spanish/Italian masculine ordinal: 1º.'],
+  ['»','Right-Pointing Double Angle Quotation Mark','French closing guillemet ».'],
+  ['¼','Vulgar Fraction One Quarter','¼ as a single character.'],
+  ['½','Vulgar Fraction One Half','½ as a single character.'],
+  ['¾','Vulgar Fraction Three Quarters','¾ as a single character.'],
+  ['¿','Inverted Question Mark','Spanish opening question mark ¿.'],
+  ['À','Latin Capital A with Grave','À — used in French and other Romance languages.'],
+  ['Á','Latin Capital A with Acute','Á — Spanish, Czech, Hungarian and others.'],
+  ['Â','Latin Capital A with Circumflex','Â — French and Romanian.'],
+  ['Ã','Latin Capital A with Tilde','Ã — Portuguese (irmão: brother).'],
+  ['Ä','Latin Capital A with Diaeresis','Ä — German umlaut. One of the core German characters.'],
+  ['Å','Latin Capital A with Ring Above','Å — Scandinavian letter (not just a diacritic).'],
+  ['Æ','Latin Capital AE Ligature','Æ — Distinct letter in Danish and Norwegian.'],
+  ['Ç','Latin Capital C with Cedilla','Ç — French and Portuguese (garçon).'],
+  ['È','Latin Capital E with Grave','È — French and Italian.'],
+  ['É','Latin Capital E with Acute','É — French (État, École). Note: in CP437, É was at byte 0x90. In Win-1252 it is at 0xC9.'],
+  ['Ê','Latin Capital E with Circumflex','Ê — French.'],
+  ['Ë','Latin Capital E with Diaeresis','Ë — French (Noël).'],
+  ['Ì','Latin Capital I with Grave','Ì — Italian.'],
+  ['Í','Latin Capital I with Acute','Í — Spanish and others.'],
+  ['Î','Latin Capital I with Circumflex','Î — French and Romanian.'],
+  ['Ï','Latin Capital I with Diaeresis','Ï — French (naïf).'],
+  ['Ð','Latin Capital Eth','Ð — Old English and Icelandic letter, representing the "th" sound.'],
+  ['Ñ','Latin Capital N with Tilde','Ñ — The Spanish letter ñ in uppercase.'],
+  ['Ò','Latin Capital O with Grave','Ò — Italian and Portuguese.'],
+  ['Ó','Latin Capital O with Acute','Ó — Spanish and others.'],
+  ['Ô','Latin Capital O with Circumflex','Ô — French.'],
+  ['Õ','Latin Capital O with Tilde','Õ — Portuguese.'],
+  ['Ö','Latin Capital O with Diaeresis','Ö — German umlaut. Also a distinct Scandinavian letter.'],
+  ['×','Multiplication Sign','× — the multiplication cross. In CP437 this byte is à (a-grave). In Win-1252 it is a maths symbol.'],
+  ['Ø','Latin Capital O with Stroke','Ø — Norwegian and Danish letter (not just a diacritic). Sorts after Z in those languages.'],
+  ['Ù','Latin Capital U with Grave','Ù — French and Italian.'],
+  ['Ú','Latin Capital U with Acute','Ú — Spanish and others.'],
+  ['Û','Latin Capital U with Circumflex','Û — French.'],
+  ['Ü','Latin Capital U with Diaeresis','Ü — German umlaut (Über).'],
+  ['Ý','Latin Capital Y with Acute','Ý — Czech, Slovak, Icelandic.'],
+  ['Þ','Latin Capital Thorn','Þ — Old English and Icelandic letter. "Ye Olde" is actually "Þe Olde" — the Y was a misread of Þ in old manuscripts.'],
+  ['ß','Latin Small Sharp S','ß — German Eszett. The same character appears in CP437 at byte 0xE1; in Win-1252 it is at 0xDF.'],
+  ['à','Latin Small A with Grave','à — French (à, où).'],
+  ['á','Latin Small A with Acute','á — Spanish.'],
+  ['â','Latin Small A with Circumflex','â — French (château).'],
+  ['ã','Latin Small A with Tilde','ã — Portuguese.'],
+  ['ä','Latin Small A with Diaeresis','ä — German.'],
+  ['å','Latin Small A with Ring Above','å — Scandinavian.'],
+  ['æ','Latin Small AE Ligature','æ — Danish/Norwegian letter.'],
+  ['ç','Latin Small C with Cedilla','ç — French/Portuguese (garçon).'],
+  ['è','Latin Small E with Grave','è — French (père) and Italian.'],
+  ['é','Latin Small E with Acute','é — French. Note: in CP437, é was at byte 0x82. Here in Win-1252 it is at 0xE9. The same character at a different byte address.'],
+  ['ê','Latin Small E with Circumflex','ê — French.'],
+  ['ë','Latin Small E with Diaeresis','ë — French (Noël).'],
+  ['ì','Latin Small I with Grave','ì — Italian.'],
+  ['í','Latin Small I with Acute','í — Spanish.'],
+  ['î','Latin Small I with Circumflex','î — French.'],
+  ['ï','Latin Small I with Diaeresis','ï — French (naïf).'],
+  ['ð','Latin Small Eth','ð — Icelandic and Old English phoneme.'],
+  ['ñ','Latin Small N with Tilde','ñ — The Spanish letter. In CP437 this was at 0xA4; in Win-1252 it is at 0xF1.'],
+  ['ò','Latin Small O with Grave','ò — Italian.'],
+  ['ó','Latin Small O with Acute','ó — Spanish.'],
+  ['ô','Latin Small O with Circumflex','ô — French.'],
+  ['õ','Latin Small O with Tilde','õ — Portuguese.'],
+  ['ö','Latin Small O with Diaeresis','ö — German and Scandinavian.'],
+  ['÷','Division Sign','÷ — the obelus. In CP437 this is at byte 0xF6; in Win-1252 at 0xF7. Same character, different byte.'],
+  ['ø','Latin Small O with Stroke','ø — Norwegian and Danish.'],
+  ['ù','Latin Small U with Grave','ù — French.'],
+  ['ú','Latin Small U with Acute','ú — Spanish.'],
+  ['û','Latin Small U with Circumflex','û — French.'],
+  ['ü','Latin Small U with Diaeresis','ü — German.'],
+  ['ý','Latin Small Y with Acute','ý — Czech, Slovak, Icelandic.'],
+  ['þ','Latin Small Thorn','þ — Old English and Icelandic.'],
+  ['ÿ','Latin Small Y with Diaeresis','ÿ — French (rare). In CP437 this was at byte 0x98; in Win-1252 it is at 0xFF — same character, different byte.']
+];
+
+// ─── PETSCII extended character map (codes 128–255) ──────────────────────────
+// Commodore 64 / PET character set (uppercase/graphics mode)
+// Each entry is [glyph, name, note]
+const PETSCII = [
+  ['','Control / Shift Function','C64 PETSCII control code 0x80. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x81. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x82. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x83. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x84. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x85. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x86. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x87. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x88. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x89. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x8A. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x8B. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x8C. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x8D. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x8E. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x8F. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x90. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x91. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x92. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x93. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x94. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x95. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x96. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x97. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x98. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x99. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x9A. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x9B. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x9C. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x9D. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x9E. Not printable in normal text mode.'],
+  ['','Control / Shift Function','C64 PETSCII control code 0x9F. Not printable in normal text mode.'],
+  [' ','Space','C64 PETSCII space character at 0xA0.'],
+  ['▌','Left Half Block','C64 PETSCII printable character at 0xA1.'],
+  ['▄','Lower Half Block','C64 PETSCII printable character at 0xA2.'],
+  ['▔','Upper One Eighth Block','C64 PETSCII printable character at 0xA3.'],
+  ['▁','Lower One Eighth Block','C64 PETSCII printable character at 0xA4.'],
+  ['▏','Left One Eighth Block','C64 PETSCII printable character at 0xA5.'],
+  ['▒','Medium Shade','C64 PETSCII printable character at 0xA6.'],
+  ['▕','Right One Eighth Block','C64 PETSCII printable character at 0xA7.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xA8; represented as private-use code point U+F12F in codec tables, so shown here without a direct Unicode glyph.'],
+  ['◤','Black Upper Left Triangle','C64 PETSCII printable character at 0xA9.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xAA; represented as private-use code point U+F130 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['├','Box Drawings Light Vertical and Right','C64 PETSCII printable character at 0xAB.'],
+  ['▗','Quadrant Lower Right','C64 PETSCII printable character at 0xAC.'],
+  ['└','Box Drawings Light Up and Right','C64 PETSCII printable character at 0xAD.'],
+  ['┐','Box Drawings Light Down and Left','C64 PETSCII printable character at 0xAE.'],
+  ['▂','Lower One Quarter Block','C64 PETSCII printable character at 0xAF.'],
+  ['┌','Box Drawings Light Down and Right','C64 PETSCII printable character at 0xB0.'],
+  ['┴','Box Drawings Light Up and Horizontal','C64 PETSCII printable character at 0xB1.'],
+  ['┬','Box Drawings Light Down and Horizontal','C64 PETSCII printable character at 0xB2.'],
+  ['┤','Box Drawings Light Vertical and Left','C64 PETSCII printable character at 0xB3.'],
+  ['▎','Left One Quarter Block','C64 PETSCII printable character at 0xB4.'],
+  ['▍','Left Three Eighths Block','C64 PETSCII printable character at 0xB5.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xB6; represented as private-use code point U+F131 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xB7; represented as private-use code point U+F132 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xB8; represented as private-use code point U+F133 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['▃','Lower Three Eighths Block','C64 PETSCII printable character at 0xB9.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xBA; represented as private-use code point U+F12D in codec tables, so shown here without a direct Unicode glyph.'],
+  ['▖','Quadrant Lower Left','C64 PETSCII printable character at 0xBB.'],
+  ['▝','Quadrant Upper Right','C64 PETSCII printable character at 0xBC.'],
+  ['┘','Box Drawings Light Up and Left','C64 PETSCII printable character at 0xBD.'],
+  ['▘','Quadrant Upper Left','C64 PETSCII printable character at 0xBE.'],
+  ['▚','Quadrant Upper Left and Lower Right','C64 PETSCII printable character at 0xBF.'],
+  ['─','Box Drawings Light Horizontal','C64 PETSCII printable character at 0xC0.'],
+  ['♠','Black Spade Suit','C64 PETSCII printable character at 0xC1.'],
+  ['│','Box Drawings Light Vertical','C64 PETSCII printable character at 0xC2.'],
+  ['─','Box Drawings Light Horizontal','C64 PETSCII printable character at 0xC3.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xC4; represented as private-use code point U+F122 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xC5; represented as private-use code point U+F123 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xC6; represented as private-use code point U+F124 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xC7; represented as private-use code point U+F126 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xC8; represented as private-use code point U+F128 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['╮','Box Drawings Light Arc Down and Left','C64 PETSCII printable character at 0xC9.'],
+  ['╰','Box Drawings Light Arc Up and Right','C64 PETSCII printable character at 0xCA.'],
+  ['╯','Box Drawings Light Arc Up and Left','C64 PETSCII printable character at 0xCB.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xCC; represented as private-use code point U+F12A in codec tables, so shown here without a direct Unicode glyph.'],
+  ['╲','Box Drawings Light Diagonal Upper Left to Lower Right','C64 PETSCII printable character at 0xCD.'],
+  ['╱','Box Drawings Light Diagonal Upper Right to Lower Left','C64 PETSCII printable character at 0xCE.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xCF; represented as private-use code point U+F12B in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xD0; represented as private-use code point U+F12C in codec tables, so shown here without a direct Unicode glyph.'],
+  ['●','Black Circle','C64 PETSCII printable character at 0xD1.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xD2; represented as private-use code point U+F125 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['♥','Black Heart Suit','C64 PETSCII printable character at 0xD3.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xD4; represented as private-use code point U+F127 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['╭','Box Drawings Light Arc Down and Right','C64 PETSCII printable character at 0xD5.'],
+  ['╳','Box Drawings Light Diagonal Cross','C64 PETSCII printable character at 0xD6.'],
+  ['○','White Circle','C64 PETSCII printable character at 0xD7.'],
+  ['♣','Black Club Suit','C64 PETSCII printable character at 0xD8.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xD9; represented as private-use code point U+F129 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['♦','Black Diamond Suit','C64 PETSCII printable character at 0xDA.'],
+  ['┼','Box Drawings Light Vertical and Horizontal','C64 PETSCII printable character at 0xDB.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xDC; represented as private-use code point U+F12E in codec tables, so shown here without a direct Unicode glyph.'],
+  ['│','Box Drawings Light Vertical','C64 PETSCII printable character at 0xDD.'],
+  ['π','Greek Small Letter Pi','C64 PETSCII printable character at 0xDE.'],
+  ['◥','Black Upper Right Triangle','C64 PETSCII printable character at 0xDF.'],
+  [' ','Space','C64 PETSCII space character at 0xE0 (same glyph as 0xA0).'],
+  ['▌','Left Half Block','C64 PETSCII printable character at 0xE1.'],
+  ['▄','Lower Half Block','C64 PETSCII printable character at 0xE2.'],
+  ['▔','Upper One Eighth Block','C64 PETSCII printable character at 0xE3.'],
+  ['▁','Lower One Eighth Block','C64 PETSCII printable character at 0xE4.'],
+  ['▏','Left One Eighth Block','C64 PETSCII printable character at 0xE5.'],
+  ['▒','Medium Shade','C64 PETSCII printable character at 0xE6.'],
+  ['▕','Right One Eighth Block','C64 PETSCII printable character at 0xE7.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xE8; represented as private-use code point U+F12F in codec tables, so shown here without a direct Unicode glyph.'],
+  ['◤','Black Upper Left Triangle','C64 PETSCII printable character at 0xE9.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xEA; represented as private-use code point U+F130 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['├','Box Drawings Light Vertical and Right','C64 PETSCII printable character at 0xEB.'],
+  ['▗','Quadrant Lower Right','C64 PETSCII printable character at 0xEC.'],
+  ['└','Box Drawings Light Up and Right','C64 PETSCII printable character at 0xED.'],
+  ['┐','Box Drawings Light Down and Left','C64 PETSCII printable character at 0xEE.'],
+  ['▂','Lower One Quarter Block','C64 PETSCII printable character at 0xEF.'],
+  ['┌','Box Drawings Light Down and Right','C64 PETSCII printable character at 0xF0.'],
+  ['┴','Box Drawings Light Up and Horizontal','C64 PETSCII printable character at 0xF1.'],
+  ['┬','Box Drawings Light Down and Horizontal','C64 PETSCII printable character at 0xF2.'],
+  ['┤','Box Drawings Light Vertical and Left','C64 PETSCII printable character at 0xF3.'],
+  ['▎','Left One Quarter Block','C64 PETSCII printable character at 0xF4.'],
+  ['▍','Left Three Eighths Block','C64 PETSCII printable character at 0xF5.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xF6; represented as private-use code point U+F131 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xF7; represented as private-use code point U+F132 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xF8; represented as private-use code point U+F133 in codec tables, so shown here without a direct Unicode glyph.'],
+  ['▃','Lower Three Eighths Block','C64 PETSCII printable character at 0xF9.'],
+  ['','PETSCII Graphic (unmapped)','C64 graphic at 0xFA; represented as private-use code point U+F12D in codec tables, so shown here without a direct Unicode glyph.'],
+  ['▖','Quadrant Lower Left','C64 PETSCII printable character at 0xFB.'],
+  ['▝','Quadrant Upper Right','C64 PETSCII printable character at 0xFC.'],
+  ['┘','Box Drawings Light Up and Left','C64 PETSCII printable character at 0xFD.'],
+  ['▘','Quadrant Upper Left','C64 PETSCII printable character at 0xFE.'],
+  ['π','Greek Small Letter Pi','C64 PETSCII printable character at 0xFF.'],
+];
+
+// ─── Encoding lookup ──────────────────────────────────────────────────────────
+const EXT_ENCODINGS = {
+  cp437:   { label: 'IBM PC · CP437',       map: CP437 },
+  win1252: { label: 'Windows · 1252',       map: WIN1252 },
+  petscii: { label: 'Commodore · PETSCII',  map: PETSCII },
+};
+
+// C64 PETSCII uppercase/graphics mapping for bytes 0x80-0xFF.
+// Includes private-use glyphs that the C64 Pro Mono font understands.
+const PETSCII_PUA = [
+  0xFFFE, 0xF104, 0xFFFE, 0xFFFE, 0xFFFE, 0xF110, 0xF112, 0xF114, 0xF116, 0xF111, 0xF113, 0xF115, 0xF117, 0x000A, 0x000F, 0xFFFE,
+  0xF105, 0xF11E, 0xF11B, 0x000C, 0xF121, 0xF106, 0xF107, 0xF108, 0xF109, 0xF10A, 0xF10B, 0xF10C, 0xF10D, 0xF11D, 0xF10E, 0xF10F,
+  0x00A0, 0x258C, 0x2584, 0x2594, 0x2581, 0x258F, 0x2592, 0x2595, 0xF12F, 0x25E4, 0xF130, 0x251C, 0x2597, 0x2514, 0x2510, 0x2582,
+  0x250C, 0x2534, 0x252C, 0x2524, 0x258E, 0x258D, 0xF131, 0xF132, 0xF133, 0x2583, 0xF12D, 0x2596, 0x259D, 0x2518, 0x2598, 0x259A,
+  0x2500, 0x2660, 0x2502, 0x2500, 0xF122, 0xF123, 0xF124, 0xF126, 0xF128, 0x256E, 0x2570, 0x256F, 0xF12A, 0x2572, 0x2571, 0xF12B,
+  0xF12C, 0x25CF, 0xF125, 0x2665, 0xF127, 0x256D, 0x2573, 0x25CB, 0x2663, 0xF129, 0x2666, 0x253C, 0xF12E, 0x2502, 0x03C0, 0x25E5,
+  0x00A0, 0x258C, 0x2584, 0x2594, 0x2581, 0x258F, 0x2592, 0x2595, 0xF12F, 0x25E4, 0xF130, 0x251C, 0x2597, 0x2514, 0x2510, 0x2582,
+  0x250C, 0x2534, 0x252C, 0x2524, 0x258E, 0x258D, 0xF131, 0xF132, 0xF133, 0x2583, 0xF12D, 0x2596, 0x259D, 0x2518, 0x2598, 0x03C0,
+];
+
+function getExtEntry(code) {
+  return EXT_ENCODINGS[extEncoding].map[code - 128] || null;
+}
+
+function petsciiToScreencode(code) {
+  // PETSCII uppercase/graphics mode byte → C64 character ROM screen code index
+  if (code >= 0x80 && code <= 0x9F) return -1;            // control codes — no glyph
+  if (code >= 0xA0 && code <= 0xBF) return code - 0x40;  // CBM-key graphics → SC 0x60-0x7F
+  if (code >= 0xC0 && code <= 0xDF) return code - 0x80;  // Shift-key graphics → SC 0x40-0x5F
+  if (code >= 0xE0 && code <= 0xFF) return code - 0x80;  // Repeat of A0-BF   → SC 0x60-0x7F
+  return -1;
+}
+
+function getPetsciiFallbackGlyph(code) {
+  // Use CharROM/screencode PUA (U+EExx) — C64 Pro Mono guarantees all 256 ROM indices here.
+  const sc = petsciiToScreencode(code);
+  if (sc < 0) return '';
+  return String.fromCodePoint(0xEE00 + sc);
+}
+
+function getExtGlyph(code, extEntry) {
+  if (extEncoding === 'petscii') {
+    // Prefer explicit PETSCII glyph when present, then C64 font PUA fallback.
+    return (extEntry && extEntry[0]) || getPetsciiFallbackGlyph(code) || '';
+  }
+  return (extEntry && extEntry[0]) || '?';
+}
+
+
 const ABBR = [
   'NUL','SOH','STX','ETX','EOT','ENQ','ACK','BEL',
   'BS', 'HT', 'LF', 'VT', 'FF', 'CR', 'SO', 'SI',
@@ -713,6 +1024,7 @@ function cat(code) {
 const isTouch = window.matchMedia('(hover: none)').matches;
 let mode = 7;
 let activeCel = null;
+let extEncoding = 'cp437';
 
 function placeholder() {
   return `<p class="detail-placeholder">${isTouch ? 'Tap a character to see details.' : 'Hover over a character to see details.'}</p>`;
@@ -760,7 +1072,9 @@ function buildGrid() {
       gl.textContent = '·';
     } else if (c === 'ext') {
       gl.className = 'cc-glyph';
-      gl.textContent = CP437[i - 128][0];
+      const extEntry = getExtEntry(i);
+      gl.textContent = getExtGlyph(i, extEntry);
+      if (extEncoding === 'petscii') gl.classList.add('petscii-font');
     } else {
       gl.className = 'cc-glyph';
       gl.textContent = String.fromCharCode(i);
@@ -800,10 +1114,10 @@ function showDetail(code) {
   const data = NOTES[code];
 
   // Character name
-  const cp437entry = c === 'ext' ? CP437[code - 128] : null;
+  const extEntry = c === 'ext' ? getExtEntry(code) : null;
 
   let name = data ? data.name : (
-    cp437entry ? cp437entry[1] :
+    extEntry ? extEntry[1] :
     c === 'ctrl'  ? `${ABBR[code]} — Control` :
     c === 'digit' ? `Digit '${String.fromCharCode(code)}'` :
     c === 'upper' ? `Uppercase '${String.fromCharCode(code)}'` :
@@ -812,7 +1126,7 @@ function showDetail(code) {
     `Character ${code}`
   );
 
-  const note = data ? data.note : (cp437entry ? cp437entry[2] : rangeNote(code));
+  const note = data ? data.note : (extEntry ? extEntry[2] : rangeNote(code));
 
   // Glyph display
   const glyphColour = {
@@ -831,7 +1145,9 @@ function showDetail(code) {
   } else if (c === 'space') {
     glyphHtml = `<div class="detail-glyph" style="color:var(--dim);font-size:18px;padding:16px 0 8px;letter-spacing:3px">SPACE</div>`;
   } else if (c === 'ext') {
-    glyphHtml = `<div class="detail-glyph" style="color:${glyphColour}">${cp437entry[0]}</div>`;
+    const extGlyph = getExtGlyph(code, extEntry);
+    const glyphClass = extEncoding === 'petscii' ? 'detail-glyph petscii-font' : 'detail-glyph';
+    glyphHtml = `<div class="${glyphClass}" style="color:${glyphColour}">${extGlyph}</div>`;
   } else {
     glyphHtml = `<div class="detail-glyph" style="color:${glyphColour}">${String.fromCharCode(code)}</div>`;
   }
@@ -870,21 +1186,29 @@ document.getElementById('modeTabs').addEventListener('click', e => {
   if (!btn || btn.dataset.mode == mode) return;
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  mode = btn.dataset.mode === 'u' ? 'u' : btn.dataset.mode === 'p' ? 'p' : parseInt(btn.dataset.mode);
+  mode = btn.dataset.mode === 'u' ? 'u' : parseInt(btn.dataset.mode);
   activeCel = null;
-  const isPanel = mode === 'u' || mode === 'p';
-  const isUnicode = mode === 'u';
-  const isPetscii = mode === 'p';
-  document.getElementById('extLegendItem').style.display = mode === 8 ? '' : 'none';
-  document.getElementById('legend').style.display = isPanel ? 'none' : '';
+  const isPanel = mode === 'u';
+  document.getElementById('legend').style.display = mode === 7 ? '' : 'none';
   document.getElementById('charGrid').style.display = isPanel ? 'none' : '';
   document.getElementById('charDetail').style.display = isPanel ? 'none' : '';
-  document.getElementById('unicodePanel').style.display = isUnicode ? '' : 'none';
-  document.getElementById('petsciiPanel').style.display = isPetscii ? '' : 'none';
+  document.getElementById('unicodePanel').style.display = isPanel ? '' : 'none';
   if (!isPanel) {
     buildGrid();
     document.getElementById('charDetail').innerHTML = placeholder();
   }
+});
+
+// ─── Encoding selector ──────────────────────────────────────────────────────────
+document.getElementById('encSelector').addEventListener('click', e => {
+  const btn = e.target.closest('.enc-btn');
+  if (!btn || btn.dataset.enc === extEncoding) return;
+  document.querySelectorAll('.enc-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  extEncoding = btn.dataset.enc;
+  activeCel = null;
+  buildGrid();
+  document.getElementById('charDetail').innerHTML = placeholder();
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
