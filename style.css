@@ -492,6 +492,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 /* Lock background scroll while the dialog is open. :has() is supported
    iOS Safari 16.4+. overflow:hidden on top-layer elements does not
    interfere with the dialog's own internal scroll. */
+html.modal-open, body.modal-open,
 html:has(#q-modal[open]),
 body:has(#q-modal[open]) { overflow: hidden; }
 #q-modal {

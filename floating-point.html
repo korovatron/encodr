@@ -368,10 +368,17 @@
      above all content, unaffected by scroll position, overflow, or
      z-index. Eliminates all iOS Safari position:fixed quirks. */
   function openModal() {
+    // Add class synchronously BEFORE showModal() so overflow:hidden is
+    // applied immediately — :has() recalculates async and would leave a
+    // brief window where background scroll is still possible.
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
     document.getElementById('q-modal').showModal();
   }
   function closeModal() {
     document.getElementById('q-modal').close();
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
   }
 
   // Weighted bit-width pools matching AQA paper distribution
