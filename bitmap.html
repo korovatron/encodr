@@ -17,33 +17,34 @@
       gap: 2px 10px;
       align-items: stretch;
     }
-
+    /* Single panel spanning all 21 rows in col 1 — gray bg fills row gaps too */
+    .pixel-panel {
+      grid-column: 1;
+      grid-row: 1 / span 21;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      border-radius: 2px;
+    }
     /* ── Pixel strip (one per row) ───────────────── */
     .pixel-strip {
       display: grid;
       grid-template-columns: repeat(24, 1fr);
       gap: 1px;
-      min-width: 0;
+      background: #1a1a1a;
+      flex: 1;
+      min-height: 0;
+      border-bottom: 1px solid #1a1a1a;
     }
+    .pixel-strip:last-child { border-bottom: none; }
     .pixel {
       border-radius: 1px;
-      background: #1a1a1a;
+      background: #444;
       transition: background .07s;
       min-width: 0;
       min-height: 0;
     }
     .pixel.on { background: #ffff00; }
-
-    /* ── Column headers ──────────────────────────── */
-    .byte-col-head {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--muted);
-      text-align: center;
-      align-self: end;
-      padding-bottom: 2px;
-    }
 
     /* ── Byte inputs ─────────────────────────────── */
     .byte-inp {
@@ -73,7 +74,13 @@
       flex-wrap: wrap;
       margin-bottom: 20px;
     }
-
+    /* ── Cap card width so pixels stay square ───────── */
+    /* Calculation: 24px pixels × 25px height + 23px gaps = 623px strip
+       + 3 inputs (59px each) + 3 col-gaps (10px) + card/res-block padding = ~880px */
+    .card.bitmap-card {
+      max-width: 880px;
+      margin-inline: auto;
+    }
     /* ── Mobile: horizontal scroll ───────────────── */
     @media (max-width: 680px) {
       .card.bitmap-card { overflow-x: auto; }
@@ -125,23 +132,16 @@
   // ── State ─────────────────────────────────────────────────────────
   const state = new Uint8Array(TOTAL_BYTES);
 
-  // ── Build unified grid: header + 21 data rows ─────────────────────
+  // ── Build unified grid ────────────────────────────────────────────
+  // .pixel-panel spans all 21 grid rows in col 1; inputs auto-place into cols 2-4
   const bitmapGrid = document.getElementById('bitmap-grid');
   const pixels = [];  // 441 pixel divs, row-major
   const inputs = [];  // 63 inputs, row-major
 
-  // Header row (empty strip spacer + 3 column labels)
-  bitmapGrid.appendChild(document.createElement('div'));
-  ['Byte 1','Byte 2','Byte 3'].forEach(label => {
-    const h = document.createElement('div');
-    h.className = 'byte-col-head';
-    h.textContent = label;
-    bitmapGrid.appendChild(h);
-  });
-
-  // Data rows
+  // Build pixel panel (all 21 strips inside one container)
+  const pixelPanel = document.createElement('div');
+  pixelPanel.className = 'pixel-panel';
   for (let row = 0; row < ROWS; row++) {
-    // Pixel strip for this row
     const strip = document.createElement('div');
     strip.className = 'pixel-strip';
     for (let col = 0; col < COLS; col++) {
@@ -150,9 +150,12 @@
       strip.appendChild(px);
       pixels.push(px);
     }
-    bitmapGrid.appendChild(strip);
+    pixelPanel.appendChild(strip);
+  }
+  bitmapGrid.appendChild(pixelPanel);
 
-    // 3 byte inputs
+  // Build inputs — auto-place into cols 2-4, rows 1-21
+  for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < BYTES_PER_ROW; col++) {
       const idx = row * BYTES_PER_ROW + col;
       const inp = document.createElement('input');
