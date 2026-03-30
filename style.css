@@ -34,6 +34,8 @@ html { overflow-x: hidden; -webkit-text-size-adjust: 100%; text-size-adjust: 100
 /* overflow-x: clip does not create a scroll container, so position:fixed works
    correctly on iOS Safari (unlike overflow-x: hidden which breaks it) */
 @supports (overflow: clip) { html { overflow-x: clip; } }
+/* Prevent iOS rubber-band/bounce when content fits the viewport */
+html, body { overscroll-behavior: none; }
 body {
   font-family: system-ui, -apple-system, sans-serif;
   background: var(--bg);
@@ -489,6 +491,11 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 /* ── Feedback modal ────────────────────────────── */
 /* Native <dialog> via showModal() — uses browser top layer, no fixed
    positioning or z-index needed. ::backdrop is the dimmed overlay. */
+/* Lock background scroll while the dialog is open. :has() is supported
+   iOS Safari 16.4+. overflow:hidden on top-layer elements does not
+   interfere with the dialog's own internal scroll. */
+html:has(#q-modal[open]),
+body:has(#q-modal[open]) { overflow: hidden; }
 #q-modal {
   border: none;
   padding: 0;
@@ -521,6 +528,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   width: 100%;
   max-height: 85vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .modal-feedback {
   font-size: 15px; line-height: 1.75;
