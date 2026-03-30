@@ -399,11 +399,6 @@
     }
 
     /* ── Quiz section ────────────────────────── */
-    .sound-quiz-topbar {
-      display: flex; flex-wrap: wrap;
-      align-items: center; justify-content: space-between;
-      gap: 12px; margin-bottom: 22px;
-    }
     .sound-quiz-q-card { margin-bottom: 10px; }
 
     .sq-input {
@@ -580,7 +575,20 @@
   <!-- ── Quiz section ─────────────────────────────────────────────── -->
   <div id="quiz-section" hidden>
 
-    <div class="sound-quiz-topbar">
+    <div class="quiz-topbar">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+        <div class="qtype-group">
+          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Units:</span>
+          <button class="qtype-btn active" data-sq-units="mix">Mix</button>
+          <button class="qtype-btn" data-sq-units="si">kB / MB…</button>
+          <button class="qtype-btn" data-sq-units="iec">kiB / MiB…</button>
+        </div>
+        <div class="qtype-group">
+          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Nyquist:</span>
+          <button class="qtype-btn active" data-sq-nyquist="on">On</button>
+          <button class="qtype-btn" data-sq-nyquist="off">Off</button>
+        </div>
+      </div>
       <div class="quiz-score-area">
         <span class="quiz-score-txt">
           <span style="color:#4c4">✓</span> <span id="sq-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="sq-wrong">0</span>&ensp;(<span id="sq-total">0</span> attempted)
@@ -1025,14 +1033,31 @@
   let sqQuestion = null, sqCount = 1;
   updateSqDisplay();
 
+  // ── Quiz settings ────────────────────────────────────────────────
+  let sqUnitsMode = 'mix';  // 'mix' | 'si' | 'iec'
+  let sqNyquist   = true;
+
   // ── Question generators ──────────────────────────────────────────
 
-  // Realistic sample rate options (Hz)
-  const RATES_HZ = [8000, 11025, 16000, 22050, 44100, 48000, 96000];
-  // Typical bit depths
-  const DEPTHS   = [4, 8, 12, 16, 24, 32];
-  // Duration options (seconds)
+  const RATES_HZ  = [8000, 11025, 16000, 22050, 44100, 48000, 96000]; // for bits/bytes/Hz questions
+  const RATES_SI  = [8000, 16000, 32000, 48000, 96000];                // multiples of 8000 → clean SI
+  const RATES_IEC = [8192, 16384, 32768];                              // powers-of-2 → clean IEC
+  const DEPTHS    = [4, 8, 12, 16, 24, 32];
   const DURATIONS = [5, 10, 15, 20, 30, 60, 90, 120, 180, 300];
+
+  const SQ_SI_UNITS  = [
+    { label: 'kB',  bitsPerUnit: 8_000           },
+    { label: 'MB',  bitsPerUnit: 8_000_000        },
+  ];
+  const SQ_IEC_UNITS = [
+    { label: 'kiB', bitsPerUnit: 8 * 1024         },
+    { label: 'MiB', bitsPerUnit: 8 * 1024 * 1024  },
+  ];
+  function availableUnits() {
+    if (sqUnitsMode === 'si')  return SQ_SI_UNITS;
+    if (sqUnitsMode === 'iec') return SQ_IEC_UNITS;
+    return [...SQ_SI_UNITS, ...SQ_IEC_UNITS];
+  }
 
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -1040,11 +1065,12 @@
     return hz >= 1000 ? (hz / 1000) + ' kHz' : hz + ' Hz';
   }
 
-  function fmtBytes(n) {
-    if (n >= 1e9) return (n / 1e9).toFixed(2) + ' GB';
-    if (n >= 1e6) return (n / 1e6).toFixed(2) + ' MB';
-    if (n >= 1e3) return (n / 1e3).toFixed(2) + ' KB';
-    return n + ' B';
+  function fmtSecs(s) {
+    if (s >= 60 && s % 60 === 0) {
+      const m = s / 60;
+      return `${m} minute${m === 1 ? '' : 's'}`;
+    }
+    return `${s} second${s === 1 ? '' : 's'}`;
   }
 
   /* Q1: Calculate file size in bits */
@@ -1055,30 +1081,67 @@
     const ans  = rate * res * secs;
     return {
       badge: 'File Size',
-      text:  `A sound clip is recorded at a sampling rate of <strong>${fmtHz(rate)}</strong> with a sample resolution of <strong>${res} bits</strong>, lasting <strong>${secs} seconds</strong>.\n\nCalculate the file size in <strong>bits</strong>.`,
+      text:  `A sound clip is recorded at a sampling rate of <strong>${fmtHz(rate)}</strong> with a sample resolution of <strong>${res} bits</strong>, lasting <strong>${fmtSecs(secs)}</strong>.\n\nCalculate the file size in <strong>bits</strong>.`,
       answerNum: ans,
       unitLabel: 'bits',
-      exact: true,
     };
   }
 
   /* Q2: Calculate file size in bytes */
   function genFileSizeBytes() {
+    // Ensure res is divisible by 8 so bytes answer is whole
     const rate = pick(RATES_HZ);
-    const res  = pick(DEPTHS);
+    const res  = pick([8, 16, 24, 32]);
     const secs = pick(DURATIONS);
     const bits = rate * res * secs;
     const ans  = bits / 8;
     return {
       badge: 'File Size',
-      text:  `A sound clip is recorded at a sampling rate of <strong>${fmtHz(rate)}</strong> with a sample resolution of <strong>${res} bits</strong>, lasting <strong>${secs} seconds</strong>.\n\nCalculate the file size in <strong>bytes</strong>.`,
+      text:  `A sound clip is recorded at a sampling rate of <strong>${fmtHz(rate)}</strong> with a sample resolution of <strong>${res} bits</strong>, lasting <strong>${fmtSecs(secs)}</strong>.\n\nCalculate the file size in <strong>bytes</strong>.`,
       answerNum: ans,
       unitLabel: 'bytes',
-      exact: true,
     };
   }
 
-  /* Q3: What sample rate is needed — Nyquist */
+  /* Q3: Calculate file size in kB / MB / kiB / MiB */
+  function genFileSizeUnit() {
+    const units = availableUnits();
+    const CLEAN = [1, 2, 4, 8, 16, 32, 64, 128, 256, 0.5, 0.25, 0.75];
+    for (let i = 0; i < 400; i++) {
+      const unit = pick(units);
+      const ans  = pick(CLEAN);
+      const totalBits = ans * unit.bitsPerUnit;
+      const ratePool  = unit.label.endsWith('iB') ? RATES_IEC : RATES_SI;
+      const rate = pick(ratePool);
+      const res  = pick(DEPTHS);
+      const secsExact = totalBits / (rate * res);
+      if (Number.isInteger(secsExact) && secsExact >= 1 && secsExact <= 600) {
+        return {
+          badge: 'File Size',
+          text:  `A sound clip is recorded at a sampling rate of <strong>${fmtHz(rate)}</strong> with a sample resolution of <strong>${res} bits</strong>, lasting <strong>${fmtSecs(secsExact)}</strong>.\n\nCalculate the file size in <strong>${unit.label}</strong>.`,
+          answerNum: ans,
+          unitLabel: unit.label,
+        };
+      }
+    }
+    return genFileSizeBits(); // fallback
+  }
+
+  /* Q4: Solve for sample resolution */
+  function genSolveResolution() {
+    const rate = pick(RATES_HZ);
+    const res  = pick(DEPTHS);
+    const secs = pick(DURATIONS);
+    const totalBits = rate * res * secs;
+    return {
+      badge: 'Solve',
+      text:  `A sound file is <strong>${totalBits.toLocaleString()} bits</strong> in size and lasts <strong>${fmtSecs(secs)}</strong>.\n\nIt was recorded at a sampling rate of <strong>${fmtHz(rate)}</strong>.\n\nWhat is the <strong>sample resolution</strong> in bits?`,
+      answerNum: res,
+      unitLabel: 'bits',
+    };
+  }
+
+  /* Q5: What sample rate is needed — Nyquist */
   function genNyquist() {
     const freqs = [4000, 5000, 8000, 10000, 11000, 15000, 16000, 20000];
     const freq  = pick(freqs);
@@ -1088,18 +1151,18 @@
       text:  `The Nyquist theorem states that a signal must be sampled at <strong>at least twice</strong> its highest frequency component.\n\nA sound has a highest frequency of <strong>${fmtHz(freq)}</strong>. What is the <strong>minimum sampling rate</strong> required to represent it accurately?`,
       answerNum: ans,
       unitLabel: 'Hz',
-      exact: true,
     };
   }
 
-  /* Q4: How does halving sample resolution affect file size (factor) */
+  /* Q6: How does halving/doubling affect file size */
   function genHalvingEffect() {
     const choices = [
-      { q: 'the sampling rate is <strong>halved</strong>', factor: 0.5,  ans: 0.5 },
-      { q: 'the sample resolution is <strong>halved</strong>', factor: 0.5, ans: 0.5 },
-      { q: 'the sampling rate is <strong>doubled</strong>', factor: 2, ans: 2 },
-      { q: 'the sample resolution is <strong>doubled</strong>', factor: 2, ans: 2 },
-      { q: 'the duration is <strong>halved</strong>', factor: 0.5, ans: 0.5 },
+      { q: 'the sampling rate is <strong>halved</strong>',          factor: 0.5 },
+      { q: 'the sample resolution is <strong>halved</strong>',      factor: 0.5 },
+      { q: 'the sampling rate is <strong>doubled</strong>',         factor: 2   },
+      { q: 'the sample resolution is <strong>doubled</strong>',     factor: 2   },
+      { q: 'the duration is <strong>halved</strong>',               factor: 0.5 },
+      { q: 'the duration is <strong>doubled</strong>',              factor: 2   },
     ];
     const rate = pick(RATES_HZ);
     const res  = pick(DEPTHS);
@@ -1112,27 +1175,26 @@
       text:  `A sound file has a size of <strong>${orig.toLocaleString()} bits</strong>.\n\nWhat is the new file size (in bits) if ${ch.q}?`,
       answerNum: newSize,
       unitLabel: 'bits',
-      exact: true,
     };
   }
 
-  /* Q5: Recover duration from file size */
+  /* Q7: Recover duration from file size */
   function genDuration() {
     const rate = pick(RATES_HZ);
     const res  = pick(DEPTHS);
     const secs = pick(DURATIONS);
     const bits = rate * res * secs;
     return {
-      badge: 'File Size',
+      badge: 'Solve',
       text:  `A sound file is <strong>${bits.toLocaleString()} bits</strong> in size.\n\nIt was recorded at <strong>${fmtHz(rate)}</strong> with a sample resolution of <strong>${res} bits</strong>.\n\nHow long is the recording in <strong>seconds</strong>?`,
       answerNum: secs,
       unitLabel: 'seconds',
-      exact: true,
     };
   }
 
   function genQuestion() {
-    const gens = [genFileSizeBits, genFileSizeBytes, genNyquist, genHalvingEffect, genDuration];
+    const base = [genFileSizeBits, genFileSizeBytes, genFileSizeUnit, genSolveResolution, genHalvingEffect, genDuration];
+    const gens = sqNyquist ? [...base, genNyquist] : base;
     return pick(gens)();
   }
 
@@ -1184,6 +1246,24 @@
     localStorage.removeItem(LS_SCORE_SQ);
     updateSqDisplay();
     nextQuestion();
+  });
+
+  document.querySelectorAll('[data-sq-units]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-sq-units]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sqUnitsMode = btn.dataset.sqUnits;
+      nextQuestion();
+    });
+  });
+
+  document.querySelectorAll('[data-sq-nyquist]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-sq-nyquist]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sqNyquist = btn.dataset.sqNyquist === 'on';
+      nextQuestion();
+    });
   });
 
   /* ── Modal backdrop close (not on content click) ─────────────────── */
