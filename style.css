@@ -82,7 +82,7 @@ header {
 .home-btn {
   margin-left: auto;
   display: flex; align-items: center;
-  font-size: 22px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
   background: #000;
   color: #fff; text-decoration: none;
   padding: 6px 14px;
@@ -617,6 +617,7 @@ body:has(#save-dialog[open]) { overflow: hidden; }
 
 .topic-card {
   display: block;
+  position: relative;
   background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
   box-shadow: 0 0 0 1px var(--border), 0 4px 16px rgba(0,0,0,.40);
   border-radius: var(--r);
@@ -647,4 +648,30 @@ body:has(#save-dialog[open]) { overflow: hidden; }
 .topic-desc {
   font-size: 13px; color: var(--muted);
   line-height: 1.6;
+}
+
+/* ── Level chips on topic cards ─────────────────── */
+.level-chips {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  min-height: 20px;
+}
+.level-chip {
+  font-size: 9px; font-weight: 800;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 100px;
+  line-height: 1.6;
+}
+.level-chip-gcse {
+  background: #000;
+  color: var(--ml);
+  box-shadow: 0 0 0 1.5px var(--ml);
+}
+.level-chip-a {
+  background: #000;
+  color: var(--exl);
+  box-shadow: 0 0 0 1.5px var(--exl);
+  margin-left: auto;
 }

@@ -772,6 +772,11 @@ function buildGrid() {
         if (activeCel === cell) return; // already selected, do nothing
         showDetail(i);
         cell.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const panel = document.getElementById('charDetail');
+        const rect = panel.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight || rect.top < 0) {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       });
     } else {
       cell.addEventListener('mouseenter', () => showDetail(i));
