@@ -877,6 +877,12 @@ document.getElementById('modeTabs').addEventListener('click', e => {
 document.getElementById('detailPlaceholder')?.remove();
 document.getElementById('charDetail').innerHTML = placeholder();
 buildGrid();
+
+// Suppress pull-to-refresh and rubber-band when page has no scrollable overflow.
+window.addEventListener('touchmove', (e) => {
+  if (e.touches && e.touches.length > 1) return;
+  if (document.documentElement.scrollHeight <= document.documentElement.clientHeight) e.preventDefault();
+}, { passive: false, capture: true });
 </script>
 
 </body>

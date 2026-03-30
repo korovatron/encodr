@@ -55,5 +55,12 @@
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 
 </main>
+<script>
+  // Suppress pull-to-refresh and rubber-band when page has no scrollable overflow.
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches.length > 1) return;
+    if (document.documentElement.scrollHeight <= document.documentElement.clientHeight) e.preventDefault();
+  }, { passive: false, capture: true });
+</script>
 </body>
 </html>
