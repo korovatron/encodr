@@ -274,8 +274,8 @@
         <button class="qtype-btn" data-units="iec">kiB / MiB…</button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt">Score:&ensp;<span id="bq-correct">0</span>&thinsp;/&thinsp;<span id="bq-total">0</span></span>
-        <button class="btn btn-sm" id="bq-reset">Restart</button>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="bq-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="bq-wrong">0</span>&ensp;(<span id="bq-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="bq-reset">Reset score</button>
       </div>
     </div>
 
@@ -977,7 +977,18 @@
   }
 
   // ── Quiz state ────────────────────────────────────────────────────
-  let bqCorrect = 0, bqTotal = 0, bqQuestion = null, bqCount = 1;
+  const LS_SCORE = 'encodr-bitmap-score';
+  function loadScore() { try { return JSON.parse(localStorage.getItem(LS_SCORE)) || {correct:0,wrong:0,total:0}; } catch { return {correct:0,wrong:0,total:0}; } }
+  function saveScore() { localStorage.setItem(LS_SCORE, JSON.stringify({correct:bqCorrect,wrong:bqWrong,total:bqTotal})); }
+  function updateScoreDisplay() {
+    document.getElementById('bq-correct').textContent = bqCorrect;
+    document.getElementById('bq-wrong').textContent   = bqWrong;
+    document.getElementById('bq-total').textContent   = bqTotal;
+  }
+  const _sc = loadScore();
+  let bqCorrect = _sc.correct, bqWrong = _sc.wrong, bqTotal = _sc.total;
+  let bqQuestion = null, bqCount = 1;
+  updateScoreDisplay();
 
   function genQuestion() {
     const generators = [genSizeBits, genSizeUnit, genMaxColoursDepth, genColourDepth, genMaxColoursSize];
@@ -1004,9 +1015,9 @@
     }
     bqTotal++;
     const correct = Math.abs(given - bqQuestion.answerNum) < 1e-9;
-    if (correct) bqCorrect++;
-    document.getElementById('bq-correct').textContent = bqCorrect;
-    document.getElementById('bq-total').textContent   = bqTotal;
+    if (correct) bqCorrect++; else bqWrong++;
+    updateScoreDisplay();
+    saveScore();
 
     const fb = document.getElementById('bq-modal-feedback');
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
@@ -1023,9 +1034,9 @@
     nextQuestion();
   });
   document.getElementById('bq-reset').addEventListener('click', () => {
-    bqCorrect = bqTotal = 0; bqCount = 1;
-    document.getElementById('bq-correct').textContent = '0';
-    document.getElementById('bq-total').textContent   = '0';
+    bqCorrect = bqWrong = bqTotal = 0; bqCount = 1;
+    localStorage.removeItem(LS_SCORE);
+    updateScoreDisplay();
     nextQuestion();
   });
 

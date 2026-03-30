@@ -91,8 +91,8 @@
         <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">DEN &rarr; BIN</span></button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt">Score:&ensp;<span id="q-correct">0</span>&thinsp;/&thinsp;<span id="q-total">0</span></span>
-        <button class="btn btn-sm" id="q-reset-score">Restart</button>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="q-reset-score">Reset score</button>
       </div>
     </div>
 
@@ -400,6 +400,7 @@
     currentType:  1,          // actual type for current question
     questionNum:  1,
     correct:      0,
+    wrong:        0,
     total:        0,
     answered:     false,
     mLen:         8,
@@ -412,6 +413,17 @@
     studentM:     [],
     studentE:     [],
   };
+
+  const LS_SCORE_FP = 'encodr-fp-score';
+  function loadScoreFP() { try { return JSON.parse(localStorage.getItem(LS_SCORE_FP)) || {correct:0,wrong:0,total:0}; } catch { return {correct:0,wrong:0,total:0}; } }
+  function saveScoreFP() { localStorage.setItem(LS_SCORE_FP, JSON.stringify({correct:QS.correct,wrong:QS.wrong,total:QS.total})); }
+  function updateScoreDisplay() {
+    document.getElementById('q-correct').textContent = QS.correct;
+    document.getElementById('q-wrong').textContent   = QS.wrong;
+    document.getElementById('q-total').textContent   = QS.total;
+  }
+  const _sc = loadScoreFP();
+  QS.correct = _sc.correct; QS.wrong = _sc.wrong; QS.total = _sc.total;
 
   function generateQuizQuestion() {
     QS.currentType = QS.questionType === 'mixed'
@@ -689,9 +701,9 @@
       document.getElementById('q-rel-err').disabled = true;
     }
 
-    if (correct) QS.correct++;
-    document.getElementById('q-correct').textContent = QS.correct;
-    document.getElementById('q-total').textContent   = QS.total;
+    if (correct) QS.correct++; else QS.wrong++;
+    updateScoreDisplay();
+    saveScoreFP();
 
     const fbEl = document.getElementById('q-modal-feedback');
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
@@ -708,11 +720,8 @@
     document.getElementById('tab-explore').classList.toggle('active',  isExplore);
     document.getElementById('tab-quiz'   ).classList.toggle('active', !isExplore);
     if (!isExplore) {
-      QS.correct = 0;
-      QS.total   = 0;
       QS.questionNum = 1;
-      document.getElementById('q-correct').textContent = '0';
-      document.getElementById('q-total').textContent   = '0';
+      updateScoreDisplay();
       generateQuizQuestion();
     }
   }
@@ -742,11 +751,10 @@
     generateQuizQuestion();
   });
   document.getElementById('q-reset-score').addEventListener('click', () => {
-    QS.correct = 0;
-    QS.total   = 0;
+    QS.correct = QS.wrong = QS.total = 0;
     QS.questionNum = 1;
-    document.getElementById('q-correct').textContent = '0';
-    document.getElementById('q-total').textContent   = '0';
+    localStorage.removeItem(LS_SCORE_FP);
+    updateScoreDisplay();
     generateQuizQuestion();
   });
 </script>
