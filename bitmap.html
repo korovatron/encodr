@@ -165,6 +165,7 @@
       inp.className = 'byte-inp';
       inp.placeholder = '0';
       inp.autocomplete = 'off';
+      inp.inputMode = 'numeric';
       inp.setAttribute('aria-label', `Row ${row + 1}, byte ${col + 1}`);
       inp.addEventListener('input', () => handleInput(inp, idx));
       inp.addEventListener('keydown', (e) => {
