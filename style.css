@@ -31,6 +31,9 @@
 }
 
 html { overflow-x: hidden; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+/* overflow-x: clip does not create a scroll container, so position:fixed works
+   correctly on iOS Safari (unlike overflow-x: hidden which breaks it) */
+@supports (overflow: clip) { html { overflow-x: clip; } }
 body {
   font-family: system-ui, -apple-system, sans-serif;
   background: var(--bg);

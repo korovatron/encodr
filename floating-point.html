@@ -160,21 +160,21 @@
       <button class="btn btn-submit" id="q-submit">Check Answer</button>
     </div>
 
-    <!-- Feedback modal -->
-    <div class="modal-backdrop" id="q-modal" role="dialog" aria-modal="true" aria-labelledby="q-modal-feedback">
-      <div class="modal">
-        <div class="modal-feedback" id="q-modal-feedback"></div>
-        <div class="modal-footer">
-          <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
-        </div>
-      </div>
-    </div>
-
   </div><!-- /#quiz-section -->
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 
 </main>
+
+<!-- Feedback modal — direct child of body so position:fixed works on iOS -->
+<div class="modal-backdrop" id="q-modal" role="dialog" aria-modal="true" aria-labelledby="q-modal-feedback">
+  <div class="modal">
+    <div class="modal-feedback" id="q-modal-feedback"></div>
+    <div class="modal-footer">
+      <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
+    </div>
+  </div>
+</div>
 
 <script>
   /* ── State ─────────────────────────────────────────────────────── */
@@ -678,7 +678,11 @@
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fbEl.innerHTML = html;
     if (document.activeElement) document.activeElement.blur();
-    document.getElementById('q-modal').classList.add('open');
+    // Delay one frame so iOS viewport finishes adjusting after keyboard dismissal
+    // before the fixed-position modal is shown
+    requestAnimationFrame(() => {
+      document.getElementById('q-modal').classList.add('open');
+    });
   }
 
   /* ── Mode-switch ─────────────────────────────── */
