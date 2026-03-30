@@ -24,4 +24,8 @@ window.addEventListener('touchmove', (e) => {
   }
 }, { passive: false, capture: true });
 
-
+// Suppress iOS drag-preview on links (the floating link icon on long-press).
+// -webkit-touch-callout:none handles the callout sheet; this handles the drag.
+document.addEventListener('dragstart', (e) => {
+  if (e.target.closest('a')) e.preventDefault();
+});
