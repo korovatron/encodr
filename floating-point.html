@@ -366,21 +366,23 @@
   /* ── Modal open / close with body-scroll lock ───────────────────
      On iPhone Safari, position:fixed elements are positioned relative
      to the document top, not the viewport, when the page is scrolled.
-     Locking the body scroll (position:fixed + negative top) freezes
-     the page in place so the modal always covers the visible screen. */
+     Setting overflow:hidden on BOTH html AND body is the iOS Safari
+     scroll-lock pattern used here. */
   let _modalScrollY = 0;
   function openModal() {
     _modalScrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top      = `-${_modalScrollY}px`;
-    document.body.style.width    = '100%';
+    // Lock scroll on both html AND body — iOS Safari requires both to be
+    // non-visible so that position:fixed still anchors to the viewport.
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
     document.getElementById('q-modal').classList.add('open');
   }
   function closeModal() {
     document.getElementById('q-modal').classList.remove('open');
-    document.body.style.position = '';
-    document.body.style.top      = '';
-    document.body.style.width    = '';
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+    // overflow:hidden may reset scrollTop to 0 on some iOS versions;
+    // restore the saved position.
     window.scrollTo(0, _modalScrollY);
   }
 
@@ -699,8 +701,7 @@
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fbEl.innerHTML = html;
     if (document.activeElement) document.activeElement.blur();
-    // One rAF lets the browser process the blur before we lock scroll
-    requestAnimationFrame(openModal);
+    openModal();
   }
 
   /* ── Mode-switch ─────────────────────────────── */
