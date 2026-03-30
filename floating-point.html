@@ -166,15 +166,15 @@
 
 </main>
 
-<!-- Feedback modal — direct child of body so position:fixed works on iOS -->
-<div class="modal-backdrop" id="q-modal" role="dialog" aria-modal="true" aria-labelledby="q-modal-feedback">
+<!-- Feedback modal — native <dialog> renders in top layer, immune to scroll/overflow/z-index on iOS -->
+<dialog id="q-modal" aria-labelledby="q-modal-feedback">
   <div class="modal">
     <div class="modal-feedback" id="q-modal-feedback"></div>
     <div class="modal-footer">
       <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
     </div>
   </div>
-</div>
+</dialog>
 
 <script>
   /* ── State ─────────────────────────────────────────────────────── */
@@ -363,30 +363,15 @@
      QUIZ MODE
   ══════════════════════════════════════════════════════════════════ */
 
-  /* ── Modal open / close with body-scroll lock ───────────────────
-     On iPhone Safari, position:fixed elements are positioned relative
-     to the document top, not the viewport, when the page is scrolled.
-     Setting overflow:hidden on BOTH html AND body is the iOS Safari
-     scroll-lock pattern used here. */
-  let _modalScrollY = 0;
+  /* ── Modal open / close ───────────────────────────────────────
+     Native <dialog>.showModal() renders in the browser top layer —
+     above all content, unaffected by scroll position, overflow, or
+     z-index. Eliminates all iOS Safari position:fixed quirks. */
   function openModal() {
-    _modalScrollY = window.scrollY;
-    // Scroll to top first so the fixed modal (top:0) lands in the visible
-    // viewport. On iPhone Safari, position:fixed at top:0 renders at the
-    // document origin — if the page is scrolled down, that's off-screen.
-    // Locking overflow AFTER scrolling to 0 keeps it there.
-    window.scrollTo(0, 0);
-    document.documentElement.classList.add('modal-open');
-    document.body.classList.add('modal-open');
-    document.getElementById('q-modal').classList.add('open');
+    document.getElementById('q-modal').showModal();
   }
   function closeModal() {
-    document.getElementById('q-modal').classList.remove('open');
-    document.documentElement.classList.remove('modal-open');
-    document.body.classList.remove('modal-open');
-    // overflow:hidden may reset scrollTop to 0 on some iOS versions;
-    // restore the saved position.
-    window.scrollTo(0, _modalScrollY);
+    document.getElementById('q-modal').close();
   }
 
   // Weighted bit-width pools matching AQA paper distribution

@@ -487,23 +487,19 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 .btn-next:hover { background: rgba(0,204,0,.20); }
 
 /* ── Feedback modal ────────────────────────────── */
-/* Scroll lock: setting overflow:hidden on BOTH html AND body is required on
-   iOS Safari so that position:fixed elements still use the viewport as their
-   containing block (setting it only on body makes fixed use body instead). */
-html.modal-open,
-body.modal-open { overflow: hidden; }
-
-.modal-backdrop {
-  display: none;
-  position: fixed;
-  top: 0; right: 0; bottom: 0; left: 0;
-  background: rgba(0,0,0,.72);
-  z-index: 100;
-  align-items: center;
-  justify-content: center;
+/* Native <dialog> via showModal() — uses browser top layer, no fixed
+   positioning or z-index needed. ::backdrop is the dimmed overlay. */
+#q-modal {
+  border: none;
   padding: 24px;
+  background: transparent;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
-.modal-backdrop.open { display: flex; }
+#q-modal::backdrop {
+  background: rgba(0,0,0,.72);
+}
 .modal {
   background: #000;
   border: 1px solid var(--border);
