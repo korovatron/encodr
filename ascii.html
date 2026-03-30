@@ -1190,6 +1190,7 @@ document.getElementById('modeTabs').addEventListener('click', e => {
   activeCel = null;
   const isPanel = mode === 'u';
   document.getElementById('legend').style.display = mode === 7 ? '' : 'none';
+  document.getElementById('extIntro').style.display = mode === 8 ? '' : 'none';
   document.getElementById('charGrid').style.display = isPanel ? 'none' : '';
   document.getElementById('charDetail').style.display = isPanel ? 'none' : '';
   document.getElementById('unicodePanel').style.display = isPanel ? '' : 'none';
