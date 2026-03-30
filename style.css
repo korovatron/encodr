@@ -42,6 +42,7 @@ body {
   min-height: 100dvh; /* iOS 15.4+: tracks visual viewport, equals visualViewport.height */
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none; /* suppress iOS tap-and-hold link preview */
 }
 input, textarea { -webkit-user-select: text; user-select: text; }
 
