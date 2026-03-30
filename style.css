@@ -39,6 +39,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  min-height: 100dvh; /* iOS 15.4+: tracks visual viewport, equals visualViewport.height */
   -webkit-user-select: none;
   user-select: none;
 }
