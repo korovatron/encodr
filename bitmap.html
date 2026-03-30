@@ -269,7 +269,7 @@
   });
 
   // ── Dismiss keyboard when tapping outside inputs ──────────────────
-  bitmapGrid.addEventListener('pointerdown', (e) => {
+  document.addEventListener('pointerdown', (e) => {
     if (e.target.tagName !== 'INPUT') document.activeElement?.blur();
   });
 
