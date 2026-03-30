@@ -269,9 +269,9 @@
   });
 
   // ── Dismiss keyboard when tapping outside inputs ──────────────────
-  document.addEventListener('pointerdown', (e) => {
+  document.addEventListener('touchstart', (e) => {
     if (e.target.tagName !== 'INPUT') document.activeElement?.blur();
-  });
+  }, { passive: true });
 
   // ── Init ──────────────────────────────────────────────────────────
   renderPixels();
