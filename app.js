@@ -11,12 +11,17 @@ window.addEventListener('touchmove', (e) => {
     return;
   }
 
-  // Page has no meaningful scroll room: block all rubber-banding.
-  // Use a 2px tolerance for sub-pixel rounding differences across devices.
-  // Scrollable pages fall through and get native iOS behaviour.
-  const root = document.documentElement;
-  if (root.scrollHeight - root.clientHeight < 2) {
+  // Use visualViewport.height (not clientHeight) — on iPhone, clientHeight
+  // excludes the Safari browser chrome so the page always appears "scrollable"
+  // even when it isn't. visualViewport.height reflects the true visible area.
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+  const scrollHeight = Math.max(
+    document.documentElement.scrollHeight,
+    document.body.scrollHeight
+  );
+  if (scrollHeight - viewportHeight < 2) {
     e.preventDefault();
   }
 }, { passive: false, capture: true });
+
 
