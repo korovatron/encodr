@@ -36,6 +36,8 @@
       min-height: 0;
       border-bottom: 1px solid #1a1a1a;
     }
+    .pixel-strip.mc { grid-template-columns: repeat(12, 1fr); }
+    .pixel-strip.mc .pixel:nth-child(even) { display: none; }
     .pixel-strip:last-child { border-bottom: none; }
     .pixel {
       border-radius: 1px;
@@ -43,8 +45,15 @@
       transition: background .07s;
       min-width: 0;
       min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      user-select: none;
     }
-    .pixel.on { background: #ffff00; }
+    /* .pixel.on removed — colours set via inline style in renderPixels */
 
     /* ── Byte inputs ─────────────────────────────── */
     .byte-inp {
@@ -72,8 +81,31 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      align-items: center;
       margin-bottom: 20px;
     }
+    .colour-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--r-sm);
+      border: 2px solid rgba(255,255,255,.45);
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: border-color .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .colour-swatch:hover { border-color: rgba(255,255,255,.9); }
+    .swatch-group { display: flex; gap: 6px; align-items: center; }
+    .mc-only { display: none; }
+    .mc .mc-only { display: block; }
+    .seg-btn .dim { color: rgba(255,255,255,.3); }
     /* ── Outer layout: CSS grid, 2 cols, 2 rows ───
        col 1: [controls row 1] [card row 2]
        col 2: [gallery spans rows 1+2]
@@ -175,6 +207,18 @@
     <div class="bitmap-controls">
       <button class="btn" id="btn-clear">Clear</button>
       <button class="btn" id="btn-invert">Invert</button>
+      <button class="btn seg-btn" id="btn-mode"><span id="mode-1bit">1-bit</span> | <span id="mode-2bit">2-bit</span></button>
+      <button class="btn seg-btn" id="btn-labels">Labels <span id="lbl-on">on</span> | <span id="lbl-off">off</span></button>
+      <div class="swatch-group">
+        <button class="colour-swatch" id="btn-c0" title="Background colour"></button>
+        <input type="color" id="inp-c0" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
+        <button class="colour-swatch" id="btn-c1" title="Foreground colour"></button>
+        <input type="color" id="inp-c1" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
+        <button class="colour-swatch mc-only" id="btn-c2" title="Multicolour 2 (bit pair 10)"></button>
+        <input type="color" id="inp-c2" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
+        <button class="colour-swatch mc-only" id="btn-c3" title="Multicolour 3 (bit pair 11)"></button>
+        <input type="color" id="inp-c3" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
+      </div>
     </div>
 
     <div class="card bitmap-card">
@@ -200,8 +244,97 @@
   const ROWS = 21, COLS = 24, BYTES_PER_ROW = 3, BITS_PER_BYTE = 8;
   const TOTAL_BYTES = ROWS * BYTES_PER_ROW; // 63
 
+  // ── Colour mode ───────────────────────────────────────────────────
+  let multicolour = false;
+  let showLabels  = true;
+  const colours = ['#444444', '#ffff00', '#ff4466', '#44aaff'];
+  const SWATCH_IDS = ['btn-c0','btn-c1','btn-c2','btn-c3'];
+  const LABELS_1BIT = ['0','1','',''];
+  const LABELS_2BIT = ['00','01','10','11'];
+
+  function contrastColour(hex) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? '#000000' : '#ffffff';
+  }
+
+  // Slightly lighter or darker version of the same colour — used for pixel labels
+  function subtleContrast(hex) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    const lum = (r * 299 + g * 587 + b * 114) / 1000;
+    const shift = lum > 128 ? -70 : 80;
+    const c = v => Math.max(0, Math.min(255, v + shift));
+    return `rgb(${c(r)},${c(g)},${c(b)})`;
+  }
+
+  function updateSwatchLabels() {
+    const labels = multicolour ? LABELS_2BIT : LABELS_1BIT;
+    SWATCH_IDS.forEach((id, i) => {
+      const btn = document.getElementById(id);
+      btn.textContent = labels[i];
+      btn.style.color = contrastColour(colours[i]);
+    });
+  }
+
+  function setupSwatch(btnId, inpId, index) {
+    const btn = document.getElementById(btnId);
+    const inp = document.getElementById(inpId);
+    btn.style.background = colours[index];
+    inp.value = colours[index];
+    btn.addEventListener('click', () => inp.click());
+    inp.addEventListener('input', () => {
+      colours[index] = inp.value;
+      btn.style.background = inp.value;
+      btn.style.color = contrastColour(inp.value);
+      renderPixels();
+    });
+  }
+  setupSwatch('btn-c0', 'inp-c0', 0);
+  setupSwatch('btn-c1', 'inp-c1', 1);
+  setupSwatch('btn-c2', 'inp-c2', 2);
+  setupSwatch('btn-c3', 'inp-c3', 3);
+  updateSwatchLabels(); // init labels
+
+  function updateModeBtn() {
+    document.getElementById('mode-1bit').className = multicolour ? 'dim' : '';
+    document.getElementById('mode-2bit').className = multicolour ? '' : 'dim';
+    document.querySelectorAll('.pixel-strip').forEach(s => s.classList.toggle('mc', multicolour));
+  }
+  function updateLabelsBtn() {
+    document.getElementById('lbl-on').className  = showLabels ? '' : 'dim';
+    document.getElementById('lbl-off').className = showLabels ? 'dim' : '';
+  }
+
+  document.getElementById('btn-mode').addEventListener('click', () => {
+    multicolour = !multicolour;
+    updateModeBtn();
+    document.documentElement.classList.toggle('mc', multicolour);
+    updateSwatchLabels();
+    renderPixels();
+  });
+
+  document.getElementById('btn-labels').addEventListener('click', () => {
+    showLabels = !showLabels;
+    updateLabelsBtn();
+    renderPixels();
+  });
+
+  updateModeBtn();
+  updateLabelsBtn();
+
   // ── State ─────────────────────────────────────────────────────────
-  const state = new Uint8Array(TOTAL_BYTES);
+  // Pre-loaded with the classic Commodore balloon sprite
+  const state = new Uint8Array([
+      0,127,  0,  1,255,192,  3,255,224,  3,231,224,
+      7,217,240,  7,223,240,  7,217,240,  3,231,224,
+      3,255,224,  3,255,224,  2,255,160,  1,127, 64,
+      1, 62, 64,  0,156,128,  0,156,128,  0, 73,  0,
+      0, 73,  0,  0, 62,  0,  0, 62,  0,  0, 62,  0,
+      0, 28,  0,
+  ]);
 
   // ── Build unified grid ────────────────────────────────────────────
   // .pixel-panel spans all 21 grid rows in col 1; inputs auto-place into cols 2-4
@@ -267,14 +400,33 @@
   // ── Render pixel grid from state ──────────────────────────────────
   function renderPixels() {
     for (let byteIdx = 0; byteIdx < TOTAL_BYTES; byteIdx++) {
-      const val = state[byteIdx];
-      const row = Math.floor(byteIdx / BYTES_PER_ROW);
+      const val       = state[byteIdx];
+      const row       = Math.floor(byteIdx / BYTES_PER_ROW);
       const byteInRow = byteIdx % BYTES_PER_ROW;
-      for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
-        const pixelCol = byteInRow * BITS_PER_BYTE + bit;
-        const pixelIdx = row * COLS + pixelCol;
-        const on = (val >> (7 - bit)) & 1;
-        pixels[pixelIdx].classList.toggle('on', on === 1);
+      if (multicolour) {
+        // 2-bit: 4 pairs per byte → 4 visible double-width pixels per byte
+        for (let pair = 0; pair < 4; pair++) {
+          const ci      = (val >> (6 - pair * 2)) & 0b11;
+          const baseCol = byteInRow * BITS_PER_BYTE + pair * 2;
+          const bg      = colours[ci];
+          const fg      = subtleContrast(bg);
+          const px0 = pixels[row * COLS + baseCol];
+          px0.style.background = bg;
+          px0.style.color = fg;
+          px0.textContent = showLabels ? ['00','01','10','11'][ci] : '';
+          // odd pixel is hidden via CSS; still set its colour for consistency
+          pixels[row * COLS + baseCol + 1].style.background = bg;
+        }
+      } else {
+        // 1-bit: each bit → one pixel
+        for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
+          const on = (val >> (7 - bit)) & 1;
+          const bg = colours[on];
+          const px = pixels[row * COLS + byteInRow * BITS_PER_BYTE + bit];
+          px.style.background = bg;
+          px.style.color = subtleContrast(bg);
+          px.textContent = showLabels ? on : '';
+        }
       }
     }
   }
@@ -413,7 +565,6 @@
     btn.addEventListener('click', () => {
       gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      loadSprite(sprite.data);
     });
 
     gallery.appendChild(btn);
@@ -433,6 +584,8 @@
   new ResizeObserver(resizeGallery).observe(gallery);
 
   // ── Init ──────────────────────────────────────────────────────────
+  // Populate inputs from the pre-loaded state
+  state.forEach((v, i) => { inputs[i].value = v === 0 ? '' : v; });
   renderPixels();
 </script>
 
