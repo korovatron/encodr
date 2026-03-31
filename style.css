@@ -723,7 +723,7 @@ body:has(#save-dialog[open]) { overflow: hidden; }
 }
 .ws-banner-text { flex: 1; min-width: 0; }
 .ws-banner-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   margin-bottom: 4px;
 }
