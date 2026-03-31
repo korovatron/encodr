@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Encodr Eo favicon mockup</title>
+  <desc id="desc">A compact favicon mark with a chunky yellow E and a red o on a black rounded-square background.</desc>
+
+  <rect width="256" height="256" rx="44" fill="#050505"/>
+
+  <g transform="rotate(-90 128 128)">
+    <!-- Yellow E -->
+    <rect x="34" y="46" width="24" height="164" rx="8" fill="#ffe500"/>
+    <rect x="34" y="46" width="78" height="24" rx="8" fill="#ffe500"/>
+    <rect x="34" y="116" width="66" height="24" rx="8" fill="#ffe500"/>
+    <rect x="34" y="186" width="78" height="24" rx="8" fill="#ffe500"/>
+
+    <!-- Red o -->
+    <rect x="130" y="80" width="92" height="92" rx="26" fill="#ff3b30"/>
+    <rect x="154" y="104" width="44" height="44" rx="14" fill="#050505"/>
+  </g>
+</svg>
