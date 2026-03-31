@@ -103,6 +103,30 @@
       line-height: 1;
     }
     .colour-swatch:hover { border-color: rgba(255,255,255,.9); }
+    .colour-picker {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+    .colour-picker .colour-swatch {
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .colour-input-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+    }
     .swatch-group { display: flex; gap: 6px; align-items: center; }
     .mc-only { display: none; }
     .mc .mc-only { display: block; }
@@ -236,14 +260,22 @@
       <button class="btn seg-btn" id="btn-mode"><span id="mode-1bit">1-bit</span> | <span id="mode-2bit">2-bit</span></button>
       <button class="btn seg-btn" id="btn-labels">Labels <span id="lbl-on">on</span> | <span id="lbl-off">off</span></button>
       <div class="swatch-group">
-        <button class="colour-swatch" id="btn-c0" title="Background colour"></button>
-        <input type="color" id="inp-c0" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
-        <button class="colour-swatch" id="btn-c1" title="Foreground colour"></button>
-        <input type="color" id="inp-c1" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
-        <button class="colour-swatch mc-only" id="btn-c2" title="Multicolour 2 (bit pair 10)"></button>
-        <input type="color" id="inp-c2" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
-        <button class="colour-swatch mc-only" id="btn-c3" title="Multicolour 3 (bit pair 11)"></button>
-        <input type="color" id="inp-c3" style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
+        <div class="colour-picker">
+          <button class="colour-swatch" id="btn-c0" title="Background colour"></button>
+          <input class="colour-input-overlay" type="color" id="inp-c0" aria-label="Background colour">
+        </div>
+        <div class="colour-picker">
+          <button class="colour-swatch" id="btn-c1" title="Foreground colour"></button>
+          <input class="colour-input-overlay" type="color" id="inp-c1" aria-label="Foreground colour">
+        </div>
+        <div class="colour-picker mc-only">
+          <button class="colour-swatch mc-only" id="btn-c2" title="Multicolour 2 (bit pair 10)"></button>
+          <input class="colour-input-overlay mc-only" type="color" id="inp-c2" aria-label="Multicolour 2">
+        </div>
+        <div class="colour-picker mc-only">
+          <button class="colour-swatch mc-only" id="btn-c3" title="Multicolour 3 (bit pair 11)"></button>
+          <input class="colour-input-overlay mc-only" type="color" id="inp-c3" aria-label="Multicolour 3">
+        </div>
       </div>
     </div>
 
@@ -379,7 +411,6 @@
     const inp = document.getElementById(inpId);
     btn.style.background = colours[index];
     inp.value = colours[index];
-    btn.addEventListener('click', () => inp.click());
     inp.addEventListener('input', () => {
       colours[index] = inp.value;
       btn.style.background = inp.value;
