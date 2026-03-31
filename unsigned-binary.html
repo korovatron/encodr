@@ -129,6 +129,24 @@
       </div>
     </div>
 
+    <div class="card" id="q-range-area" hidden>
+      <div class="res-block">
+        <div class="q-answer-lbl">Representable Range</div>
+        <div class="err-grid">
+          <div>
+            <div class="q-err-lbl">Smallest value</div>
+            <input class="q-denary-input q-err-input" type="text" id="q-min-input"
+                   placeholder="e.g. 0" autocomplete="off" spellcheck="false" />
+          </div>
+          <div>
+            <div class="q-err-lbl">Largest value</div>
+            <input class="q-denary-input q-err-input" type="text" id="q-max-input"
+                   placeholder="e.g. 255" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="quiz-actions">
       <button class="btn btn-submit" id="q-submit">Check Answer</button>
     </div>
@@ -385,10 +403,13 @@
     answered: false,
     prompt: '',
     formatHint: '',
-    answerKind: 'den', // 'den' | 'bin' | 'hex'
+    answerKind: 'den', // 'den' | 'bin' | 'hex' | 'range'
     expectedText: '',
     expectedValue: 0,
-    rangeMax: 255
+    rangeMax: 255,
+    rangeBits: 8,
+    expectedMin: 0,
+    expectedMax: 255
   };
 
   const LS_SCORE_UNSIGNED = 'encodr-unsigned-score';
@@ -470,7 +491,8 @@
       '3': 'DEN → HEX',
       '4': 'HEX → DEN',
       '5': 'BIN → HEX',
-      '6': 'HEX → BIN'
+      '6': 'HEX → BIN',
+      '7': 'RANGE'
     };
 
     const badge = document.getElementById('q-type-badge');
@@ -540,7 +562,7 @@
       QS.answerKind = 'hex';
       QS.expectedText = fmtHex(value);
       QS.expectedValue = value;
-    } else {
+    } else if (type === '6') {
       const hexDigits = pick([1, 2, 3, 4]);
       const maxForDigits = 16 ** hexDigits - 1;
       const value = randInt(0, maxForDigits);
@@ -555,6 +577,22 @@
       QS.answerKind = 'bin';
       QS.expectedText = fmtBin(value, bitWidth);
       QS.expectedValue = value;
+    } else {
+      const n = randInt(2, 16);
+      const min = 0;
+      const max = 2 ** n - 1;
+      QS.prompt = pick([
+        `With an ${n}-bit unsigned binary number, what is the smallest and largest representable denary value?`,
+        `State the denary range for ${n}-bit unsigned binary.`,
+        `For unsigned ${n}-bit binary, give the minimum and maximum denary values.`
+      ]);
+      QS.formatHint = 'Enter both endpoints of the range below.';
+      QS.answerKind = 'range';
+      QS.expectedMin = min;
+      QS.expectedMax = max;
+      QS.rangeBits = n;
+      QS.expectedText = `${min} to ${max}`;
+      QS.expectedValue = max;
     }
   }
 
@@ -563,6 +601,10 @@
     document.getElementById('q-text').textContent = QS.prompt;
     document.getElementById('q-format-hint').textContent = QS.formatHint;
     document.getElementById('q-answer-lbl').textContent = 'Your Answer';
+
+    const isRange = QS.answerKind === 'range';
+    document.getElementById('q-answer-card').hidden = isRange;
+    document.getElementById('q-range-area').hidden = !isRange;
 
     const inp = document.getElementById('q-input');
     inp.value = '';
@@ -573,6 +615,11 @@
       ? 'e.g. 11001010'
       : 'e.g. CA';
 
+    document.getElementById('q-min-input').value = '';
+    document.getElementById('q-max-input').value = '';
+    document.getElementById('q-min-input').disabled = false;
+    document.getElementById('q-max-input').disabled = false;
+
     closeModal();
     document.getElementById('q-modal-feedback').innerHTML = '';
     document.getElementById('q-submit').disabled = false;
@@ -580,7 +627,7 @@
 
   function generateQuizQuestion() {
     QS.currentType = QS.questionType === 'mixed'
-      ? pick(['1', '2', '3', '4', '5', '6'])
+      ? pick(['1', '2', '3', '4', '5', '6', '7'])
       : String(QS.questionType);
     QS.answered = false;
     setQuestion(QS.currentType);
@@ -590,17 +637,31 @@
   function checkQuizAnswer() {
     if (QS.answered) return;
 
-    const input = document.getElementById('q-input');
-    const raw = (input.value || '').trim();
-    if (!raw) {
-      input.focus();
-      return;
-    }
-
     let correct = false;
-    let studentDisplay = raw;
+    let studentDisplay = '';
 
-    if (QS.answerKind === 'den') {
+    if (QS.answerKind === 'range') {
+      const minRaw = (document.getElementById('q-min-input').value || '').trim();
+      const maxRaw = (document.getElementById('q-max-input').value || '').trim();
+      if (!/^-?\d+$/.test(minRaw)) { document.getElementById('q-min-input').focus(); return; }
+      if (!/^-?\d+$/.test(maxRaw)) { document.getElementById('q-max-input').focus(); return; }
+
+      const minVal = parseInt(minRaw, 10);
+      const maxVal = parseInt(maxRaw, 10);
+      studentDisplay = `${minVal} to ${maxVal}`;
+      correct = minVal === QS.expectedMin && maxVal === QS.expectedMax;
+      document.getElementById('q-min-input').disabled = true;
+      document.getElementById('q-max-input').disabled = true;
+    } else {
+      const input = document.getElementById('q-input');
+      const raw = (input.value || '').trim();
+      if (!raw) {
+        input.focus();
+        return;
+      }
+      studentDisplay = raw;
+
+      if (QS.answerKind === 'den') {
       if (!/^-?\d+$/.test(raw)) {
         input.focus();
         return;
@@ -608,7 +669,7 @@
       const student = parseInt(raw, 10);
       studentDisplay = student.toString();
       correct = student === QS.expectedValue;
-    } else if (QS.answerKind === 'bin') {
+      } else if (QS.answerKind === 'bin') {
       const b = normalizeBinary(raw);
       if (!b) {
         input.focus();
@@ -616,7 +677,7 @@
       }
       studentDisplay = b;
       correct = parseInt(b, 2) === QS.expectedValue;
-    } else {
+      } else {
       const h = normalizeHex(raw);
       if (!h) {
         input.focus();
@@ -624,15 +685,17 @@
       }
       studentDisplay = h;
       correct = parseInt(h, 16) === QS.expectedValue;
+      }
+
+      document.getElementById('q-input').disabled = true;
     }
 
     QS.answered = true;
     QS.total++;
     document.getElementById('q-submit').disabled = true;
-    document.getElementById('q-input').disabled = true;
 
-    const expected = QS.expectedText;
-    const answerName = QS.answerKind === 'den' ? 'denary' : QS.answerKind === 'bin' ? 'binary' : 'hexadecimal';
+    const expected = QS.answerKind === 'range' ? `${QS.expectedMin} to ${QS.expectedMax}` : QS.expectedText;
+    const answerName = QS.answerKind === 'den' ? 'denary' : QS.answerKind === 'bin' ? 'binary' : QS.answerKind === 'hex' ? 'hexadecimal' : 'range';
 
     const html = correct
       ? `✓ Correct! The ${answerName} answer is <strong>${expected}</strong>.`
@@ -662,7 +725,13 @@
 
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
   document.getElementById('q-input').addEventListener('keydown', ev => {
-    if (ev.key === 'Enter' && !QS.answered) checkQuizAnswer();
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind !== 'range') checkQuizAnswer();
+  });
+  document.getElementById('q-min-input').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') checkQuizAnswer();
+  });
+  document.getElementById('q-max-input').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') checkQuizAnswer();
   });
   document.getElementById('q-next').addEventListener('click', () => {
     closeModal();

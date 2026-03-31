@@ -83,18 +83,73 @@
   </div>
 
   <div id="quiz-section" hidden>
+    <div class="quiz-topbar">
+      <div class="qtype-group">
+        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
+        <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
+        <button class="qtype-btn" data-qt="1"><span class="qt-long">Binary &rarr; Denary</span><span class="qt-short">B&rarr;D</span></button>
+        <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">D&rarr;B</span></button>
+        <button class="qtype-btn" data-qt="3"><span class="qt-long">Range</span><span class="qt-short">RNG</span></button>
+      </div>
+      <div class="quiz-score-area">
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="q-reset-score">Reset score</button>
+      </div>
+    </div>
+
     <div class="card quiz-q-card">
       <div class="res-block">
         <div class="quiz-q-header">
-          <span class="quiz-q-num">Test Mode</span>
+          <span class="quiz-q-num" id="q-num">Question 1</span>
+          <span class="badge" id="q-type-badge"></span>
         </div>
-        <div class="quiz-q-text">Test mode for two's complement will be added next.</div>
+        <div class="quiz-q-text" id="q-text"></div>
+        <p class="quiz-format-hint" id="q-format-hint"></p>
       </div>
+    </div>
+
+    <div class="card" id="q-answer-card">
+      <div class="res-block">
+        <div class="q-answer-lbl" id="q-answer-lbl">Your Answer</div>
+        <input class="q-denary-input" type="text" id="q-input"
+               placeholder="Type your answer" autocomplete="off" spellcheck="false" />
+      </div>
+    </div>
+
+    <div class="card" id="q-range-area" hidden>
+      <div class="res-block">
+        <div class="q-answer-lbl">Representable Range</div>
+        <div class="err-grid">
+          <div>
+            <div class="q-err-lbl">Smallest value</div>
+            <input class="q-denary-input q-err-input" type="text" id="q-min-input"
+                   placeholder="e.g. -512" autocomplete="off" spellcheck="false" />
+          </div>
+          <div>
+            <div class="q-err-lbl">Largest value</div>
+            <input class="q-denary-input q-err-input" type="text" id="q-max-input"
+                   placeholder="e.g. 511" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-actions">
+      <button class="btn btn-submit" id="q-submit">Check Answer</button>
     </div>
   </div>
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
+
+<dialog id="q-modal" aria-labelledby="q-modal-feedback">
+  <div class="modal">
+    <div class="modal-feedback" id="q-modal-feedback"></div>
+    <div class="modal-footer">
+      <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
   const S = {
@@ -284,6 +339,259 @@
     document.getElementById('quiz-section').hidden = isExplore;
     document.getElementById('tab-explore').classList.toggle('active', isExplore);
     document.getElementById('tab-quiz').classList.toggle('active', !isExplore);
+    if (!isExplore) {
+      QS.questionNum = 1;
+      updateScoreDisplay();
+      generateQuizQuestion();
+    } else {
+      closeModal();
+    }
+  }
+
+  const QS = {
+    questionType: 'mixed', // 'mixed' | '1' | '2' | '3'
+    currentType: '1',
+    questionNum: 1,
+    correct: 0,
+    wrong: 0,
+    total: 0,
+    answered: false,
+    answerKind: 'den', // 'den' | 'bin' | 'range'
+    prompt: '',
+    formatHint: '',
+    bits: 8,
+    expectedValue: 0,
+    expectedBits: '',
+    expectedMin: -128,
+    expectedMax: 127
+  };
+
+  const LS_SCORE_TWOS = 'encodr-twos-score';
+
+  function loadScoreTwos() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_SCORE_TWOS)) || { correct: 0, wrong: 0, total: 0 };
+    } catch {
+      return { correct: 0, wrong: 0, total: 0 };
+    }
+  }
+
+  function saveScoreTwos() {
+    localStorage.setItem(LS_SCORE_TWOS, JSON.stringify({
+      correct: QS.correct,
+      wrong: QS.wrong,
+      total: QS.total
+    }));
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById('q-correct').textContent = QS.correct;
+    document.getElementById('q-wrong').textContent = QS.wrong;
+    document.getElementById('q-total').textContent = QS.total;
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function twosBitsFor(value, n) {
+    const unsigned = value < 0 ? (2 ** n + value) : value;
+    return unsigned.toString(2).padStart(n, '0');
+  }
+
+  function twosValueFromBits(bitString) {
+    const n = bitString.length;
+    const u = parseInt(bitString, 2);
+    return bitString[0] === '1' ? u - 2 ** n : u;
+  }
+
+  function normalizeBinary(raw) {
+    if (!raw) return null;
+    let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
+    if (/^0b/i.test(s)) s = s.slice(2);
+    if (!/^[01]+$/.test(s)) return null;
+    return s;
+  }
+
+  function openModal() {
+    const dlg = document.getElementById('q-modal');
+    if (!dlg.open) dlg.showModal();
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeModal() {
+    const dlg = document.getElementById('q-modal');
+    if (dlg.open) dlg.close();
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+  }
+
+  function generateBinToDenQuestion() {
+    const n = randInt(6, 12);
+    const min = -(2 ** (n - 1));
+    const max = 2 ** (n - 1) - 1;
+    const value = randInt(min, max);
+    const bits = twosBitsFor(value, n);
+
+    QS.answerKind = 'den';
+    QS.bits = n;
+    QS.expectedValue = value;
+    QS.expectedBits = bits;
+    QS.prompt = pick([
+      `Convert the two's complement binary number ${bits} into denary.`,
+      `What denary value does ${bits} represent in ${n}-bit two's complement?`,
+      `Write ${bits} (two's complement, ${n} bits) as a denary number.`
+    ]);
+    QS.formatHint = 'Enter a denary integer.';
+  }
+
+  function generateDenToBinQuestion() {
+    const n = randInt(6, 12);
+    const min = -(2 ** (n - 1));
+    const max = 2 ** (n - 1) - 1;
+    const value = randInt(min, max);
+    const bits = twosBitsFor(value, n);
+
+    QS.answerKind = 'bin';
+    QS.bits = n;
+    QS.expectedValue = value;
+    QS.expectedBits = bits;
+    QS.prompt = pick([
+      `Write the denary number ${value} in ${n} bits two's complement.`,
+      `Represent denary ${value} as a ${n}-bit two's complement binary number.`,
+      `Convert denary ${value} to ${n}-bit two's complement.`
+    ]);
+    QS.formatHint = `Enter exactly ${n} bits (0s and 1s).`;
+  }
+
+  function generateRangeQuestion() {
+    const n = randInt(6, 12);
+    const min = -(2 ** (n - 1));
+    const max = 2 ** (n - 1) - 1;
+
+    QS.answerKind = 'range';
+    QS.bits = n;
+    QS.expectedMin = min;
+    QS.expectedMax = max;
+    QS.prompt = pick([
+      `With a ${n}-bit two's complement number, what is the smallest and largest representable denary value?`,
+      `Give the denary range of ${n}-bit two's complement values.`,
+      `For ${n}-bit two's complement, state the minimum and maximum denary numbers.`
+    ]);
+    QS.formatHint = 'Enter both endpoints of the range below.';
+  }
+
+  function generateQuizQuestion() {
+    QS.currentType = QS.questionType === 'mixed' ? pick(['1', '2', '3']) : QS.questionType;
+    QS.answered = false;
+
+    const badge = document.getElementById('q-type-badge');
+    if (QS.currentType === '1') {
+      badge.className = 'badge badge-m';
+      badge.textContent = 'BIN → DEN';
+      generateBinToDenQuestion();
+    } else if (QS.currentType === '2') {
+      badge.className = 'badge badge-e';
+      badge.textContent = 'DEN → BIN';
+      generateDenToBinQuestion();
+    } else {
+      badge.className = 'badge badge-r';
+      badge.textContent = 'RANGE';
+      generateRangeQuestion();
+    }
+
+    document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
+    document.getElementById('q-text').textContent = QS.prompt;
+    document.getElementById('q-format-hint').textContent = QS.formatHint;
+
+    const single = document.getElementById('q-answer-card');
+    const range = document.getElementById('q-range-area');
+    single.hidden = QS.answerKind === 'range';
+    range.hidden = QS.answerKind !== 'range';
+
+    const inp = document.getElementById('q-input');
+    inp.value = '';
+    inp.disabled = false;
+    inp.placeholder = QS.answerKind === 'den' ? 'e.g. -42' : 'e.g. 11010110';
+
+    document.getElementById('q-min-input').value = '';
+    document.getElementById('q-max-input').value = '';
+    document.getElementById('q-min-input').disabled = false;
+    document.getElementById('q-max-input').disabled = false;
+
+    closeModal();
+    document.getElementById('q-modal-feedback').innerHTML = '';
+    document.getElementById('q-submit').disabled = false;
+  }
+
+  function checkQuizAnswer() {
+    if (QS.answered) return;
+
+    let correct = false;
+    let html = '';
+
+    if (QS.answerKind === 'range') {
+      const minRaw = (document.getElementById('q-min-input').value || '').trim();
+      const maxRaw = (document.getElementById('q-max-input').value || '').trim();
+      if (!/^-?\d+$/.test(minRaw)) { document.getElementById('q-min-input').focus(); return; }
+      if (!/^-?\d+$/.test(maxRaw)) { document.getElementById('q-max-input').focus(); return; }
+
+      const minVal = parseInt(minRaw, 10);
+      const maxVal = parseInt(maxRaw, 10);
+      correct = minVal === QS.expectedMin && maxVal === QS.expectedMax;
+
+      html = correct
+        ? `✓ Correct! Range is <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${minVal}</strong> to <strong>${maxVal}</strong>, ` +
+          `answer: <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.</span>`;
+
+      document.getElementById('q-min-input').disabled = true;
+      document.getElementById('q-max-input').disabled = true;
+    } else if (QS.answerKind === 'den') {
+      const raw = (document.getElementById('q-input').value || '').trim();
+      if (!/^-?\d+$/.test(raw)) { document.getElementById('q-input').focus(); return; }
+      const student = parseInt(raw, 10);
+      correct = student === QS.expectedValue;
+
+      html = correct
+        ? `✓ Correct! Denary value is <strong>${QS.expectedValue}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${student}</strong>, answer: <strong>${QS.expectedValue}</strong>.</span>`;
+
+      document.getElementById('q-input').disabled = true;
+    } else {
+      const raw = (document.getElementById('q-input').value || '').trim();
+      const parsed = normalizeBinary(raw);
+      if (!parsed) { document.getElementById('q-input').focus(); return; }
+
+      const sameLen = parsed.length === QS.bits;
+      const sameValue = twosValueFromBits(parsed) === QS.expectedValue;
+      correct = sameLen && sameValue;
+
+      html = correct
+        ? `✓ Correct! ${QS.expectedValue} in ${QS.bits} bits is <strong>${QS.expectedBits}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${parsed}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
+
+      document.getElementById('q-input').disabled = true;
+    }
+
+    QS.answered = true;
+    QS.total++;
+    document.getElementById('q-submit').disabled = true;
+
+    if (correct) QS.correct++; else QS.wrong++;
+    updateScoreDisplay();
+    saveScoreTwos();
+
+    const fbEl = document.getElementById('q-modal-feedback');
+    fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
+    fbEl.innerHTML = html;
+    if (document.activeElement) document.activeElement.blur();
+    openModal();
   }
 
   function renderAll() {
@@ -298,6 +606,49 @@
   document.getElementById('btn-negate').addEventListener('click', doNegate);
   document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
   document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
+
+  const _score = loadScoreTwos();
+  QS.correct = _score.correct;
+  QS.wrong = _score.wrong;
+  QS.total = _score.total;
+  updateScoreDisplay();
+
+  document.querySelectorAll('.qtype-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('active')) return;
+      document.querySelectorAll('.qtype-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      QS.questionType = btn.dataset.qt;
+      closeModal();
+      QS.questionNum++;
+      generateQuizQuestion();
+    });
+  });
+
+  document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
+  document.getElementById('q-input').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind !== 'range') checkQuizAnswer();
+  });
+  document.getElementById('q-min-input').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') checkQuizAnswer();
+  });
+  document.getElementById('q-max-input').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') checkQuizAnswer();
+  });
+  document.getElementById('q-next').addEventListener('click', () => {
+    closeModal();
+    QS.questionNum++;
+    generateQuizQuestion();
+  });
+  document.getElementById('q-reset-score').addEventListener('click', () => {
+    QS.correct = 0;
+    QS.wrong = 0;
+    QS.total = 0;
+    QS.questionNum = 1;
+    localStorage.removeItem(LS_SCORE_TWOS);
+    updateScoreDisplay();
+    generateQuizQuestion();
+  });
 
   let resizeTimer;
   window.addEventListener('resize', () => {
