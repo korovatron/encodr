@@ -573,6 +573,40 @@
 
   function checkQuizAnswer() {
     if (QS.answered) return;
+
+    let student = null;
+    let stuAbs = null;
+    let stuRel = null;
+
+    if (QS.currentType === 1) {
+      const raw = (document.getElementById('q-denary-input').value || '')
+        .trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
+      if (!raw) {
+        document.getElementById('q-denary-input').focus();
+        return;
+      }
+      student = parseFloat(raw);
+      if (isNaN(student)) {
+        document.getElementById('q-denary-input').focus();
+        return;
+      }
+    } else if (QS.isInexact) {
+      const absInp = document.getElementById('q-abs-err');
+      const relInp = document.getElementById('q-rel-err');
+      const absRaw = (absInp.value || '').trim();
+      const relRaw = (relInp.value || '').trim();
+      if (!absRaw) { absInp.focus(); return; }
+      if (!relRaw) { relInp.focus(); return; }
+
+      const parseErr = raw => parseFloat(
+        (raw || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.')
+      );
+      stuAbs = parseErr(absRaw);
+      stuRel = parseErr(relRaw);
+      if (isNaN(stuAbs)) { absInp.focus(); return; }
+      if (isNaN(stuRel)) { relInp.focus(); return; }
+    }
+
     QS.answered = true;
     QS.total++;
     document.getElementById('q-submit').disabled = true;
@@ -582,29 +616,21 @@
 
     if (QS.currentType === 1) {
       // ── Type 1: Binary → Denary ──────────────────────────────────
-      const raw     = (document.getElementById('q-denary-input').value || '')
-        .trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
-      const student = parseFloat(raw);
       const tol     = Math.abs(target) > 1e-12 ? Math.abs(target) * 1e-6 : 1e-9;
 
-      if (isNaN(student)) {
-        correct = false;
-        html = `No valid number entered. The answer was <strong>${fmtNum(target)}</strong>.`;
+      correct = Math.abs(student - target) <= tol;
+      if (correct) {
+        html = `\u2713 Correct! The value is <strong>${fmtNum(target)}</strong>.`;
       } else {
-        correct = Math.abs(student - target) <= tol;
-        if (correct) {
-          html = `\u2713 Correct! The value is <strong>${fmtNum(target)}</strong>.`;
-        } else {
-          const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
-          html =
-            `\u2717 Incorrect \u2014 you entered <strong>${fmtNum(student)}</strong>, ` +
-            `answer: <strong>${fmtNum(target)}</strong>.<br><br>` +
-            `Working:<br>` +
-            `\u00a0\u00a0Mantissa\u00a0= ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
-            `\u00a0\u00a0Exponent = ${eFormula(QS.eBits)} = ${ev}<br>` +
-            `\u00a0\u00a0Value\u00a0\u00a0\u00a0\u00a0= ${fmtNum(mv)} \u00d7 2<sup>${ev}</sup>` +
-            ` = <strong>${fmtNum(target)}</strong>`;
-        }
+        const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
+        html =
+          `\u2717 Incorrect \u2014 you entered <strong>${fmtNum(student)}</strong>, ` +
+          `answer: <strong>${fmtNum(target)}</strong>.<br><br>` +
+          `Working:<br>` +
+          `\u00a0\u00a0Mantissa\u00a0= ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
+          `\u00a0\u00a0Exponent = ${eFormula(QS.eBits)} = ${ev}<br>` +
+          `\u00a0\u00a0Value\u00a0\u00a0\u00a0\u00a0= ${fmtNum(mv)} \u00d7 2<sup>${ev}</sup>` +
+          ` = <strong>${fmtNum(target)}</strong>`;
       }
       document.getElementById('q-denary-input').disabled = true;
 
@@ -649,12 +675,6 @@
       // Expected errors (computed from the correct stored value)
       const expAbsErr = Math.abs(target - stored);
       const expRelErr = expAbsErr / Math.abs(target) * 100;
-
-      const parseErr = raw => parseFloat(
-        (raw || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.')
-      );
-      const stuAbs = parseErr(document.getElementById('q-abs-err').value);
-      const stuRel = parseErr(document.getElementById('q-rel-err').value);
 
       // Tolerances: 5% relative on abs error; ±0.5 percentage points on rel error
       const absCorrect = !isNaN(stuAbs) && Math.abs(stuAbs - expAbsErr) <= Math.max(expAbsErr * 0.05, 1e-12);
