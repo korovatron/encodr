@@ -774,8 +774,9 @@
     return btn;
   }
 
-  // Populate gallery with saved sprites on load
-  loadUserSprites().forEach((sprite, i) => addUserThumb(sprite, i));
+  // Populate gallery with saved sprites on load (newest first)
+  const _initSprites = loadUserSprites();
+  for (let i = _initSprites.length - 1; i >= 0; i--) addUserThumb(_initSprites[i], i);
 
   // ── Save button & dialog ──────────────────────────────────────────
   const saveDialog  = document.getElementById('save-dialog');
@@ -802,7 +803,9 @@
     };
     list.push(entry);
     saveUserSprites(list);
-    addUserThumb(entry, list.length - 1);
+    const newBtn = addUserThumb(entry, list.length - 1);
+    const firstUser = gallery.querySelector('.sprite-thumb[data-user-idx]');
+    if (firstUser && firstUser !== newBtn) gallery.insertBefore(newBtn, firstUser);
     resizeGallery();
   }
 
