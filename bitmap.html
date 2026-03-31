@@ -1085,7 +1085,7 @@
 
   // First question generated when user switches to Test tab
   document.getElementById('tab-test').addEventListener('click', () => {
-    if (bqTotal === 0 && bqCount === 1) nextQuestion();
+    if (!bqQuestion) nextQuestion();
   }, { once: true });
 
   // ── Init ──────────────────────────────────────────────────────────
