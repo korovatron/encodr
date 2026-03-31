@@ -99,18 +99,52 @@
   </div>
 
   <div id="quiz-section" hidden>
+    <div class="quiz-topbar">
+      <div class="qtype-group">
+        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
+        <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
+      </div>
+      <div class="quiz-score-area">
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="q-reset-score">Reset score</button>
+      </div>
+    </div>
+
     <div class="card quiz-q-card">
       <div class="res-block">
         <div class="quiz-q-header">
-          <span class="quiz-q-num">Test Mode</span>
+          <span class="quiz-q-num" id="q-num">Question 1</span>
+          <span class="badge" id="q-type-badge"></span>
         </div>
-        <div class="quiz-q-text">Test mode for unsigned binary and hexadecimal will be added next.</div>
+        <div class="quiz-q-text" id="q-text"></div>
+        <p class="quiz-format-hint" id="q-format-hint"></p>
       </div>
+    </div>
+
+    <div class="card" id="q-answer-card">
+      <div class="res-block">
+        <div class="q-answer-lbl" id="q-answer-lbl">Your Answer</div>
+        <input class="q-denary-input" type="text" id="q-input"
+               placeholder="Type your answer" autocomplete="off" spellcheck="false" />
+      </div>
+    </div>
+
+    <div class="quiz-actions">
+      <button class="btn btn-submit" id="q-submit">Check Answer</button>
     </div>
   </div>
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
+
+<dialog id="q-modal" aria-labelledby="q-modal-feedback">
+  <div class="modal">
+    <div class="modal-feedback" id="q-modal-feedback"></div>
+    <div class="modal-footer">
+      <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
   const S = {
@@ -332,12 +366,318 @@
     document.getElementById('quiz-section').hidden = isExplore;
     document.getElementById('tab-explore').classList.toggle('active', isExplore);
     document.getElementById('tab-quiz').classList.toggle('active', !isExplore);
+    if (!isExplore) {
+      QS.questionNum = 1;
+      updateScoreDisplay();
+      generateQuizQuestion();
+    } else {
+      closeModal();
+    }
+  }
+
+  const QS = {
+    questionType: 'mixed', // 'mixed' | '1' | '2' | '3' | '4' | '5' | '6'
+    currentType: '1',
+    questionNum: 1,
+    correct: 0,
+    wrong: 0,
+    total: 0,
+    answered: false,
+    prompt: '',
+    formatHint: '',
+    answerKind: 'den', // 'den' | 'bin' | 'hex'
+    expectedText: '',
+    expectedValue: 0,
+    rangeMax: 255
+  };
+
+  const LS_SCORE_UNSIGNED = 'encodr-unsigned-score';
+
+  function loadScoreUnsigned() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_SCORE_UNSIGNED)) || { correct: 0, wrong: 0, total: 0 };
+    } catch {
+      return { correct: 0, wrong: 0, total: 0 };
+    }
+  }
+
+  function saveScoreUnsigned() {
+    localStorage.setItem(LS_SCORE_UNSIGNED, JSON.stringify({
+      correct: QS.correct,
+      wrong: QS.wrong,
+      total: QS.total
+    }));
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById('q-correct').textContent = QS.correct;
+    document.getElementById('q-wrong').textContent = QS.wrong;
+    document.getElementById('q-total').textContent = QS.total;
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function fmtBin(v, width) {
+    return v.toString(2).padStart(width, '0');
+  }
+
+  function fmtHex(v, width = 0) {
+    const h = v.toString(16).toUpperCase();
+    return width > 0 ? h.padStart(width, '0') : h;
+  }
+
+  function normalizeBinary(raw) {
+    if (!raw) return null;
+    let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
+    if (/^0b/i.test(s)) s = s.slice(2);
+    if (!/^[01]+$/.test(s)) return null;
+    return s;
+  }
+
+  function normalizeHex(raw) {
+    if (!raw) return null;
+    let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
+    if (/^0x/i.test(s)) s = s.slice(2);
+    s = s.toUpperCase();
+    if (!/^[0-9A-F]+$/.test(s)) return null;
+    return s;
+  }
+
+  function openModal() {
+    const dlg = document.getElementById('q-modal');
+    if (!dlg.open) dlg.showModal();
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeModal() {
+    const dlg = document.getElementById('q-modal');
+    if (dlg.open) dlg.close();
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+  }
+
+  function setQuestion(type) {
+    const labels = {
+      '1': 'BIN → DEN',
+      '2': 'DEN → BIN',
+      '3': 'DEN → HEX',
+      '4': 'HEX → DEN',
+      '5': 'BIN → HEX',
+      '6': 'HEX → BIN'
+    };
+
+    const badge = document.getElementById('q-type-badge');
+    badge.className = 'badge ' + (type === '1' || type === '5' ? 'badge-m' : type === '2' || type === '6' ? 'badge-e' : 'badge-r');
+    badge.textContent = labels[type];
+
+    if (type === '1') {
+      const value = randInt(0, 255);
+      const bin = fmtBin(value, 8);
+      QS.prompt = pick([
+        `Convert the binary value ${bin} to denary.`,
+        `What denary number does 8-bit binary ${bin} represent?`,
+        `Write ${bin} as a denary value.`
+      ]);
+      QS.formatHint = 'Enter a denary integer (0 to 255).';
+      QS.answerKind = 'den';
+      QS.expectedText = String(value);
+      QS.expectedValue = value;
+    } else if (type === '2') {
+      const value = randInt(0, 255);
+      QS.prompt = pick([
+        `Convert denary ${value} to 8-bit binary.`,
+        `Write denary ${value} as an 8-bit binary value.`,
+        `What is the 8-bit binary form of denary ${value}?`
+      ]);
+      QS.formatHint = 'Enter binary (0s and 1s). Leading zeros are allowed.';
+      QS.answerKind = 'bin';
+      QS.expectedText = fmtBin(value, 8);
+      QS.expectedValue = value;
+    } else if (type === '3') {
+      const value = randInt(0, 255);
+      QS.prompt = pick([
+        `Convert denary ${value} to hexadecimal.`,
+        `Write denary ${value} as a 2-digit hex value.`,
+        `What is denary ${value} in hexadecimal?`
+      ]);
+      QS.formatHint = 'Enter hexadecimal (00 to FF), no prefix needed.';
+      QS.answerKind = 'hex';
+      QS.expectedText = fmtHex(value, 2);
+      QS.expectedValue = value;
+    } else if (type === '4') {
+      const value = randInt(0, 255);
+      const hex = fmtHex(value, 2);
+      QS.prompt = pick([
+        `Convert hexadecimal ${hex} to denary.`,
+        `What denary value is hex ${hex}?`,
+        `Write hex ${hex} as a denary number.`
+      ]);
+      QS.formatHint = 'Enter a denary integer (0 to 255).';
+      QS.answerKind = 'den';
+      QS.expectedText = String(value);
+      QS.expectedValue = value;
+    } else if (type === '5') {
+      const oddLengths = [5, 6, 7, 9, 10, 11, 13, 14, 15];
+      const nibbleLengths = [4, 8, 12, 16];
+      const useOddLen = Math.random() < 0.2;
+      const width = useOddLen ? pick(oddLengths) : pick(nibbleLengths);
+      const maxForWidth = Math.min(65535, 2 ** width - 1);
+      const value = randInt(0, maxForWidth);
+      const bin = fmtBin(value, width);
+      QS.prompt = pick([
+        `Convert binary ${bin} to hexadecimal.`,
+        `Write the binary value ${bin} as hex.`,
+        `What is ${bin} in hexadecimal?`
+      ]);
+      QS.formatHint = 'Enter hexadecimal using 0-9 and A-F.';
+      QS.answerKind = 'hex';
+      QS.expectedText = fmtHex(value);
+      QS.expectedValue = value;
+    } else {
+      const hexDigits = pick([1, 2, 3, 4]);
+      const maxForDigits = 16 ** hexDigits - 1;
+      const value = randInt(0, maxForDigits);
+      const hex = fmtHex(value, hexDigits);
+      const bitWidth = hexDigits * 4;
+      QS.prompt = pick([
+        `What is hex ${hex} represented as ${bitWidth}-bit binary?`,
+        `Convert hexadecimal ${hex} to ${bitWidth}-bit binary.`,
+        `Write hex ${hex} as a ${bitWidth}-bit binary value.`
+      ]);
+      QS.formatHint = 'Enter binary (0s and 1s).';
+      QS.answerKind = 'bin';
+      QS.expectedText = fmtBin(value, bitWidth);
+      QS.expectedValue = value;
+    }
+  }
+
+  function renderQuizQuestion() {
+    document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
+    document.getElementById('q-text').textContent = QS.prompt;
+    document.getElementById('q-format-hint').textContent = QS.formatHint;
+    document.getElementById('q-answer-lbl').textContent = 'Your Answer';
+
+    const inp = document.getElementById('q-input');
+    inp.value = '';
+    inp.disabled = false;
+    inp.placeholder = QS.answerKind === 'den'
+      ? 'e.g. 202'
+      : QS.answerKind === 'bin'
+      ? 'e.g. 11001010'
+      : 'e.g. CA';
+
+    closeModal();
+    document.getElementById('q-modal-feedback').innerHTML = '';
+    document.getElementById('q-submit').disabled = false;
+  }
+
+  function generateQuizQuestion() {
+    QS.currentType = QS.questionType === 'mixed'
+      ? pick(['1', '2', '3', '4', '5', '6'])
+      : String(QS.questionType);
+    QS.answered = false;
+    setQuestion(QS.currentType);
+    renderQuizQuestion();
+  }
+
+  function checkQuizAnswer() {
+    if (QS.answered) return;
+
+    const input = document.getElementById('q-input');
+    const raw = (input.value || '').trim();
+    if (!raw) {
+      input.focus();
+      return;
+    }
+
+    let correct = false;
+    let studentDisplay = raw;
+
+    if (QS.answerKind === 'den') {
+      if (!/^-?\d+$/.test(raw)) {
+        input.focus();
+        return;
+      }
+      const student = parseInt(raw, 10);
+      studentDisplay = student.toString();
+      correct = student === QS.expectedValue;
+    } else if (QS.answerKind === 'bin') {
+      const b = normalizeBinary(raw);
+      if (!b) {
+        input.focus();
+        return;
+      }
+      studentDisplay = b;
+      correct = parseInt(b, 2) === QS.expectedValue;
+    } else {
+      const h = normalizeHex(raw);
+      if (!h) {
+        input.focus();
+        return;
+      }
+      studentDisplay = h;
+      correct = parseInt(h, 16) === QS.expectedValue;
+    }
+
+    QS.answered = true;
+    QS.total++;
+    document.getElementById('q-submit').disabled = true;
+    document.getElementById('q-input').disabled = true;
+
+    const expected = QS.expectedText;
+    const answerName = QS.answerKind === 'den' ? 'denary' : QS.answerKind === 'bin' ? 'binary' : 'hexadecimal';
+
+    const html = correct
+      ? `✓ Correct! The ${answerName} answer is <strong>${expected}</strong>.`
+      : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
+
+    if (correct) QS.correct++; else QS.wrong++;
+    updateScoreDisplay();
+    saveScoreUnsigned();
+
+    const fbEl = document.getElementById('q-modal-feedback');
+    fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
+    fbEl.innerHTML = html;
+    if (document.activeElement) document.activeElement.blur();
+    openModal();
   }
 
   document.getElementById('u-minus').addEventListener('click', () => changeBits(-1));
   document.getElementById('u-plus').addEventListener('click', () => changeBits(+1));
   document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
   document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
+
+  const _score = loadScoreUnsigned();
+  QS.correct = _score.correct;
+  QS.wrong = _score.wrong;
+  QS.total = _score.total;
+  updateScoreDisplay();
+
+  document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
+  document.getElementById('q-input').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && !QS.answered) checkQuizAnswer();
+  });
+  document.getElementById('q-next').addEventListener('click', () => {
+    closeModal();
+    QS.questionNum++;
+    generateQuizQuestion();
+  });
+  document.getElementById('q-reset-score').addEventListener('click', () => {
+    QS.correct = 0;
+    QS.wrong = 0;
+    QS.total = 0;
+    QS.questionNum = 1;
+    localStorage.removeItem(LS_SCORE_UNSIGNED);
+    updateScoreDisplay();
+    generateQuizQuestion();
+  });
 
   let resizeTimer;
   window.addEventListener('resize', () => {
