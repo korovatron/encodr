@@ -66,7 +66,7 @@
 
     .cc {
       display: flex; flex-direction: column; align-items: stretch;
-      height: 62px;
+      height: 70px;
       border-radius: 6px; cursor: default;
       transition: filter .1s, transform .1s, outline-color .1s;
       -webkit-user-select: none; user-select: none; overflow: hidden;
@@ -81,7 +81,7 @@
       font-size: 12.5px; line-height: 1; color: var(--dim);
     }
     .cc-glyph {
-      font-size: 22px; line-height: 1; text-align: center;
+      font-size: 28px; line-height: 1; text-align: center;
       flex: 1; display: flex; align-items: center; justify-content: center;
       font-family: 'Consolas', 'Courier New', monospace;
     }
@@ -90,7 +90,7 @@
       letter-spacing: 0;
     }
     .cc-abbr {
-      font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+      font-size: 14px; font-weight: 700; letter-spacing: 0.5px;
       text-align: center; flex: 1; display: flex; align-items: center;
       justify-content: center; line-height: 1.2;
       text-transform: uppercase;
@@ -102,7 +102,7 @@
     .cat-ctrl .cc-dec, .cat-ctrl .cc-hex { color: #7a3030; }
 
     .cat-space { background: #000; box-shadow: 0 0 0 1px var(--dim); }
-    .cat-space .cc-glyph { color: var(--dim); font-size: 13px; }
+    .cat-space .cc-glyph { color: var(--dim); font-size: 15px; }
     .cat-space .cc-dec, .cat-space .cc-hex { color: #3a4070; }
 
     .cat-digit { background: #000; box-shadow: 0 0 0 1px var(--ml); }
@@ -218,9 +218,9 @@
         grid-template-columns: repeat(8, minmax(0, 1fr));
         gap: 3px;
       }
-      .cc { height: 48px; border-radius: 4px; }
-      .cc-glyph { font-size: 17px; }
-      .cc-abbr  { font-size: 10px; }
+      .cc { height: 54px; border-radius: 4px; }
+      .cc-glyph { font-size: 21px; }
+      .cc-abbr  { font-size: 12px; }
     }
     @media (max-width: 700px) {
       .cc-dec, .cc-hex { display: none; }
@@ -228,9 +228,9 @@
     }
     @media (max-width: 420px) {
       .char-grid { gap: 2px; }
-      .cc { height: 38px; border-radius: 3px; }
-      .cc-glyph { font-size: 14px; }
-      .cc-abbr  { font-size: 9px; }
+      .cc { height: 44px; border-radius: 3px; }
+      .cc-glyph { font-size: 17px; }
+      .cc-abbr  { font-size: 10px; }
     }
 
     /* ── Unicode info panel ─────────────────────── */
