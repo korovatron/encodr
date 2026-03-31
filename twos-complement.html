@@ -39,6 +39,9 @@
         <button class="step" id="t-plus" aria-label="Use more bits">+</button>
         <span class="chip-lbl chip-lbl-u">(4-16)</span>
       </div>
+      <div class="chip chip-m">
+        <button class="negate-btn" id="btn-negate">Negate</button>
+      </div>
     </div>
 
     <div class="result-card">
@@ -49,6 +52,7 @@
             <div class="bit-grid" id="t-grid"></div>
           </div>
         </div>
+          <div class="negate-steps" id="negate-steps" hidden></div>
       </div>
     </div>
 
@@ -61,6 +65,17 @@
             <div class="res-eq-row">
               <div class="res-eq" id="res-eq">0 = 0</div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-o row-badge">Range</span>
+          <div class="row-main">
+            <div class="res-eq" id="res-range">Range: &minus;128 to 127</div>
           </div>
         </div>
       </div>
@@ -83,7 +98,8 @@
 
 <script>
   const S = {
-    bits: Array(8).fill(0)
+    bits: Array(8).fill(0),
+    negateSteps: null
   };
 
   function weightAt(i, n) {
@@ -121,6 +137,61 @@
     return bits.reduce((sum, bit, i) => sum + (bit ? weightAt(i, bits.length) : 0), 0);
   }
 
+  function clearSteps() {
+    S.negateSteps = null;
+    const el = document.getElementById('negate-steps');
+    if (!el) return;
+    el.hidden = true;
+    el.innerHTML = '';
+  }
+
+  function computeNegate() {
+    const n = S.bits.length;
+    const origBits = [...S.bits];
+    const origVal = valueOf(origBits);
+    const flipBits = origBits.map(b => b ^ 1);
+    const flipUnsigned = flipBits.reduce((s, b, i) => s + (b ? 2 ** (n - 1 - i) : 0), 0);
+    const resultBits = [...flipBits];
+    let carry = 1;
+    for (let i = n - 1; i >= 0; i--) {
+      const sum = resultBits[i] + carry;
+      resultBits[i] = sum & 1;
+      carry = sum >> 1;
+    }
+    const resultVal = valueOf(resultBits);
+    return { origBits, origVal, flipBits, flipUnsigned, resultBits, resultVal, n };
+  }
+
+  function doNegate() {
+    const steps = computeNegate();
+    S.bits = steps.resultBits;
+    S.negateSteps = steps;
+    renderAll();
+  }
+
+  function renderNegateSteps() {
+    const el = document.getElementById('negate-steps');
+    if (!S.negateSteps) { el.hidden = true; return; }
+    const { origBits, origVal, flipBits, flipUnsigned, resultBits, resultVal, n } = S.negateSteps;
+    const bstr = arr => arr.join('');
+    const vhtml = v => v < 0 ? `&minus;${Math.abs(v)}` : String(v);
+    const unsignedOrig = (2 ** n - 1) - flipUnsigned;
+    const flipNote = `(2<sup>${n}</sup>&minus;1 &minus; ${unsignedOrig})`;
+    let resultNote;
+    if (origVal === 0) {
+      resultNote = `<span class="ns-warn">(zero negates to itself)</span>`;
+    } else if (resultVal === origVal) {
+      resultNote = `<span class="ns-warn">(overflow &mdash; min value negates to itself)</span>`;
+    } else {
+      resultNote = `<span class="ns-tick">&#x2713;</span>`;
+    }
+    el.innerHTML =
+      `<div class="negate-step"><span class="ns-lbl">Original</span><code class="ns-bits">${bstr(origBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(origVal)}</span></div>` +
+      `<div class="negate-step"><span class="ns-lbl">Flip bits</span><code class="ns-bits">${bstr(flipBits)}</code><span class="ns-eq">=</span><span class="ns-val">${flipUnsigned}</span><span class="ns-note">${flipNote}</span></div>` +
+      `<div class="negate-step"><span class="ns-lbl">Add 1</span><code class="ns-bits">${bstr(resultBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(resultVal)}</span><span class="ns-note">${resultNote}</span></div>`;
+    el.hidden = false;
+  }
+
   function fitGrid(gridId, n) {
     const grid = document.getElementById(gridId);
     if (!grid || !grid.parentElement) return;
@@ -155,6 +226,7 @@
       box.setAttribute('aria-label', `Bit ${i + 1} of ${n}, currently ${bit}`);
 
       const doToggle = () => {
+        clearSteps();
         S.bits[i] ^= 1;
         renderAll();
       };
@@ -182,12 +254,17 @@
       terms.push(weightTermHTML(i, bits.length));
     });
 
+    const n = bits.length;
     const value = valueOf(bits);
+    const min = -(2 ** (n - 1));
+    const max = 2 ** (n - 1) - 1;
     document.getElementById('res-big').textContent = String(value);
     document.getElementById('res-eq').innerHTML = `${terms.length ? terms.join(' + ') : '0'} = <span class="vm">${value}</span>`;
+    document.getElementById('res-range').innerHTML = `Range: <span class="vm">${min}</span> to <span class="vm">${max}</span>`;
   }
 
   function changeBits(delta) {
+    clearSteps();
     const cur = S.bits.length;
     const next = Math.max(4, Math.min(16, cur + delta));
     if (next === cur) return;
@@ -213,10 +290,12 @@
     document.getElementById('t-count').textContent = S.bits.length;
     renderGrid();
     renderResult();
+    renderNegateSteps();
   }
 
-  document.getElementById('t-minus').addEventListener('click', () => changeBits(-1));
-  document.getElementById('t-plus').addEventListener('click', () => changeBits(+1));
+  document.getElementById('t-minus').addEventListener('click', () => { clearSteps(); changeBits(-1); });
+  document.getElementById('t-plus').addEventListener('click', () => { clearSteps(); changeBits(+1); });
+  document.getElementById('btn-negate').addEventListener('click', doNegate);
   document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
   document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
 

@@ -209,6 +209,62 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 .badge-m { background: #000000; color: var(--ml); box-shadow: 0 0 0 2px var(--ml), 0 0 8px rgba(255,255,0,.45); }
 .badge-e { background: #000000; color: var(--exl); box-shadow: 0 0 0 2px var(--exl), 0 0 8px rgba(0,255,0,.40); }
 .badge-r { background: #000000; color: #ffffff; box-shadow: 0 0 0 2px rgba(255,255,255,.70), 0 0 8px rgba(255,255,255,.25); }
+.badge-o { background: #000000; color: #ff8c00; box-shadow: 0 0 0 2px #ff8c00, 0 0 8px rgba(255,140,0,.45); }
+.negate-btn {
+  background: transparent;
+  color: var(--ml);
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: color .12s;
+}
+.negate-btn:hover { color: #fff6a8; }
+.negate-btn:active { color: #d7c800; }
+.negate-steps {
+  margin-top: 12px;
+  padding-top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  width: max-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+.negate-step {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'Consolas', monospace;
+  font-size: 19px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  text-align: left;
+}
+.ns-lbl { color: var(--muted); width: 100px; text-align: right; font-size: 17px; flex-shrink: 0; }
+.ns-bits {
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.16);
+}
+.ns-eq { color: var(--muted); }
+.ns-val { color: var(--ml); }
+.ns-note { color: var(--muted); font-size: 17px; }
+.ns-tick { color: #39ff7a; }
+.ns-warn { color: #ff5555; font-size: 17px; }
 
 .card-sub { font-size: 14px; color: var(--muted); }
 
