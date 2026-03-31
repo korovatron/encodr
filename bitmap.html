@@ -709,6 +709,13 @@
     localStorage.setItem(LS_KEY, JSON.stringify(list));
   }
 
+  function removeUserThumbs() {
+    gallery.querySelectorAll('.sprite-thumb[data-user-idx]').forEach(btn => btn.remove());
+    for (let i = thumbEntries.length - 1; i >= 0; i--) {
+      if (thumbEntries[i].isUser) thumbEntries.splice(i, 1);
+    }
+  }
+
   function addUserThumb(sprite, index) {
     const btn = document.createElement('button');
     btn.className = 'sprite-thumb';
@@ -718,7 +725,7 @@
     const canvas = document.createElement('canvas');
     // Use the sprite's own colours for the thumbnail
     const thumbSprite = { color: sprite.colours[1], data: sprite.data };
-    thumbEntries.push({ canvas, sprite: thumbSprite });
+  thumbEntries.push({ canvas, sprite: thumbSprite, isUser: true });
 
     const label = document.createElement('span');
     label.textContent = sprite.name;
@@ -730,14 +737,11 @@
     del.addEventListener('click', (e) => {
       e.stopPropagation();
       const list = loadUserSprites();
-      list.splice(index, 1);
+      const userIdx = parseInt(btn.dataset.userIdx, 10);
+      if (!Number.isInteger(userIdx)) return;
+      list.splice(userIdx, 1);
       saveUserSprites(list);
-      // Remove from thumbEntries
-      const ti = thumbEntries.findIndex(t => t.canvas === canvas);
-      if (ti !== -1) thumbEntries.splice(ti, 1);
-      btn.remove();
-      // Re-index remaining user thumbs
-      gallery.querySelectorAll('[data-user-idx]').forEach((b, i) => { b.dataset.userIdx = i; });
+      renderUserThumbs(list);
       resizeGallery();
     });
 
@@ -769,8 +773,13 @@
     return btn;
   }
 
+  function renderUserThumbs(list) {
+    removeUserThumbs();
+    list.forEach((sprite, i) => addUserThumb(sprite, i));
+  }
+
   // Populate gallery with saved sprites on load
-  loadUserSprites().forEach((sprite, i) => addUserThumb(sprite, i));
+  renderUserThumbs(loadUserSprites());
 
   // ── Save button & dialog ──────────────────────────────────────────
   const saveDialog  = document.getElementById('save-dialog');
@@ -795,15 +804,16 @@
       colours: [...colours],
       multicolour,
     };
-    list.push(entry);
+    list.unshift(entry);
     saveUserSprites(list);
-    addUserThumb(entry, list.length - 1);
+    renderUserThumbs(list);
     resizeGallery();
   }
 
   // ── Dismiss keyboard when tapping outside inputs ──────────────────
   document.addEventListener('touchstart', (e) => {
-    if (e.target.tagName !== 'INPUT') document.activeElement?.blur();
+    if (e.target.closest('input, button, label, select, textarea, dialog')) return;
+    document.activeElement?.blur();
   }, { passive: true });
 
   // ── Keep gallery height = card height & canvases sized to column ──
