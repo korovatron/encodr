@@ -111,6 +111,10 @@
         <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
         <button class="qtype-btn" data-qt="1"><span class="qt-long">Binary &rarr; Denary</span><span class="qt-short">BIN &rarr; DEN</span></button>
         <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">DEN &rarr; BIN</span></button>
+        <button class="qtype-btn" data-qt="3"><span class="qt-long">Smallest positive</span><span class="qt-short">MIN+</span></button>
+        <button class="qtype-btn" data-qt="4"><span class="qt-long">Largest positive</span><span class="qt-short">MAX+</span></button>
+        <button class="qtype-btn" data-qt="5"><span class="qt-long">Largest negative</span><span class="qt-short">MAX−</span></button>
+        <button class="qtype-btn" data-qt="6"><span class="qt-long">Most negative</span><span class="qt-short">MIN−</span></button>
       </div>
       <div class="quiz-score-area">
         <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
@@ -432,7 +436,7 @@
   }
 
   const QS = {
-    questionType: 'mixed',   // 'mixed' | '1' | '2'
+    questionType: 'mixed',   // 'mixed' | '1' | '2' | '3' | '4' | '5' | '6'
     currentType:  1,          // actual type for current question
     questionNum:  1,
     correct:      0,
@@ -448,6 +452,7 @@
     isInexact:    false,
     studentM:     [],
     studentE:     [],
+    extremaType:  null, // '3'|'4'|'5'|'6' for extrema questions
   };
 
   const LS_SCORE_FP = 'encodr-fp-score';
@@ -463,44 +468,101 @@
 
   function generateQuizQuestion() {
     QS.currentType = QS.questionType === 'mixed'
-      ? (Math.random() < 0.5 ? 1 : 2)
-      : parseInt(QS.questionType);
+      ? pick(['1', '2', '3', '4', '5', '6'])
+      : String(QS.questionType);
 
-    const mLen = pick(QS.currentType === 1 ? M_LENS_T1 : M_LENS_T2);
+    const mLen = pick([6, 7, 7, 8, 8, 9, 10]);
     const eLen = pick(E_LENS);
     QS.mLen = mLen;
     QS.eLen = eLen;
 
-    let mb, eb, mv, ev, val, tries = 0;
-    do {
-      mb = randomBits(mLen);
-      eb = randomBits(eLen);
-      mv = mVal(mb);
-      ev = eVal(eb);
-      val = mv === 0 ? 0 : mv * 2 ** ev;
-      tries++;
-    } while ((mb[0] === mb[1] || val === 0 || !isFinite(val) || dpCount(val) > 6) && tries < 500);
-
-    QS.mBits    = mb;
-    QS.eBits    = eb;
     QS.answered = false;
     QS.studentM = Array(mLen).fill(0);
     QS.studentE = Array(eLen).fill(0);
+    QS.isInexact = false;
 
-    // Inexact: ~25% of Type 2 questions.
-    // Offset target by 10–45% of a ULS so the generated bits are always the nearest representation.
-    QS.isInexact = (QS.currentType === 2) && (Math.random() < 0.25);
-    if (QS.isInexact) {
-      const uls    = 2 ** (ev - mLen + 1);
-      const frac   = 0.10 + Math.random() * 0.35;
-      const offset = uls * frac;
-      QS.storedValue  = val;
-      // Shift target away from zero so the stored value under-represents it
-      // Round to at most 6 dp so the displayed number stays clean
-      QS.targetDenary = parseFloat((val > 0 ? val + offset : val - offset).toFixed(6));
-    } else {
-      QS.storedValue  = val;
+    if (QS.currentType === '1') {
+      // Binary→Denary: random normalized number
+      let mb, eb, mv, ev, val, tries = 0;
+      do {
+        mb = randomBits(mLen);
+        eb = randomBits(eLen);
+        mv = mVal(mb);
+        ev = eVal(eb);
+        val = mv === 0 ? 0 : mv * 2 ** ev;
+        tries++;
+      } while ((mb[0] === mb[1] || val === 0 || !isFinite(val) || dpCount(val) > 6) && tries < 500);
+      QS.mBits = mb;
+      QS.eBits = eb;
+      QS.storedValue = val;
       QS.targetDenary = val;
+      QS.extremaType = null;
+    } else if (QS.currentType === '2') {
+      // Denary→Binary: random normalized target
+      let mb, eb, mv, ev, val, tries = 0;
+      do {
+        mb = randomBits(mLen);
+        eb = randomBits(eLen);
+        mv = mVal(mb);
+        ev = eVal(eb);
+        val = mv === 0 ? 0 : mv * 2 ** ev;
+        tries++;
+      } while ((mb[0] === mb[1] || val === 0 || !isFinite(val) || dpCount(val) > 6) && tries < 500);
+      QS.mBits = mb;
+      QS.eBits = eb;
+      QS.storedValue = val;
+      QS.targetDenary = val;
+      QS.isInexact = Math.random() < 0.25;
+      if (QS.isInexact) {
+        const uls    = 2 ** (eVal(eb) - mLen + 1);
+        const offset = uls * (0.10 + Math.random() * 0.35);
+        QS.targetDenary = parseFloat((val > 0 ? val + offset : val - offset).toFixed(6));
+      }
+      QS.extremaType = null;
+    } else if (QS.currentType === '3') {
+      // Smallest positive: 0.1 × 2^min
+      const eMin = -(2 ** (eLen - 1));
+      QS.mBits = [0, ...Array(mLen - 1).fill(0)];
+      const eBits = (eMin + 2 ** (eLen - 1)).toString(2);
+      QS.eBits = eBits.split('').map(ch => ch === '1' ? 1 : 0);
+      while (QS.eBits.length < eLen) QS.eBits.unshift(0);
+      const minPos = (0.5) * 2 ** eMin;
+      QS.storedValue = minPos;
+      QS.targetDenary = minPos;
+      QS.extremaType = '3';
+    } else if (QS.currentType === '4') {
+      // Largest positive: all bits 1 except MSB=0
+      const eMax = 2 ** (eLen - 1) - 1;
+      QS.mBits = [0, ...Array(mLen - 1).fill(1)];
+      const eBits = (eMax + 2 ** (eLen - 1)).toString(2);
+      QS.eBits = eBits.split('').map(ch => ch === '1' ? 1 : 0);
+      while (QS.eBits.length < eLen) QS.eBits.unshift(0);
+      const maxPos = (1 - 2 ** (-(mLen - 1))) * 2 ** eMax;
+      QS.storedValue = maxPos;
+      QS.targetDenary = maxPos;
+      QS.extremaType = '4';
+    } else if (QS.currentType === '5') {
+      // Largest negative (closest to zero): −0.1 × 2^min
+      const eMin = -(2 ** (eLen - 1));
+      QS.mBits = [1, ...Array(mLen - 1).fill(0)];
+      const eBits = (eMin + 2 ** (eLen - 1)).toString(2);
+      QS.eBits = eBits.split('').map(ch => ch === '1' ? 1 : 0);
+      while (QS.eBits.length < eLen) QS.eBits.unshift(0);
+      const maxNeg = (-0.5) * 2 ** eMin;
+      QS.storedValue = maxNeg;
+      QS.targetDenary = maxNeg;
+      QS.extremaType = '5';
+    } else if (QS.currentType === '6') {
+      // Most negative: all bits 1, includes MSB=1
+      const eMax = 2 ** (eLen - 1) - 1;
+      QS.mBits = [1, ...Array(mLen - 1).fill(1)];
+      const eBits = (eMax + 2 ** (eLen - 1)).toString(2);
+      QS.eBits = eBits.split('').map(ch => ch === '1' ? 1 : 0);
+      while (QS.eBits.length < eLen) QS.eBits.unshift(0);
+      const minNeg = -(1 - 2 ** (-(mLen - 1))) * 2 ** eMax;
+      QS.storedValue = minNeg;
+      QS.targetDenary = minNeg;
+      QS.extremaType = '6';
     }
 
     renderQuizQuestion();
@@ -513,7 +575,7 @@
     const badge   = document.getElementById('q-type-badge');
     const errArea = document.getElementById('q-err-area');
 
-    if (t === 1) {
+    if (t === '1') {
       badge.className = 'badge badge-m';
       badge.textContent = 'Binary \u2192 Denary';
       document.getElementById('q-text').textContent =
@@ -523,7 +585,7 @@
       errArea.hidden = true;
       const inp = document.getElementById('q-denary-input');
       inp.value = ''; inp.disabled = false;
-    } else {
+    } else if (t === '2') {
       badge.className = 'badge badge-e';
       badge.textContent = 'Denary \u2192 Binary';
       document.getElementById('q-t1-area').hidden = true;
@@ -548,10 +610,32 @@
           'Toggle the bits to represent the denary value shown below.';
         errArea.hidden = true;
       }
+    } else if (['3', '4', '5', '6'].includes(t)) {
+      // Extrema types: all are binary → denary format with custom questions
+      const questions = {
+        '3': 'What is the smallest positive number you can represent?',
+        '4': 'What is the largest positive number you can represent?',
+        '5': 'What is the largest negative number (closest to zero)?',
+        '6': 'What is the most negative number you can represent?'
+      };
+      const labels = {
+        '3': 'Smallest positive',
+        '4': 'Largest positive',
+        '5': 'Largest negative',
+        '6': 'Most negative'
+      };
+      badge.className = 'badge badge-m';
+      badge.textContent = labels[t];
+      document.getElementById('q-text').textContent = questions[t];
+      document.getElementById('q-target-wrap').hidden = true;
+      document.getElementById('q-t1-area').hidden = false;
+      errArea.hidden = true;
+      const inp = document.getElementById('q-denary-input');
+      inp.value = ''; inp.disabled = false;
     }
 
-    renderQuizGrid('m', t === 1 ? QS.mBits : QS.studentM, t === 2);
-    renderQuizGrid('e', t === 1 ? QS.eBits : QS.studentE, t === 2);
+    renderQuizGrid('m', ['1', '3', '4', '5', '6'].includes(t) ? QS.mBits : QS.studentM, t === '2');
+    renderQuizGrid('e', ['1', '3', '4', '5', '6'].includes(t) ? QS.eBits : QS.studentE, t === '2');
 
     closeModal();
     document.getElementById('q-modal-feedback').innerHTML = '';
@@ -610,7 +694,7 @@
     let stuAbs = null;
     let stuRel = null;
 
-    if (QS.currentType === 1) {
+    if (['1', '3', '4', '5', '6'].includes(QS.currentType)) {
       const raw = (document.getElementById('q-denary-input').value || '')
         .trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
       if (!raw) {
@@ -646,13 +730,16 @@
     let correct, html;
     const target = QS.targetDenary;
 
-    if (QS.currentType === 1) {
-      // ── Type 1: Binary → Denary ──────────────────────────────────
+    if (['1', '3', '4', '5', '6'].includes(QS.currentType)) {
+      // ── Type 1 & extrema types: Binary → Denary ──────────────────────────────
       const tol     = Math.abs(target) > 1e-12 ? Math.abs(target) * 1e-6 : 1e-9;
+      const typeLabel = ['3', '4', '5', '6'].includes(QS.currentType)
+        ? `<strong>${QS.extremaType === '3' ? 'smallest positive' : QS.extremaType === '4' ? 'largest positive' : QS.extremaType === '5' ? 'largest negative' : 'most negative'}</strong> `
+        : '';
 
       correct = Math.abs(student - target) <= tol;
       if (correct) {
-        html = `\u2713 Correct! The value is <strong>${fmtNum(target)}</strong>.`;
+        html = `\u2713 Correct! The ${typeLabel}value is <strong>${fmtNum(target)}</strong>.`;
       } else {
         const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
         html =
