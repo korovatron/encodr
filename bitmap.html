@@ -185,7 +185,7 @@
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: var(--muted);
+      color: #ffffff;
     }
     .thumb-delete {
       position: absolute;
@@ -252,7 +252,7 @@
 
   <div id="explore-section">
   <p class="intro">
-    Enter a denary value (0–255) into each byte field. Each byte controls 8 pixels in the image grid.
+    Try to recreate a gallery image by entering denary values (0-255) into each byte field. In 1-bit mode each byte controls 8 pixels, and in 2-bit mode each byte controls 4 double-width pixels.
     Three bytes fill one row of 24 pixels — the same format as a <strong>Commodore 64 sprite</strong>.
   </p>
 
@@ -582,53 +582,50 @@
   // ── Sprite library ────────────────────────────────────────────────
   const SPRITES = [
     {
-      name: 'Face',
-      color: '#ffff00',
+      name: 'Manic Miner',
+      color: '#ffffff',
       data: [
-        0,126,0,    1,255,128,  3,255,192,  7,219,224,  7,219,224,
-        15,255,240, 15,255,240, 15,60,240,  15,60,240,  15,255,240,
-        7,231,224,  7,129,224,  3,255,192,  1,255,128,  0,126,0,
-        0,60,0,     0,126,0,    0,195,0,    1,129,128,  3,0,192,
+        0,0,0,      0,0,0,      0,0,0,      0,12,0,     0,124,0,
+        0,248,0,    0,104,0,    0,124,0,    0,120,0,    0,48,0,
+        0,120,0,    0,252,0,    0,252,0,    1,238,0,    1,246,0,
+        0,120,0,    0,236,0,    0,220,0,    0,238,0,    0,0,0,
         0,0,0,
       ],
     },
     {
-      name: 'Heart',
-      color: '#ff4466',
+      name: 'Alien',
+      multicolour: true,
+      colours: ['#444444', '#ffffff', '#00ffff', '#000000'],
       data: [
-        0,0,0,      0,0,0,      0,0,0,
-        31,129,248, 63,129,252, 127,231,254,
-        255,255,255,127,255,254,63,255,252,
-        31,255,248, 15,255,240, 7,255,224,
-        3,255,192,  1,255,128,  0,255,0,
-        0,126,0,    0,60,0,     0,24,0,
-        0,0,0,      0,0,0,      0,0,0,
+        0,0,0,      0,0,0,      0,0,0,      0,0,0,      0,170,0,
+        2,105,128,  9,235,96,   9,235,96,   14,170,176, 15,255,240,
+        3,255,192,  0,255,0,    0,255,0,    12,195,48,  15,195,240,
+        12,195,48,  12,0,48,    60,0,60,    12,0,48,    0,0,0,
+        0,0,0,
       ],
     },
     {
-      name: 'Diamond',
-      color: '#44ffbb',
+      name: 'Frog',
+      multicolour: true,
+      colours: ['#444444', '#ffffff', '#00ff00', '#000000'],
       data: [
-        0,0,0,      0,0,0,      0,0,0,
-        0,24,0,     0,60,0,     0,126,0,
-        0,255,0,    1,255,128,  3,255,192,
-        7,255,224,  15,255,240, 7,255,224,
-        3,255,192,  1,255,128,  0,255,0,
-        0,126,0,    0,60,0,     0,24,0,
-        0,0,0,      0,0,0,      0,0,0,
+        0,0,0,      4,0,0,      21,0,0,     29,0,64,    29,1,208,
+        21,1,208,   55,171,112, 14,106,192, 2,106,0,    14,170,192,
+        14,170,192, 0,168,0,    8,252,128,  10,170,128, 14,170,192,
+        15,255,192, 3,255,0,    0,204,0,    0,204,48,   60,204,240,
+        63,207,192,
       ],
     },
     {
-      name: 'Rocket',
-      color: '#44aaff',
+      name: 'Yin Yang',
+      color: '#ffffff',
+      colours: ['#000000', '#ffffff'],
       data: [
-        0,24,0,     0,60,0,     0,126,0,
-        0,255,0,    1,255,128,  3,255,192,
-        3,255,192,  3,255,192,  3,255,192,
-        3,255,192,  7,255,224,  15,255,240,
-        3,255,192,  3,255,192,  0,255,0,
-        0,255,0,    3,195,192,  7,129,224,
-        15,0,240,   31,0,248,   62,0,124,
+        0,0,0,      0,0,0,      0,0,0,      0,126,0,    1,255,128,
+        3,255,192,  7,255,224,  7,252,224,  12,56,112,  8,28,208,
+        9,143,208,  9,135,144,  8,0,16,     4,0,32,     4,0,32,
+        2,0,64,     1,129,128,  0,126,0,    0,0,0,      0,0,0,
+        0,0,0,
       ],
     },
   ];
@@ -650,11 +647,22 @@
       const val       = sprite.data[byteIdx];
       const row       = Math.floor(byteIdx / BYTES_PER_ROW);
       const byteInRow = byteIdx % BYTES_PER_ROW;
-      for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
-        const col = byteInRow * BITS_PER_BYTE + bit;
-        const on  = (val >> (7 - bit)) & 1;
-        ctx.fillStyle = on ? sprite.color : '#444';
-        ctx.fillRect(col * px, row * px, px - 1, px - 1);
+      if (sprite.multicolour) {
+        for (let pair = 0; pair < 4; pair++) {
+          const ci = (val >> (6 - pair * 2)) & 0b11;
+          const col = byteInRow * BITS_PER_BYTE + pair * 2;
+          ctx.fillStyle = sprite.colours[ci];
+          ctx.fillRect(col * px, row * px, px * 2 - 1, px - 1);
+        }
+      } else {
+        const offColour = sprite.colours ? sprite.colours[0] : '#444';
+        const onColour = sprite.colours ? sprite.colours[1] : sprite.color;
+        for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
+          const col = byteInRow * BITS_PER_BYTE + bit;
+          const on  = (val >> (7 - bit)) & 1;
+          ctx.fillStyle = on ? onColour : offColour;
+          ctx.fillRect(col * px, row * px, px - 1, px - 1);
+        }
       }
     }
   }
@@ -678,6 +686,23 @@
       inputs[i].classList.remove('err');
     });
     renderPixels();
+  }
+
+  function applySprite(sprite) {
+    if (sprite.colours) {
+      sprite.colours.forEach((hex, i) => {
+        colours[i] = hex;
+        const swBtn = document.getElementById(`btn-c${i}`);
+        const swInp = document.getElementById(`inp-c${i}`);
+        swBtn.style.background = hex;
+        swInp.value = hex;
+      });
+    }
+    multicolour = !!sprite.multicolour;
+    document.documentElement.classList.toggle('mc', multicolour);
+    updateModeBtn();
+    updateSwatchLabels();
+    loadSprite(sprite.data);
   }
 
   SPRITES.forEach((sprite) => {
@@ -722,7 +747,12 @@
 
     const canvas = document.createElement('canvas');
     // Use the sprite's own colours for the thumbnail
-    const thumbSprite = { color: sprite.colours[1], data: sprite.data };
+    const thumbSprite = {
+      data: sprite.data,
+      multicolour: !!sprite.multicolour,
+      colours: [...sprite.colours],
+      color: sprite.colours[1],
+    };
     thumbEntries.push({ canvas, sprite: thumbSprite });
 
     const label = document.createElement('span');
@@ -753,19 +783,7 @@
     btn.addEventListener('click', () => {
       gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      // Restore colours + mode then load data
-      sprite.colours.forEach((hex, i) => {
-        colours[i] = hex;
-        const swBtn = document.getElementById(`btn-c${i}`);
-        const swInp = document.getElementById(`inp-c${i}`);
-        swBtn.style.background = hex;
-        swInp.value = hex;
-      });
-      multicolour = sprite.multicolour;
-      document.documentElement.classList.toggle('mc', multicolour);
-      updateModeBtn();
-      updateSwatchLabels();
-      loadSprite(sprite.data);
+      applySprite(sprite);
     });
 
     // Insert before the first non-user thumb
