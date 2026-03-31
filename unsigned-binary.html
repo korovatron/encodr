@@ -131,6 +131,36 @@
     return raw.padStart(nibbles, '0');
   }
 
+  function maxValue() {
+    return 2 ** S.bits.length - 1;
+  }
+
+  function setValue(v) {
+    const modulus = maxValue() + 1;
+    const norm = ((v % modulus) + modulus) % modulus;
+    const bin = norm.toString(2).padStart(S.bits.length, '0');
+    S.bits = [...bin].map(ch => Number(ch));
+  }
+
+  function incrementDigitString(digits, idx, base) {
+    const symbols = base === 16 ? '0123456789ABCDEF' : '0123456789';
+    const chars = digits.split('');
+    const cur = symbols.indexOf(chars[idx]);
+    const next = (cur + 1) % base;
+    chars[idx] = symbols[next];
+    return chars.join('');
+  }
+
+  function weightLabelHTML(exp) {
+    const wt = 2 ** exp;
+    return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
+  }
+
+  function weightTermHTML(exp) {
+    const wt = 2 ** exp;
+    return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
+  }
+
   function fitGrid(gridId, n) {
     const grid = document.getElementById(gridId);
     if (!grid || !grid.parentElement) return;
@@ -149,13 +179,13 @@
     grid.innerHTML = '';
 
     bits.forEach((bit, i) => {
-      const wt = 2 ** (n - 1 - i);
+      const exp = n - 1 - i;
       const col = document.createElement('div');
       col.className = 'bit-col';
 
       const wtEl = document.createElement('div');
       wtEl.className = 'bit-wt';
-      wtEl.textContent = wt.toString();
+      wtEl.innerHTML = weightLabelHTML(exp);
 
       const box = document.createElement('div');
       box.className = `bit-box mb${bit}`;
@@ -182,7 +212,7 @@
     fitGrid('u-grid', n);
   }
 
-  function renderValueGrid(gridId, digits, base) {
+  function renderValueGrid(gridId, digits, base, onIncrement) {
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
     const exponents = Array.from({ length: digits.length }, (_, i) => digits.length - 1 - i);
@@ -196,9 +226,20 @@
       wtEl.innerHTML = `${base}<sup>${exponents[i]}</sup>`;
 
       const box = document.createElement('div');
-      box.className = `bit-box static ${base === 10 ? 'mb1' : 'eb1'}`;
+      box.className = `bit-box ${base === 10 ? 'mb1' : 'eb1'}`;
       box.textContent = digit;
-      box.setAttribute('aria-hidden', 'true');
+      box.setAttribute('role', 'button');
+      box.setAttribute('tabindex', '0');
+      box.setAttribute('aria-label', `Base ${base} digit ${i + 1} of ${digits.length}, currently ${digit}. Activate to increment.`);
+
+      const doIncrement = () => onIncrement(i);
+      box.addEventListener('click', doIncrement);
+      box.addEventListener('keydown', ev => {
+        if (ev.key === ' ' || ev.key === 'Enter') {
+          ev.preventDefault();
+          doIncrement();
+        }
+      });
 
       col.append(wtEl, box);
       grid.appendChild(col);
@@ -211,7 +252,7 @@
     const n = bits.length;
     const parts = [];
     for (let i = 0; i < n; i++) {
-      if (bits[i]) parts.push((2 ** (n - 1 - i)).toString());
+      if (bits[i]) parts.push(weightTermHTML(n - 1 - i));
     }
     return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
   }
@@ -232,15 +273,25 @@
   function renderResults() {
     const bits = S.bits;
     const denary = unsignedValue(bits);
+    const denDigits = String(denary).padStart(String(maxValue()).length, '0');
     const hex = hexDigitsFor(bits);
 
     document.getElementById('den-big').textContent = denary.toLocaleString();
     document.getElementById('hex-big').textContent = hex;
 
-    renderValueGrid('den-grid', denary.toString(), 10);
-    renderValueGrid('hex-grid', hex, 16);
+    renderValueGrid('den-grid', denDigits, 10, idx => {
+      const nextDigits = incrementDigitString(denDigits, idx, 10);
+      setValue(parseInt(nextDigits, 10));
+      renderAll();
+    });
 
-    document.getElementById('den-eq').textContent = denaryFormula(bits, denary.toLocaleString());
+    renderValueGrid('hex-grid', hex, 16, idx => {
+      const nextHex = incrementDigitString(hex, idx, 16);
+      setValue(parseInt(nextHex, 16));
+      renderAll();
+    });
+
+    document.getElementById('den-eq').innerHTML = denaryFormula(bits, denary.toLocaleString());
     document.getElementById('hex-eq').textContent = `${groupBits(bits)} = ${hex}  (${hexFormula(hex, denary.toLocaleString())})`;
   }
 
@@ -255,11 +306,9 @@
     const next = Math.max(2, Math.min(16, cur + delta));
     if (next === cur) return;
 
-    if (next > cur) {
-      while (S.bits.length < next) S.bits.push(0);
-    } else {
-      while (S.bits.length > next) S.bits.pop();
-    }
+    const currentValue = unsignedValue(S.bits);
+    S.bits = Array(next).fill(0);
+    setValue(currentValue);
 
     renderAll();
   }

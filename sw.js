@@ -1,4 +1,4 @@
-const CACHE_NAME = "encodr-v1.0.6";
+const CACHE_NAME = "encodr-v1.0.7";
 
 const LOCAL_ASSETS = [
   "./",
@@ -7,6 +7,7 @@ const LOCAL_ASSETS = [
   "./bitmap.html",
   "./unsigned-binary.html",
   "./fixed-point.html",
+  "./twos-complement.html",
   "./floating-point.html",
   "./sound.html",
   "./style.css",

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <title>Encodr - Two's Complement</title>
+  <link rel="icon" href="encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">Enc<em>o</em>dr</a>
+  <span class="breadcrumb-sep">&rsaquo;</span>
+  <span class="hsub">Two's Complement</span>
+  <a class="home-btn" href="index.html">Home</a>
+</header>
+
+<main>
+  <h1>Two's Complement</h1>
+  <div class="mode-tabs" role="tablist">
+    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
+    <button class="mode-tab" id="tab-quiz" role="tab">Test</button>
+  </div>
+
+  <div id="explore-section">
+    <p class="intro">Toggle bits to build a two's complement value. The final bit is the negative weight bit.</p>
+
+    <div class="controls">
+      <div class="chip chip-m">
+        <span class="chip-lbl chip-lbl-m">Bits</span>
+        <button class="step" id="t-minus" aria-label="Use fewer bits">-</button>
+        <span class="step-val" id="t-count">8</span>
+        <button class="step" id="t-plus" aria-label="Use more bits">+</button>
+        <span class="chip-lbl chip-lbl-u">(4-16)</span>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-m row-badge">Two's Complement Bits</span>
+          <div class="grid-wrap">
+            <div class="bit-grid" id="t-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-r row-badge">Denary Value</span>
+          <div class="row-main">
+            <div class="res-big" id="res-big">0</div>
+            <div class="res-eq-row">
+              <div class="res-eq" id="res-eq">0 = 0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz-section" hidden>
+    <div class="card quiz-q-card">
+      <div class="res-block">
+        <div class="quiz-q-header">
+          <span class="quiz-q-num">Test Mode</span>
+        </div>
+        <div class="quiz-q-text">Test mode for two's complement will be added next.</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
+
+<script>
+  const S = {
+    bits: Array(8).fill(0)
+  };
+
+  function weightAt(i, n) {
+    if (i === 0) return -(2 ** (n - 1));
+    return 2 ** (n - 1 - i);
+  }
+
+  function exponentAt(i, n) {
+    return i === 0 ? (n - 1) : (n - 1 - i);
+  }
+
+  function weightLabelHTML(i, n) {
+    const wt = weightAt(i, n);
+    const exp = exponentAt(i, n);
+    const abs = Math.abs(wt);
+    if (abs >= 1000) {
+      const pow = `2<sup>${exp}</sup>`;
+      return wt < 0 ? `&minus;${pow}` : pow;
+    }
+    return wt < 0 ? `&minus;${abs}` : String(abs);
+  }
+
+  function weightTermHTML(i, n) {
+    const wt = weightAt(i, n);
+    const exp = exponentAt(i, n);
+    const abs = Math.abs(wt);
+    if (abs >= 1000) {
+      const pow = `2<sup>${exp}</sup>`;
+      return wt < 0 ? `(&minus;${pow})` : pow;
+    }
+    return wt < 0 ? `(&minus;${abs})` : String(abs);
+  }
+
+  function valueOf(bits) {
+    return bits.reduce((sum, bit, i) => sum + (bit ? weightAt(i, bits.length) : 0), 0);
+  }
+
+  function fitGrid(gridId, n) {
+    const grid = document.getElementById(gridId);
+    if (!grid || !grid.parentElement) return;
+    const available = grid.parentElement.clientWidth;
+    if (!available) return;
+    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
+    grid.style.setProperty('--box-size', size + 'px');
+    grid.style.setProperty('--box-fs', Math.round(size * 26 / 56) + 'px');
+    grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
+  }
+
+  function renderGrid() {
+    const bits = S.bits;
+    const n = bits.length;
+    const grid = document.getElementById('t-grid');
+    grid.innerHTML = '';
+
+    bits.forEach((bit, i) => {
+      const col = document.createElement('div');
+      col.className = 'bit-col';
+
+      const wtEl = document.createElement('div');
+      wtEl.className = 'bit-wt';
+      wtEl.innerHTML = weightLabelHTML(i, n);
+
+      const box = document.createElement('div');
+      const isNegativeBit = i === 0;
+      box.className = `bit-box ${isNegativeBit ? 'ms' : 'mb'}${bit}`;
+      box.textContent = bit;
+      box.setAttribute('role', 'button');
+      box.setAttribute('tabindex', '0');
+      box.setAttribute('aria-label', `Bit ${i + 1} of ${n}, currently ${bit}`);
+
+      const doToggle = () => {
+        S.bits[i] ^= 1;
+        renderAll();
+      };
+
+      box.addEventListener('click', doToggle);
+      box.addEventListener('keydown', ev => {
+        if (ev.key === ' ' || ev.key === 'Enter') {
+          ev.preventDefault();
+          doToggle();
+        }
+      });
+
+      col.append(wtEl, box);
+      grid.appendChild(col);
+    });
+
+    fitGrid('t-grid', n);
+  }
+
+  function renderResult() {
+    const bits = S.bits;
+    const terms = [];
+    bits.forEach((bit, i) => {
+      if (!bit) return;
+      terms.push(weightTermHTML(i, bits.length));
+    });
+
+    const value = valueOf(bits);
+    document.getElementById('res-big').textContent = String(value);
+    document.getElementById('res-eq').innerHTML = `${terms.length ? terms.join(' + ') : '0'} = <span class="vm">${value}</span>`;
+  }
+
+  function changeBits(delta) {
+    const cur = S.bits.length;
+    const next = Math.max(4, Math.min(16, cur + delta));
+    if (next === cur) return;
+
+    if (next > cur) {
+      while (S.bits.length < next) S.bits.push(0);
+    } else {
+      while (S.bits.length > next) S.bits.pop();
+    }
+
+    renderAll();
+  }
+
+  function switchMode(mode) {
+    const isExplore = mode === 'explore';
+    document.getElementById('explore-section').hidden = !isExplore;
+    document.getElementById('quiz-section').hidden = isExplore;
+    document.getElementById('tab-explore').classList.toggle('active', isExplore);
+    document.getElementById('tab-quiz').classList.toggle('active', !isExplore);
+  }
+
+  function renderAll() {
+    document.getElementById('t-count').textContent = S.bits.length;
+    renderGrid();
+    renderResult();
+  }
+
+  document.getElementById('t-minus').addEventListener('click', () => changeBits(-1));
+  document.getElementById('t-plus').addEventListener('click', () => changeBits(+1));
+  document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
+  document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderAll, 80);
+  });
+
+  renderAll();
+</script>
+</body>
+</html>
