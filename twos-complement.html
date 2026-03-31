@@ -11,6 +11,7 @@
   <link rel="manifest" href="site.webmanifest" />
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
+  <script src="quiz-generators.js" defer></script>
 </head>
 <body>
 
@@ -431,63 +432,8 @@
     document.body.classList.remove('modal-open');
   }
 
-  function generateBinToDenQuestion() {
-    const n = randInt(6, 12);
-    const min = -(2 ** (n - 1));
-    const max = 2 ** (n - 1) - 1;
-    const value = randInt(min, max);
-    const bits = twosBitsFor(value, n);
-
-    QS.answerKind = 'den';
-    QS.bits = n;
-    QS.expectedValue = value;
-    QS.expectedBits = bits;
-    QS.prompt = pick([
-      `Convert the two's complement binary number ${bits} into denary.`,
-      `What denary value does ${bits} represent in ${n}-bit two's complement?`,
-      `Write ${bits} (two's complement, ${n} bits) as a denary number.`
-    ]);
-    QS.formatHint = 'Enter a denary integer.';
-  }
-
-  function generateDenToBinQuestion() {
-    const n = randInt(6, 12);
-    const min = -(2 ** (n - 1));
-    const max = 2 ** (n - 1) - 1;
-    const value = randInt(min, max);
-    const bits = twosBitsFor(value, n);
-
-    QS.answerKind = 'bin';
-    QS.bits = n;
-    QS.expectedValue = value;
-    QS.expectedBits = bits;
-    QS.prompt = pick([
-      `Write the denary number ${value} in ${n} bits two's complement.`,
-      `Represent denary ${value} as a ${n}-bit two's complement binary number.`,
-      `Convert denary ${value} to ${n}-bit two's complement.`
-    ]);
-    QS.formatHint = `Enter exactly ${n} bits (0s and 1s).`;
-  }
-
-  function generateRangeQuestion() {
-    const n = randInt(6, 12);
-    const min = -(2 ** (n - 1));
-    const max = 2 ** (n - 1) - 1;
-
-    QS.answerKind = 'range';
-    QS.bits = n;
-    QS.expectedMin = min;
-    QS.expectedMax = max;
-    QS.prompt = pick([
-      `With a ${n}-bit two's complement number, what is the smallest and largest representable denary value?`,
-      `Give the denary range of ${n}-bit two's complement values.`,
-      `For ${n}-bit two's complement, state the minimum and maximum denary numbers.`
-    ]);
-    QS.formatHint = 'Enter both endpoints of the range below.';
-  }
-
   function generateQuizQuestion() {
-    QS.currentType = QS.questionType === 'mixed' ? pick(['1', '2', '3']) : QS.questionType;
+    Object.assign(QS, window.EncodrQuizGenerators.twosComplement.generate(QS.questionType));
     QS.answered = false;
 
     const badge = document.getElementById('q-type-badge');

@@ -11,6 +11,7 @@
   <link rel="manifest" href="site.webmanifest" />
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
+  <script src="quiz-generators.js" defer></script>
 </head>
 <body>
 
@@ -464,105 +465,7 @@
   QS.correct = _sc.correct; QS.wrong = _sc.wrong; QS.total = _sc.total;
 
   function generateQuizQuestion() {
-    QS.currentType = QS.questionType === 'mixed'
-      ? pick(['1', '2', '3', '4', '5', '6'])
-      : QS.questionType === 'extrema'
-      ? pick(['3', '4', '5', '6'])
-      : String(QS.questionType);
-
-    const mLen = pick([6, 7, 7, 8, 8, 9, 10]);
-    const eLen = pick(E_LENS);
-    QS.mLen = mLen;
-    QS.eLen = eLen;
-
-    QS.answered = false;
-    QS.studentM = Array(mLen).fill(0);
-    QS.studentE = Array(eLen).fill(0);
-    QS.isInexact = false;
-
-    if (QS.currentType === '1') {
-      // Binary→Denary: random normalized number
-      let mb, eb, mv, ev, val, tries = 0;
-      do {
-        mb = randomBits(mLen);
-        eb = randomBits(eLen);
-        mv = mVal(mb);
-        ev = eVal(eb);
-        val = mv === 0 ? 0 : mv * 2 ** ev;
-        tries++;
-      } while ((mb[0] === mb[1] || val === 0 || !isFinite(val) || dpCount(val) > 6) && tries < 500);
-      QS.mBits = mb;
-      QS.eBits = eb;
-      QS.storedValue = val;
-      QS.targetDenary = val;
-      QS.extremaType = null;
-    } else if (QS.currentType === '2') {
-      // Denary→Binary: random normalized target
-      let mb, eb, mv, ev, val, tries = 0;
-      do {
-        mb = randomBits(mLen);
-        eb = randomBits(eLen);
-        mv = mVal(mb);
-        ev = eVal(eb);
-        val = mv === 0 ? 0 : mv * 2 ** ev;
-        tries++;
-      } while ((mb[0] === mb[1] || val === 0 || !isFinite(val) || dpCount(val) > 6) && tries < 500);
-      QS.mBits = mb;
-      QS.eBits = eb;
-      QS.storedValue = val;
-      QS.targetDenary = val;
-      QS.isInexact = Math.random() < 0.25;
-      if (QS.isInexact) {
-        const uls    = 2 ** (eVal(eb) - mLen + 1);
-        const offset = uls * (0.10 + Math.random() * 0.35);
-        QS.targetDenary = parseFloat((val > 0 ? val + offset : val - offset).toFixed(6));
-      }
-      QS.extremaType = null;
-    } else if (QS.currentType === '3') {
-      // Smallest positive: 0.1 × 2^min
-      const eMin = -(2 ** (eLen - 1));
-      QS.mBits = [0, ...Array(mLen - 1).fill(0)];
-      const eBits = (eMin + 2 ** (eLen - 1)).toString(2);
-      QS.eBits = eBits.split('').map(ch => ch === '1' ? 1 : 0);
-      while (QS.eBits.length < eLen) QS.eBits.unshift(0);
-      const minPos = (0.5) * 2 ** eMin;
-      QS.storedValue = minPos;
-      QS.targetDenary = minPos;
-      QS.extremaType = '3';
-    } else if (QS.currentType === '4') {
-      // Largest positive: all bits 1 except MSB=0
-      const eMax = 2 ** (eLen - 1) - 1;
-      QS.mBits = [0, ...Array(mLen - 1).fill(1)];
-      const eBits = (eMax + 2 ** (eLen - 1)).toString(2);
-      QS.eBits = eBits.split('').map(ch => ch === '1' ? 1 : 0);
-      while (QS.eBits.length < eLen) QS.eBits.unshift(0);
-      const maxPos = (1 - 2 ** (-(mLen - 1))) * 2 ** eMax;
-      QS.storedValue = maxPos;
-      QS.targetDenary = maxPos;
-      QS.extremaType = '4';
-    } else if (QS.currentType === '5') {
-      // Largest negative (closest to zero): −0.1 × 2^min
-      const eMin = -(2 ** (eLen - 1));
-      QS.mBits = [1, ...Array(mLen - 1).fill(0)];
-      const eBits = (eMin + 2 ** (eLen - 1)).toString(2);
-      QS.eBits = eBits.split('').map(ch => ch === '1' ? 1 : 0);
-      while (QS.eBits.length < eLen) QS.eBits.unshift(0);
-      const maxNeg = (-0.5) * 2 ** eMin;
-      QS.storedValue = maxNeg;
-      QS.targetDenary = maxNeg;
-      QS.extremaType = '5';
-    } else if (QS.currentType === '6') {
-      // Most negative: all bits 1, includes MSB=1
-      const eMax = 2 ** (eLen - 1) - 1;
-      QS.mBits = [1, ...Array(mLen - 1).fill(1)];
-      const eBits = (eMax + 2 ** (eLen - 1)).toString(2);
-      QS.eBits = eBits.split('').map(ch => ch === '1' ? 1 : 0);
-      while (QS.eBits.length < eLen) QS.eBits.unshift(0);
-      const minNeg = -(1 - 2 ** (-(mLen - 1))) * 2 ** eMax;
-      QS.storedValue = minNeg;
-      QS.targetDenary = minNeg;
-      QS.extremaType = '6';
-    }
+    Object.assign(QS, window.EncodrQuizGenerators.floatingPoint.generate(QS.questionType));
 
     renderQuizQuestion();
   }

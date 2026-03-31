@@ -11,6 +11,7 @@
   <link rel="manifest" href="site.webmanifest" />
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
+  <script src="quiz-generators.js" defer></script>
   <style>
     .point-col {
       width: 14px;
@@ -435,93 +436,8 @@
     document.body.classList.remove('modal-open');
   }
 
-  function generateBinToDenQuestion() {
-    const n = randInt(4, 16);
-    const left = randInt(1, n - 1);
-    const frac = n - left;
-    const maxRaw = 2 ** n - 1;
-    let raw = randInt(0, maxRaw);
-    if (raw === 0) raw = 1;
-    const rawBits = raw.toString(2).padStart(n, '0');
-    const shown = bitsWithPoint(rawBits, left);
-    const value = raw / (2 ** frac);
-
-    QS.answerKind = 'den';
-    QS.totalBits = n;
-    QS.leftBits = left;
-    QS.fracBits = frac;
-    QS.expectedValue = value;
-    QS.expectedBits = shown;
-    QS.prompt = pick([
-      `Convert the fixed point binary ${shown} into denary.`,
-      `What denary value does fixed point binary ${shown} represent?`,
-      `Write ${shown} as a denary number.`
-    ]);
-    QS.formatHint = 'Enter a denary value (decimals allowed).';
-  }
-
-  function pickScaledSixteenth(maxValue, fracBits) {
-    const maxU = Math.floor(maxValue * 16 + 1e-9);
-    if (maxU <= 0) return 0;
-    const needFactor = fracBits >= 4 ? 1 : 2 ** (4 - fracBits);
-    let tries = 0;
-    while (tries < 200) {
-      const u = randInt(0, maxU);
-      if (u % needFactor === 0) return u;
-      tries++;
-    }
-    return Math.floor(maxU / needFactor) * needFactor;
-  }
-
-  function generateDenToBinQuestion() {
-    const n = randInt(6, 16);
-    const frac = randInt(1, Math.min(8, n - 1));
-    const left = n - frac;
-    const maxValue = 2 ** left - 2 ** (-frac);
-
-    const u = pickScaledSixteenth(maxValue, frac);
-    const value = u / 16;
-    const raw = Math.round(value * (2 ** frac));
-    const rawBits = raw.toString(2).padStart(n, '0');
-    const shown = bitsWithPoint(rawBits, left);
-
-    QS.answerKind = 'bin';
-    QS.totalBits = n;
-    QS.leftBits = left;
-    QS.fracBits = frac;
-    QS.expectedValue = value;
-    QS.expectedBits = shown;
-    QS.prompt = pick([
-      `Using ${n} bits in total with ${frac} bits after the binary point, represent the denary number ${formatNum(value)}.`,
-      `Write ${formatNum(value)} as fixed point binary using ${n} total bits and ${frac} fractional bits.`,
-      `Convert denary ${formatNum(value)} to fixed point binary (${n} bits, ${frac} after the point).`
-    ]);
-    QS.formatHint = `Enter ${n} binary bits with the point after ${left} bits (example format: ${'0'.repeat(left)}.${'0'.repeat(frac)}).`;
-  }
-
-  function generateRangeQuestion() {
-    const n = randInt(4, 16);
-    const left = randInt(1, n - 1);
-    const frac = n - left;
-    const min = 0;
-    const max = 2 ** left - 2 ** (-frac);
-
-    QS.answerKind = 'range';
-    QS.totalBits = n;
-    QS.leftBits = left;
-    QS.fracBits = frac;
-    QS.expectedMin = min;
-    QS.expectedMax = max;
-    QS.prompt = pick([
-      `With ${n} bits in total and ${frac} bits after the binary point, what are the smallest and largest representable denary values?`,
-      `State the representable denary range for fixed point (${n} total bits, ${frac} fractional bits).`,
-      `For ${n}-bit fixed point with ${frac} bits after the point, give the minimum and maximum denary values.`
-    ]);
-    QS.formatHint = 'Enter both endpoints of the range below.';
-  }
-
   function generateQuizQuestion() {
-    QS.currentType = QS.questionType === 'mixed' ? pick(['1', '2', '3']) : QS.questionType;
+    Object.assign(QS, window.EncodrQuizGenerators.fixedPoint.generate(QS.questionType));
     QS.answered = false;
 
     const badge = document.getElementById('q-type-badge');

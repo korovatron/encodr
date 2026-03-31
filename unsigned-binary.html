@@ -11,6 +11,7 @@
   <link rel="manifest" href="site.webmanifest" />
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
+  <script src="quiz-generators.js" defer></script>
 </head>
 <body>
 
@@ -495,105 +496,12 @@
       '7': 'RANGE'
     };
 
-    const badge = document.getElementById('q-type-badge');
-    badge.className = 'badge ' + (type === '1' || type === '5' ? 'badge-m' : type === '2' || type === '6' ? 'badge-e' : 'badge-r');
-    badge.textContent = labels[type];
+    const generated = window.EncodrQuizGenerators.unsigned.generate(type);
+    Object.assign(QS, generated);
 
-    if (type === '1') {
-      const value = randInt(0, 255);
-      const bin = fmtBin(value, 8);
-      QS.prompt = pick([
-        `Convert the binary value ${bin} to denary.`,
-        `What denary number does 8-bit binary ${bin} represent?`,
-        `Write ${bin} as a denary value.`
-      ]);
-      QS.formatHint = 'Enter a denary integer (0 to 255).';
-      QS.answerKind = 'den';
-      QS.expectedText = String(value);
-      QS.expectedValue = value;
-    } else if (type === '2') {
-      const value = randInt(0, 255);
-      QS.prompt = pick([
-        `Convert denary ${value} to 8-bit binary.`,
-        `Write denary ${value} as an 8-bit binary value.`,
-        `What is the 8-bit binary form of denary ${value}?`
-      ]);
-      QS.formatHint = 'Enter binary (0s and 1s). Leading zeros are allowed.';
-      QS.answerKind = 'bin';
-      QS.expectedText = fmtBin(value, 8);
-      QS.expectedValue = value;
-    } else if (type === '3') {
-      const value = randInt(0, 255);
-      QS.prompt = pick([
-        `Convert denary ${value} to hexadecimal.`,
-        `Write denary ${value} as a 2-digit hex value.`,
-        `What is denary ${value} in hexadecimal?`
-      ]);
-      QS.formatHint = 'Enter hexadecimal (00 to FF), no prefix needed.';
-      QS.answerKind = 'hex';
-      QS.expectedText = fmtHex(value, 2);
-      QS.expectedValue = value;
-    } else if (type === '4') {
-      const value = randInt(0, 255);
-      const hex = fmtHex(value, 2);
-      QS.prompt = pick([
-        `Convert hexadecimal ${hex} to denary.`,
-        `What denary value is hex ${hex}?`,
-        `Write hex ${hex} as a denary number.`
-      ]);
-      QS.formatHint = 'Enter a denary integer (0 to 255).';
-      QS.answerKind = 'den';
-      QS.expectedText = String(value);
-      QS.expectedValue = value;
-    } else if (type === '5') {
-      const oddLengths = [5, 6, 7, 9, 10, 11, 13, 14, 15];
-      const nibbleLengths = [4, 8, 12, 16];
-      const useOddLen = Math.random() < 0.2;
-      const width = useOddLen ? pick(oddLengths) : pick(nibbleLengths);
-      const maxForWidth = Math.min(65535, 2 ** width - 1);
-      const value = randInt(0, maxForWidth);
-      const bin = fmtBin(value, width);
-      QS.prompt = pick([
-        `Convert binary ${bin} to hexadecimal.`,
-        `Write the binary value ${bin} as hex.`,
-        `What is ${bin} in hexadecimal?`
-      ]);
-      QS.formatHint = 'Enter hexadecimal using 0-9 and A-F.';
-      QS.answerKind = 'hex';
-      QS.expectedText = fmtHex(value);
-      QS.expectedValue = value;
-    } else if (type === '6') {
-      const hexDigits = pick([1, 2, 3, 4]);
-      const maxForDigits = 16 ** hexDigits - 1;
-      const value = randInt(0, maxForDigits);
-      const hex = fmtHex(value, hexDigits);
-      const bitWidth = hexDigits * 4;
-      QS.prompt = pick([
-        `What is hex ${hex} represented as ${bitWidth}-bit binary?`,
-        `Convert hexadecimal ${hex} to ${bitWidth}-bit binary.`,
-        `Write hex ${hex} as a ${bitWidth}-bit binary value.`
-      ]);
-      QS.formatHint = 'Enter binary (0s and 1s).';
-      QS.answerKind = 'bin';
-      QS.expectedText = fmtBin(value, bitWidth);
-      QS.expectedValue = value;
-    } else {
-      const n = randInt(2, 16);
-      const min = 0;
-      const max = 2 ** n - 1;
-      QS.prompt = pick([
-        `With an ${n}-bit unsigned binary number, what is the smallest and largest representable denary value?`,
-        `State the denary range for ${n}-bit unsigned binary.`,
-        `For unsigned ${n}-bit binary, give the minimum and maximum denary values.`
-      ]);
-      QS.formatHint = 'Enter both endpoints of the range below.';
-      QS.answerKind = 'range';
-      QS.expectedMin = min;
-      QS.expectedMax = max;
-      QS.rangeBits = n;
-      QS.expectedText = `${min} to ${max}`;
-      QS.expectedValue = max;
-    }
+    const badge = document.getElementById('q-type-badge');
+    badge.className = 'badge ' + (QS.currentType === '1' || QS.currentType === '5' ? 'badge-m' : QS.currentType === '2' || QS.currentType === '6' ? 'badge-e' : 'badge-r');
+    badge.textContent = labels[QS.currentType];
   }
 
   function renderQuizQuestion() {
@@ -626,11 +534,8 @@
   }
 
   function generateQuizQuestion() {
-    QS.currentType = QS.questionType === 'mixed'
-      ? pick(['1', '2', '3', '4', '5', '6', '7'])
-      : String(QS.questionType);
     QS.answered = false;
-    setQuestion(QS.currentType);
+    setQuestion(QS.questionType);
     renderQuizQuestion();
   }
 
