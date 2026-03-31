@@ -101,6 +101,17 @@
         </div>
       </div>
     </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-o row-badge">Range</span>
+          <div class="row-main">
+            <div class="res-eq" id="res-range-f">Range: 0 to 15.9375</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="quiz-section" hidden>
@@ -242,9 +253,13 @@
   }
 
   function renderResults() {
+    const n = S.bits.length;
+    const p = S.point;
+    const max = 2 ** p - 2 ** (p - n);
     const val = fixedValue(S.bits, S.point);
     document.getElementById('den-big').textContent = formatNum(val);
     document.getElementById('den-eq').textContent = denaryFormula(S.bits, S.point, val);
+    document.getElementById('res-range-f').innerHTML = `Range: <span class="vm">0</span> to <span class="vm">${formatNum(max)}</span>`;
   }
 
   function changeBits(delta) {

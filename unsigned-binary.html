@@ -85,6 +85,17 @@
         </div>
       </div>
     </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-o row-badge">Range</span>
+          <div class="row-main">
+            <div class="res-eq" id="res-range-u">Range: 0 to 255</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="quiz-section" hidden>
@@ -272,8 +283,9 @@
 
   function renderResults() {
     const bits = S.bits;
+    const max = maxValue();
     const denary = unsignedValue(bits);
-    const denDigits = String(denary).padStart(String(maxValue()).length, '0');
+    const denDigits = String(denary).padStart(String(max).length, '0');
     const hex = hexDigitsFor(bits);
 
     document.getElementById('den-big').textContent = denary.toLocaleString();
@@ -293,6 +305,7 @@
 
     document.getElementById('den-eq').innerHTML = denaryFormula(bits, denary.toLocaleString());
     document.getElementById('hex-eq').textContent = `${groupBits(bits)} = ${hex}  (${hexFormula(hex, denary.toLocaleString())})`;
+    document.getElementById('res-range-u').innerHTML = `Range: <span class="vm">0</span> to <span class="vm">${max.toLocaleString()}</span>`;
   }
 
   function renderAll() {

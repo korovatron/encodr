@@ -89,6 +89,17 @@
       </div>
     </div>
   </div><!-- /.result-card -->
+
+  <div class="result-card">
+    <div class="res-block">
+      <div class="labelled-grid-row">
+        <span class="badge badge-o row-badge">Range</span>
+        <div class="row-main">
+          <div class="res-eq" id="res-range-fl">Range: &minus;128 to 127</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /.result-card -->
   </div><!-- /#explore-section -->
 
   <!-- ── Quiz section ──────────────────────────────────────────────── -->
@@ -325,6 +336,11 @@
     const m = mVal(S.m);
     const e = eVal(S.e);
     const r = m === 0 ? 0 : m * 2 ** e;
+    const mBits = S.m.length;
+    const eBits = S.e.length;
+    const eMax = 2 ** (eBits - 1) - 1;
+    const min = -(2 ** eMax);
+    const max = (1 - 2 ** (-(mBits - 1))) * (2 ** eMax);
 
     // Big value
     document.getElementById('res-big').textContent = fmtNum(r);
@@ -333,6 +349,7 @@
     document.getElementById('res-eq').innerHTML =
       `<span class="vm">${fmtNum(m)}</span>&thinsp;&times;&thinsp;` +
       `2<sup><span class="ve">${e}</span></sup>&ensp;=&ensp;${fmtNum(r)}`;
+    document.getElementById('res-range-fl').innerHTML = `Range: <span class="vm">${fmtNum(min)}</span> to <span class="vm">${fmtNum(max)}</span>`;
 
     // Normalisation indicator
     const bits = S.m;
