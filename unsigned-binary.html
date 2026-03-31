@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <title>Encodr - Unsigned Binary &amp; Hexadecimal</title>
+  <link rel="icon" href="encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">Enc<em>o</em>dr</a>
+  <span class="breadcrumb-sep">&rsaquo;</span>
+  <span class="hsub">Unsigned Binary &amp; Hexadecimal</span>
+  <a class="home-btn" href="index.html">Home</a>
+</header>
+
+<main>
+  <h1>Unsigned Binary &amp; Hexadecimal</h1>
+  <div class="mode-tabs" role="tablist">
+    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
+    <button class="mode-tab" id="tab-quiz" role="tab">Test</button>
+  </div>
+
+  <div id="explore-section">
+    <p class="intro">Click any bit to toggle it between&nbsp;0 and&nbsp;1.</p>
+
+    <div class="controls">
+      <div class="chip chip-m">
+        <span class="chip-lbl chip-lbl-m">Bits</span>
+        <button class="step" id="u-minus" aria-label="Use fewer bits">-</button>
+        <span class="step-val" id="u-count">8</span>
+        <button class="step" id="u-plus" aria-label="Use more bits">+</button>
+        <span class="chip-lbl chip-lbl-u">(2-16)</span>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-m row-badge">Unsigned Binary</span>
+          <div class="grid-wrap">
+            <div class="bit-grid" id="u-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-r row-badge">Denary Value</span>
+          <div class="row-main">
+            <div class="res-big" id="den-big">0</div>
+            <div class="grid-wrap">
+              <div class="bit-grid" id="den-grid"></div>
+            </div>
+            <div class="res-eq-row">
+              <div class="res-eq" id="den-eq">0 = 0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-e row-badge">Hex Value</span>
+          <div class="row-main">
+            <div class="res-big" id="hex-big" style="color: var(--exl);">00</div>
+            <div class="grid-wrap">
+              <div class="bit-grid" id="hex-grid"></div>
+            </div>
+            <div class="res-eq-row">
+              <div class="res-eq" id="hex-eq">0 = 00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz-section" hidden>
+    <div class="card quiz-q-card">
+      <div class="res-block">
+        <div class="quiz-q-header">
+          <span class="quiz-q-num">Test Mode</span>
+        </div>
+        <div class="quiz-q-text">Test mode for unsigned binary and hexadecimal will be added next.</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
+
+<script>
+  const S = {
+    bits: Array(8).fill(0)
+  };
+
+  function groupBits(bits) {
+    const s = bits.join('');
+    return s.replace(/(.{4})(?=.)/g, '$1 ');
+  }
+
+  function toSuperscript(n) {
+    const map = { '-': '\u207b', '0': '\u2070', '1': '\u00b9', '2': '\u00b2', '3': '\u00b3', '4': '\u2074', '5': '\u2075', '6': '\u2076', '7': '\u2077', '8': '\u2078', '9': '\u2079' };
+    return String(n).split('').map(ch => map[ch] || ch).join('');
+  }
+
+  function unsignedValue(bits) {
+    let total = 0;
+    const n = bits.length;
+    for (let i = 0; i < n; i++) {
+      if (bits[i]) total += 2 ** (n - 1 - i);
+    }
+    return total;
+  }
+
+  function hexDigitsFor(bits) {
+    const nibbles = Math.ceil(bits.length / 4);
+    const raw = parseInt(bits.join('') || '0', 2).toString(16).toUpperCase();
+    return raw.padStart(nibbles, '0');
+  }
+
+  function fitGrid(gridId, n) {
+    const grid = document.getElementById(gridId);
+    if (!grid || !grid.parentElement) return;
+    const available = grid.parentElement.clientWidth;
+    if (!available) return;
+    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
+    grid.style.setProperty('--box-size', size + 'px');
+    grid.style.setProperty('--box-fs', Math.round(size * 26 / 56) + 'px');
+    grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
+  }
+
+  function renderBitGrid() {
+    const bits = S.bits;
+    const n = bits.length;
+    const grid = document.getElementById('u-grid');
+    grid.innerHTML = '';
+
+    bits.forEach((bit, i) => {
+      const wt = 2 ** (n - 1 - i);
+      const col = document.createElement('div');
+      col.className = 'bit-col';
+
+      const wtEl = document.createElement('div');
+      wtEl.className = 'bit-wt';
+      wtEl.textContent = wt.toString();
+
+      const box = document.createElement('div');
+      box.className = `bit-box mb${bit}`;
+      box.textContent = bit;
+      box.setAttribute('role', 'button');
+      box.setAttribute('tabindex', '0');
+      box.setAttribute('aria-label', `Bit ${i + 1} of ${n}, currently ${bit}`);
+      const doToggle = () => {
+        S.bits[i] ^= 1;
+        renderAll();
+      };
+      box.addEventListener('click', doToggle);
+      box.addEventListener('keydown', ev => {
+        if (ev.key === ' ' || ev.key === 'Enter') {
+          ev.preventDefault();
+          doToggle();
+        }
+      });
+
+      col.append(wtEl, box);
+      grid.appendChild(col);
+    });
+
+    fitGrid('u-grid', n);
+  }
+
+  function renderValueGrid(gridId, digits, base) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+    const exponents = Array.from({ length: digits.length }, (_, i) => digits.length - 1 - i);
+
+    digits.split('').forEach((digit, i) => {
+      const col = document.createElement('div');
+      col.className = 'bit-col';
+
+      const wtEl = document.createElement('div');
+      wtEl.className = 'bit-wt';
+      wtEl.innerHTML = `${base}<sup>${exponents[i]}</sup>`;
+
+      const box = document.createElement('div');
+      box.className = `bit-box static ${base === 10 ? 'mb1' : 'eb1'}`;
+      box.textContent = digit;
+      box.setAttribute('aria-hidden', 'true');
+
+      col.append(wtEl, box);
+      grid.appendChild(col);
+    });
+
+    fitGrid(gridId, digits.length);
+  }
+
+  function denaryFormula(bits, value) {
+    const n = bits.length;
+    const parts = [];
+    for (let i = 0; i < n; i++) {
+      if (bits[i]) parts.push((2 ** (n - 1 - i)).toString());
+    }
+    return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
+  }
+
+  function hexFormula(hex, value) {
+    const parts = [];
+    const chars = hex.split('');
+    chars.forEach((ch, i) => {
+      const exp = chars.length - 1 - i;
+      const digitVal = parseInt(ch, 16);
+      if (digitVal === 0) return;
+      const displayDigit = digitVal > 9 ? ch : digitVal.toString();
+      parts.push(`${displayDigit}\u00d716${toSuperscript(exp)}`);
+    });
+    return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
+  }
+
+  function renderResults() {
+    const bits = S.bits;
+    const denary = unsignedValue(bits);
+    const hex = hexDigitsFor(bits);
+
+    document.getElementById('den-big').textContent = denary.toLocaleString();
+    document.getElementById('hex-big').textContent = hex;
+
+    renderValueGrid('den-grid', denary.toString(), 10);
+    renderValueGrid('hex-grid', hex, 16);
+
+    document.getElementById('den-eq').textContent = denaryFormula(bits, denary.toLocaleString());
+    document.getElementById('hex-eq').textContent = `${groupBits(bits)} = ${hex}  (${hexFormula(hex, denary.toLocaleString())})`;
+  }
+
+  function renderAll() {
+    document.getElementById('u-count').textContent = S.bits.length;
+    renderBitGrid();
+    renderResults();
+  }
+
+  function changeBits(delta) {
+    const cur = S.bits.length;
+    const next = Math.max(2, Math.min(16, cur + delta));
+    if (next === cur) return;
+
+    if (next > cur) {
+      while (S.bits.length < next) S.bits.push(0);
+    } else {
+      while (S.bits.length > next) S.bits.pop();
+    }
+
+    renderAll();
+  }
+
+  function switchMode(mode) {
+    const isExplore = mode === 'explore';
+    document.getElementById('explore-section').hidden = !isExplore;
+    document.getElementById('quiz-section').hidden = isExplore;
+    document.getElementById('tab-explore').classList.toggle('active', isExplore);
+    document.getElementById('tab-quiz').classList.toggle('active', !isExplore);
+  }
+
+  document.getElementById('u-minus').addEventListener('click', () => changeBits(-1));
+  document.getElementById('u-plus').addEventListener('click', () => changeBits(+1));
+  document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
+  document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderAll, 80);
+  });
+
+  renderAll();
+</script>
+</body>
+</html>
