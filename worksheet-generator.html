@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <title>Encodr Worksheet Generator</title>
+  <link rel="icon" href="encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
+  <script src="quiz-generators.js" defer></script>
+  <script src="vendor/jspdf.umd.min.js" defer></script>
+  <script src="worksheet-generator.js" defer></script>
+  <style>
+    .ws-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .ws-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .ws-label {
+      font-size: 14px;
+      color: var(--muted);
+      min-width: 150px;
+    }
+
+    .ws-text,
+    .ws-num,
+    .ws-select {
+      background: #000;
+      color: var(--text);
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1.5px var(--border);
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 15px;
+    }
+
+    .ws-text { min-width: 280px; flex: 1 1 320px; }
+    .ws-num { width: 110px; }
+
+    .ws-topics {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .ws-topic {
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    }
+
+    .ws-topic-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .ws-subtypes {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .ws-cb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .ws-cb input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: #ffff00;
+    }
+
+    .ws-options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .ws-status {
+      font-size: 14px;
+      color: var(--muted);
+      min-height: 22px;
+      margin-top: 4px;
+    }
+
+    .ws-status.error { color: #ff8f8f; }
+    .ws-status.success { color: #7dff7d; }
+
+    @media (max-width: 700px) {
+      .ws-label { min-width: 100%; }
+      .ws-text { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <a class="logo" href="index.html" aria-label="Encodr home">Enc<em>o</em>dr</a>
+  <span class="hdiv" aria-hidden="true"></span>
+  <span class="hsub">Worksheet Generator</span>
+  <a class="home-btn" href="index.html">Home</a>
+</header>
+
+<main>
+  <h1>Worksheet Generator</h1>
+  <p class="intro">Choose topics and sub-topic question types, then generate a PDF worksheet. Answers are placed on separate pages at the end.</p>
+
+  <section class="card">
+    <div class="card-head"><span class="badge badge-r">Config</span></div>
+    <div class="ws-layout">
+      <div class="ws-row">
+        <label for="ws-title" class="ws-label">Worksheet title</label>
+        <input id="ws-title" class="ws-text" type="text" value="Encodr Worksheet" maxlength="120" />
+      </div>
+      <div class="ws-row">
+        <label for="ws-count" class="ws-label">Number of questions</label>
+        <input id="ws-count" class="ws-num" type="number" min="1" max="100" value="20" />
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><span class="badge badge-r">Topics</span></div>
+    <p class="card-sub">Tick topics and subtypes to include.</p>
+    <div id="ws-topics" class="ws-topics"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><span class="badge badge-r">Generate</span></div>
+    <div class="ws-row">
+      <button id="ws-generate" class="btn btn-submit" type="button">Generate PDF Worksheet</button>
+    </div>
+    <p id="ws-status" class="ws-status" aria-live="polite"></p>
+  </section>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
+</body>
+</html>

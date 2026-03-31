@@ -528,7 +528,11 @@
     },
 
     bitmap: {
-      generate: function (unitsMode) {
+      generate: function (options) {
+        const mode = typeof options === 'string' ? options : (options && options.unitsMode) || 'mix';
+        const questionTypes = options && typeof options === 'object' && Array.isArray(options.questionTypes) && options.questionTypes.length
+          ? options.questionTypes
+          : ['sizeBits', 'sizeUnit', 'maxColoursDepth', 'colourDepth', 'maxColoursSize'];
         function genSizeBits() {
           const bitDepth = pick([1, 2, 3, 4, 6, 8]);
           const colours = 2 ** bitDepth;
@@ -549,7 +553,7 @@
         }
 
         function genSizeUnit() {
-          const units = bitmapUnits(unitsMode);
+          const units = bitmapUnits(mode);
           const answers = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 0.5, 0.25, 0.75];
           for (let i = 0; i < 100; i++) {
             const unit = pick(units);
@@ -603,7 +607,7 @@
             const w = dims[0], h = dims[1];
             const pixels = h ? w * h : w;
             const totalBits = pixels * bitDepth;
-            const unit = pick(bitmapUnits(unitsMode));
+            const unit = pick(bitmapUnits(mode));
             const sizeInUnit = totalBits / unit.factor;
             const frac = sizeInUnit - Math.floor(sizeInUnit);
             if ([0, 0.5, 0.25, 0.75].indexOf(frac) === -1) continue;
@@ -619,14 +623,29 @@
           return genMaxColoursDepth();
         }
 
-        return pick([genSizeBits, genSizeUnit, genMaxColoursDepth, genColourDepth, genMaxColoursSize])();
+        const generatorByType = {
+          sizeBits: genSizeBits,
+          sizeUnit: genSizeUnit,
+          maxColoursDepth: genMaxColoursDepth,
+          colourDepth: genColourDepth,
+          maxColoursSize: genMaxColoursSize
+        };
+        const active = questionTypes
+          .map(function (type) { return generatorByType[type]; })
+          .filter(Boolean);
+        const pool = active.length ? active : [genSizeBits, genSizeUnit, genMaxColoursDepth, genColourDepth, genMaxColoursSize];
+        return pick(pool)();
       }
     },
 
     sound: {
       generate: function (options) {
-        const unitsMode = options.unitsMode;
-        const nyquistOn = options.nyquistOn;
+        const opts = options || {};
+        const unitsMode = opts.unitsMode || 'mix';
+        const nyquistOn = opts.nyquistOn !== false;
+        const questionTypes = Array.isArray(opts.questionTypes) && opts.questionTypes.length
+          ? opts.questionTypes
+          : ['fileSizeBits', 'fileSizeBytes', 'fileSizeUnit', 'solveResolution', 'halvingEffect', 'duration', 'nyquist'];
 
         function genFileSizeBits() {
           const rate = pick(SOUND_RATES_HZ);
@@ -731,9 +750,23 @@
           };
         }
 
-        const base = [genFileSizeBits, genFileSizeBytes, genFileSizeUnit, genSolveResolution, genHalvingEffect, genDuration];
-        const gens = nyquistOn ? base.concat([genNyquist]) : base;
-        return pick(gens)();
+        const generatorByType = {
+          fileSizeBits: genFileSizeBits,
+          fileSizeBytes: genFileSizeBytes,
+          fileSizeUnit: genFileSizeUnit,
+          solveResolution: genSolveResolution,
+          halvingEffect: genHalvingEffect,
+          duration: genDuration,
+          nyquist: nyquistOn ? genNyquist : null
+        };
+        const active = questionTypes
+          .map(function (type) { return generatorByType[type]; })
+          .filter(Boolean);
+        const fallback = nyquistOn
+          ? [genFileSizeBits, genFileSizeBytes, genFileSizeUnit, genSolveResolution, genHalvingEffect, genDuration, genNyquist]
+          : [genFileSizeBits, genFileSizeBytes, genFileSizeUnit, genSolveResolution, genHalvingEffect, genDuration];
+        const pool = active.length ? active : fallback;
+        return pick(pool)();
       }
     }
   };
