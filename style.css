@@ -701,6 +701,44 @@ body:has(#save-dialog[open]) { overflow: hidden; }
 .home-intro-title { font-size: 38px; font-weight: 900; color: var(--text); margin: 0 0 10px; line-height: 1.1; }
 .home-intro-sub { font-size: 20px; color: var(--text); margin: 0; line-height: 1.6; }
 
+/* ── Worksheet generator banner ─────────────────── */
+.ws-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, #31206f 0%, #45308f 50%, #5b43aa 100%);
+  box-shadow: 0 0 0 1px var(--border), 0 4px 16px rgba(0,0,0,.40);
+  border-radius: var(--r);
+  padding: 18px 24px;
+  text-decoration: none;
+  color: var(--text);
+  margin-bottom: 12px;
+  transition: background .15s, transform .12s, box-shadow .12s;
+}
+.ws-banner:hover {
+  background: linear-gradient(135deg, #3a2780 0%, #523aa1 50%, #6a50bc 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px var(--border), 0 8px 24px rgba(0,0,0,.55);
+}
+.ws-banner-text { flex: 1; min-width: 0; }
+.ws-banner-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.ws-banner-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,.75);
+  line-height: 1.5;
+}
+.ws-banner-cta {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text);
+}
+
 .topic-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
