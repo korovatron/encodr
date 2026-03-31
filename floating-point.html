@@ -111,10 +111,7 @@
         <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
         <button class="qtype-btn" data-qt="1"><span class="qt-long">Binary &rarr; Denary</span><span class="qt-short">BIN &rarr; DEN</span></button>
         <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">DEN &rarr; BIN</span></button>
-        <button class="qtype-btn" data-qt="3"><span class="qt-long">Smallest positive</span><span class="qt-short">MIN+</span></button>
-        <button class="qtype-btn" data-qt="4"><span class="qt-long">Largest positive</span><span class="qt-short">MAX+</span></button>
-        <button class="qtype-btn" data-qt="5"><span class="qt-long">Largest negative</span><span class="qt-short">MAX−</span></button>
-        <button class="qtype-btn" data-qt="6"><span class="qt-long">Most negative</span><span class="qt-short">MIN−</span></button>
+        <button class="qtype-btn" data-qt="extrema"><span class="qt-long">Extrema</span><span class="qt-short">EXT</span></button>
       </div>
       <div class="quiz-score-area">
         <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
@@ -135,7 +132,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="q-m-card">
       <div class="res-block">
         <div class="labelled-grid-row">
           <span class="badge badge-m row-badge">Mantissa</span>
@@ -146,7 +143,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="q-e-card">
       <div class="res-block">
         <div class="labelled-grid-row">
           <span class="badge badge-e row-badge">Exponent</span>
@@ -159,7 +156,7 @@
 
     <div class="card" id="q-t1-area" hidden>
       <div class="res-block">
-        <div class="q-answer-lbl">Your answer (denary)</div>
+        <div class="q-answer-lbl" id="q-answer-lbl">Your answer (denary)</div>
         <input class="q-denary-input" type="text" id="q-denary-input"
                placeholder="e.g. &minus;0.75" autocomplete="off" spellcheck="false" />
       </div>
@@ -436,7 +433,7 @@
   }
 
   const QS = {
-    questionType: 'mixed',   // 'mixed' | '1' | '2' | '3' | '4' | '5' | '6'
+    questionType: 'mixed',   // 'mixed' | '1' | '2' | 'extrema'
     currentType:  1,          // actual type for current question
     questionNum:  1,
     correct:      0,
@@ -469,6 +466,8 @@
   function generateQuizQuestion() {
     QS.currentType = QS.questionType === 'mixed'
       ? pick(['1', '2', '3', '4', '5', '6'])
+      : QS.questionType === 'extrema'
+      ? pick(['3', '4', '5', '6'])
       : String(QS.questionType);
 
     const mLen = pick([6, 7, 7, 8, 8, 9, 10]);
@@ -583,6 +582,7 @@
       document.getElementById('q-target-wrap').hidden = true;
       document.getElementById('q-t1-area').hidden = false;
       errArea.hidden = true;
+      document.getElementById('q-answer-lbl').textContent = 'Your answer (denary)';
       const inp = document.getElementById('q-denary-input');
       inp.value = ''; inp.disabled = false;
     } else if (t === '2') {
@@ -612,11 +612,11 @@
       }
     } else if (['3', '4', '5', '6'].includes(t)) {
       // Extrema types: all are binary → denary format with custom questions
-      const questions = {
-        '3': 'What is the smallest positive number you can represent?',
-        '4': 'What is the largest positive number you can represent?',
-        '5': 'What is the largest negative number (closest to zero)?',
-        '6': 'What is the most negative number you can represent?'
+      const typeNames = {
+        '3': 'smallest positive',
+        '4': 'largest positive',
+        '5': 'largest negative (closest to zero)',
+        '6': 'most negative'
       };
       const labels = {
         '3': 'Smallest positive',
@@ -626,16 +626,25 @@
       };
       badge.className = 'badge badge-m';
       badge.textContent = labels[t];
-      document.getElementById('q-text').textContent = questions[t];
+      document.getElementById('q-text').textContent =
+        `What is the ${typeNames[t]} number when a floating-point number is represented with ` +
+        `a ${QS.mLen}-bit two's complement mantissa and a ${QS.eLen}-bit two's complement exponent?`;
       document.getElementById('q-target-wrap').hidden = true;
       document.getElementById('q-t1-area').hidden = false;
       errArea.hidden = true;
+      document.getElementById('q-m-card').hidden = true;
+      document.getElementById('q-e-card').hidden = true;
+      document.getElementById('q-answer-lbl').textContent = 'Your answer';
       const inp = document.getElementById('q-denary-input');
       inp.value = ''; inp.disabled = false;
     }
 
-    renderQuizGrid('m', ['1', '3', '4', '5', '6'].includes(t) ? QS.mBits : QS.studentM, t === '2');
-    renderQuizGrid('e', ['1', '3', '4', '5', '6'].includes(t) ? QS.eBits : QS.studentE, t === '2');
+    if (['1', '2'].includes(t)) {
+      document.getElementById('q-m-card').hidden = false;
+      document.getElementById('q-e-card').hidden = false;
+      renderQuizGrid('m', t === '1' ? QS.mBits : QS.studentM, t === '2');
+      renderQuizGrid('e', t === '1' ? QS.eBits : QS.studentE, t === '2');
+    }
 
     closeModal();
     document.getElementById('q-modal-feedback').innerHTML = '';
