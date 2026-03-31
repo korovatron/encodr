@@ -147,12 +147,17 @@
     return rounded.toString();
   }
 
-  function fitGrid(gridId, n) {
+  function fitGrid(gridId, n, includesPoint = false) {
     const grid = document.getElementById(gridId);
     if (!grid || !grid.parentElement) return;
     const available = grid.parentElement.clientWidth;
     if (!available) return;
-    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
+
+    const gap = 5;
+    const pointWidth = includesPoint ? 14 : 0;
+    const totalGaps = includesPoint ? n : Math.max(0, n - 1);
+    const size = Math.max(24, Math.min(56, Math.floor((available - totalGaps * gap - pointWidth) / n)));
+
     grid.style.setProperty('--box-size', size + 'px');
     grid.style.setProperty('--box-fs', Math.round(size * 26 / 56) + 'px');
     grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
@@ -222,7 +227,7 @@
 
     if (S.point === n) addPointDot();
 
-    fitGrid('f-grid', n);
+    fitGrid('f-grid', n, true);
   }
 
   function denaryFormula(bits, point, value) {
