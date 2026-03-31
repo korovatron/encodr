@@ -46,9 +46,9 @@
   <!-- Mantissa -->
   <div class="card">
     <div class="res-block">
-      <div style="display:flex;align-items:flex-start;gap:12px;">
-        <span class="badge badge-m" style="flex-shrink:0;margin-top:4px">Mantissa</span>
-        <div class="grid-wrap" style="flex:1">
+      <div class="labelled-grid-row">
+        <span class="badge badge-m row-badge">Mantissa</span>
+        <div class="grid-wrap">
           <div class="bit-grid" id="m-grid"></div>
         </div>
       </div>
@@ -58,9 +58,9 @@
   <!-- Exponent -->
   <div class="card">
     <div class="res-block">
-      <div style="display:flex;align-items:flex-start;gap:12px;">
-        <span class="badge badge-e" style="flex-shrink:0;margin-top:4px">Exponent</span>
-        <div class="grid-wrap" style="flex:1">
+      <div class="labelled-grid-row">
+        <span class="badge badge-e row-badge">Exponent</span>
+        <div class="grid-wrap">
           <div class="bit-grid" id="e-grid"></div>
         </div>
       </div>
@@ -70,13 +70,15 @@
   <!-- Result -->
   <div class="result-card">
     <div class="res-block">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span class="badge badge-r" style="flex-shrink:0;align-self:flex-start;margin-top:4px">Denary value</span>
-        <div style="flex:1;text-align:center;">
+      <div class="labelled-grid-row">
+        <div class="result-badge-row">
+          <span class="badge badge-r row-badge">Denary value</span>
+          <div id="norm-area" class="norm-area"></div>
+        </div>
+        <div class="row-main">
           <div class="res-big" id="res-big">0</div>
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div class="res-eq" id="res-eq" style="flex:1;text-align:center;"></div>
-            <div id="norm-area" style="flex-shrink:0"></div>
+          <div class="res-eq-row">
+            <div class="res-eq" id="res-eq"></div>
           </div>
         </div>
       </div>
@@ -115,9 +117,9 @@
 
     <div class="card">
       <div class="res-block">
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <span class="badge badge-m" style="flex-shrink:0;margin-top:4px">Mantissa</span>
-          <div class="grid-wrap" style="flex:1">
+        <div class="labelled-grid-row">
+          <span class="badge badge-m row-badge">Mantissa</span>
+          <div class="grid-wrap">
             <div class="bit-grid" id="q-m-grid"></div>
           </div>
         </div>
@@ -126,9 +128,9 @@
 
     <div class="card">
       <div class="res-block">
-        <div style="display:flex;align-items:flex-start;gap:12px;">
-          <span class="badge badge-e" style="flex-shrink:0;margin-top:4px">Exponent</span>
-          <div class="grid-wrap" style="flex:1">
+        <div class="labelled-grid-row">
+          <span class="badge badge-e row-badge">Exponent</span>
+          <div class="grid-wrap">
             <div class="bit-grid" id="q-e-grid"></div>
           </div>
         </div>

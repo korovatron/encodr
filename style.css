@@ -215,6 +215,29 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 /* ── Bit grid ─────────────────────────────────── */
 .grid-wrap { overflow-x: auto; max-width: 100%; display: flex; justify-content: center; }
 
+.labelled-grid-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.labelled-grid-row .row-badge {
+  position: static;
+  margin-top: 0;
+  align-self: flex-start;
+}
+.labelled-grid-row .grid-wrap { width: 100%; }
+.labelled-grid-row .row-main { width: 100%; text-align: center; }
+
+.result-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+.result-badge-row .norm { margin-top: 0; }
+
 .bit-grid {
   display: inline-flex;
   gap: 5px;
@@ -314,6 +337,18 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   font-family: 'Consolas', monospace;
   margin-bottom: 0;
   text-align: center;
+}
+.res-eq-row {
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.norm-area {
+  position: static;
+  transform: none;
 }
 .res-eq .vm { color: var(--ml); }
 .res-eq .ve { color: var(--exl); }
