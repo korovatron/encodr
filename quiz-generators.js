@@ -16,6 +16,15 @@
     return width ? hex.padStart(width, '0') : hex;
   }
 
+  function fmtAnswer(n) {
+    const frac = n - Math.floor(n);
+    if (frac === 0) return String(n);
+    if (frac === 0.5) return n < 1 ? '0.5' : Math.floor(n) + '.5';
+    if (frac === 0.25) return n < 1 ? '0.25' : Math.floor(n) + '.25';
+    if (frac === 0.75) return n < 1 ? '0.75' : Math.floor(n) + '.75';
+    return String(n);
+  }
+
   function bitsWithPoint(rawBits, leftBits) {
     return rawBits.slice(0, leftBits) + '.' + rawBits.slice(leftBits);
   }
@@ -71,6 +80,78 @@
   }
 
   const E_LENS = [4, 4, 4, 5, 5, 6];
+
+  function minBitsForColours(n) {
+    return Math.ceil(Math.log2(n));
+  }
+
+  function niceFactors(pixels) {
+    const nice = [100, 200, 400, 500, 800, 1000, 2000, 4000, 8000, 10000,
+      40000, 80000, 100000, 400000, 800000, 1000000,
+      4000000, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536,
+      131072, 262144, 524288, 1048576];
+    if (nice.includes(pixels)) return [pixels, null];
+    const wSizes = [10, 20, 100, 200, 400, 500, 800, 1000, 2000, 4000, 8000, 128, 256, 512, 1024, 2048, 4096];
+    for (let i = 0; i < wSizes.length; i++) {
+      const w = wSizes[i];
+      if (pixels % w === 0) {
+        const h = pixels / w;
+        if (h >= 10 && h <= 8000) return [w, h];
+      }
+    }
+    return null;
+  }
+
+  const BITMAP_SI_UNITS = [
+    { label: 'kB', factor: 8000 },
+    { label: 'MB', factor: 8000000 },
+    { label: 'GB', factor: 8000000000 },
+    { label: 'TB', factor: 8000000000000 }
+  ];
+  const BITMAP_IEC_UNITS = [
+    { label: 'kiB', factor: 8 * 1024 },
+    { label: 'MiB', factor: 8 * 1048576 },
+    { label: 'GiB', factor: 8 * 1073741824 },
+    { label: 'TiB', factor: 8 * 1099511627776 }
+  ];
+
+  function bitmapUnits(mode) {
+    if (mode === 'si') return BITMAP_SI_UNITS;
+    if (mode === 'iec') return BITMAP_IEC_UNITS;
+    return BITMAP_SI_UNITS.concat(BITMAP_IEC_UNITS);
+  }
+
+  const SOUND_RATES_HZ = [8000, 11025, 16000, 22050, 44100, 48000, 96000];
+  const SOUND_RATES_SI = [8000, 16000, 32000, 48000, 96000];
+  const SOUND_RATES_IEC = [8192, 16384, 32768];
+  const SOUND_DEPTHS = [4, 8, 12, 16, 24, 32];
+  const SOUND_DURATIONS = [5, 10, 15, 20, 30, 60, 90, 120, 180, 300];
+  const SOUND_SI_UNITS = [
+    { label: 'kB', bitsPerUnit: 8000 },
+    { label: 'MB', bitsPerUnit: 8000000 }
+  ];
+  const SOUND_IEC_UNITS = [
+    { label: 'kiB', bitsPerUnit: 8 * 1024 },
+    { label: 'MiB', bitsPerUnit: 8 * 1024 * 1024 }
+  ];
+
+  function soundUnits(mode) {
+    if (mode === 'si') return SOUND_SI_UNITS;
+    if (mode === 'iec') return SOUND_IEC_UNITS;
+    return SOUND_SI_UNITS.concat(SOUND_IEC_UNITS);
+  }
+
+  function fmtHz(hz) {
+    return hz >= 1000 ? hz / 1000 + ' kHz' : hz + ' Hz';
+  }
+
+  function fmtSecs(s) {
+    if (s >= 60 && s % 60 === 0) {
+      const m = s / 60;
+      return m + ' minute' + (m === 1 ? '' : 's');
+    }
+    return s + ' second' + (s === 1 ? '' : 's');
+  }
 
   window.EncodrQuizGenerators = {
     unsigned: {
@@ -443,6 +524,216 @@
         result.targetDenary = minNeg;
         result.extremaType = '6';
         return result;
+      }
+    },
+
+    bitmap: {
+      generate: function (unitsMode) {
+        function genSizeBits() {
+          const bitDepth = pick([1, 2, 3, 4, 6, 8]);
+          const colours = 2 ** bitDepth;
+          const pxSets = [[100], [200], [400], [500], [1000], [2000], [4000], [10, 10], [20, 20], [100, 100], [200, 150], [1000, 800], [500, 400]];
+          const dims = pick(pxSets);
+          const w = dims[0], h = dims[1];
+          const pixels = h ? w * h : w;
+          const answer = pixels * bitDepth;
+          const dimText = h ? w + ' pixel × ' + h + ' pixel' : w + ' pixels';
+          return {
+            badge: 'Size in bits',
+            text: h
+              ? 'A ' + dimText + ' bitmap image contains ' + colours.toLocaleString() + ' different colours.\n\nCalculate the minimum file size of the image in <strong>bits</strong>.'
+              : 'A bitmap image is made up of ' + pixels.toLocaleString() + ' pixels and contains ' + colours.toLocaleString() + ' colours.\n\nCalculate the minimum file size of the image in <strong>bits</strong>.',
+            answerNum: answer,
+            unitLabel: 'bits'
+          };
+        }
+
+        function genSizeUnit() {
+          const units = bitmapUnits(unitsMode);
+          const answers = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 0.5, 0.25, 0.75];
+          for (let i = 0; i < 100; i++) {
+            const unit = pick(units);
+            const ans = pick(answers);
+            const totalBits = ans * unit.factor;
+            if (!Number.isInteger(totalBits)) continue;
+            const bitDepth = pick([1, 2, 3, 4, 6, 8]);
+            const colours = 2 ** bitDepth;
+            if (totalBits % bitDepth !== 0) continue;
+            const pixels = totalBits / bitDepth;
+            const dims = niceFactors(pixels);
+            if (!dims) continue;
+            const w = dims[0], h = dims[1];
+            const dimText = h ? w.toLocaleString() + ' × ' + h.toLocaleString() + ' pixels' : w.toLocaleString() + ' pixels';
+            return {
+              badge: 'Size in ' + unit.label,
+              text: 'A bitmap image is ' + dimText + ' and contains ' + colours.toLocaleString() + ' different colours.\n\nCalculate the minimum file size in <strong>' + unit.label + '</strong>.',
+              answerNum: ans,
+              unitLabel: unit.label
+            };
+          }
+          return genSizeBits();
+        }
+
+        function genMaxColoursDepth() {
+          const depth = pick([1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 24]);
+          return {
+            badge: 'Max colours',
+            text: 'State the maximum number of different colours that can be used in a bitmap image that has a colour depth of <strong>' + depth + ' bits</strong>.',
+            answerNum: 2 ** depth,
+            unitLabel: 'colours'
+          };
+        }
+
+        function genColourDepth() {
+          const depth = pick([1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 24]);
+          const colours = pick([2 ** depth - 1, 2 ** depth]);
+          return {
+            badge: 'Colour depth',
+            text: 'A bitmap image uses ' + colours.toLocaleString() + ' different colours.\n\nCalculate the minimum number of bits per pixel (colour depth) needed to store this image.',
+            answerNum: minBitsForColours(colours),
+            unitLabel: 'bits per pixel'
+          };
+        }
+
+        function genMaxColoursSize() {
+          for (let i = 0; i < 100; i++) {
+            const bitDepth = pick([1, 2, 4, 8, 16, 24]);
+            const dims = niceFactors(pick([100, 200, 400, 800, 1000, 2000, 4000, 8000, 100 * 100, 200 * 150, 1000 * 800, 800 * 600, 4000 * 3000, 128 * 128, 256 * 256, 512 * 512]));
+            if (!dims) continue;
+            const w = dims[0], h = dims[1];
+            const pixels = h ? w * h : w;
+            const totalBits = pixels * bitDepth;
+            const unit = pick(bitmapUnits(unitsMode));
+            const sizeInUnit = totalBits / unit.factor;
+            const frac = sizeInUnit - Math.floor(sizeInUnit);
+            if ([0, 0.5, 0.25, 0.75].indexOf(frac) === -1) continue;
+            if (sizeInUnit < 0.25 || sizeInUnit > 100000) continue;
+            const dimText = h ? w.toLocaleString() + ' pixels wide by ' + h.toLocaleString() + ' pixels high' : w.toLocaleString() + ' pixels';
+            return {
+              badge: 'Max colours',
+              text: 'A bitmap image is ' + dimText + '.\n\nThe image takes up <strong>' + fmtAnswer(sizeInUnit) + ' ' + unit.label + '</strong> of storage space when represented as a bitmap, excluding metadata.\n\nCalculate the maximum number of different colours that could appear in the image.',
+              answerNum: 2 ** bitDepth,
+              unitLabel: 'colours'
+            };
+          }
+          return genMaxColoursDepth();
+        }
+
+        return pick([genSizeBits, genSizeUnit, genMaxColoursDepth, genColourDepth, genMaxColoursSize])();
+      }
+    },
+
+    sound: {
+      generate: function (options) {
+        const unitsMode = options.unitsMode;
+        const nyquistOn = options.nyquistOn;
+
+        function genFileSizeBits() {
+          const rate = pick(SOUND_RATES_HZ);
+          const res = pick(SOUND_DEPTHS);
+          const secs = pick(SOUND_DURATIONS);
+          return {
+            badge: 'File Size',
+            text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secs) + '</strong>.\n\nCalculate the file size in <strong>bits</strong>.',
+            answerNum: rate * res * secs,
+            unitLabel: 'bits'
+          };
+        }
+
+        function genFileSizeBytes() {
+          const rate = pick(SOUND_RATES_HZ);
+          const res = pick([8, 16, 24, 32]);
+          const secs = pick(SOUND_DURATIONS);
+          return {
+            badge: 'File Size',
+            text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secs) + '</strong>.\n\nCalculate the file size in <strong>bytes</strong>.',
+            answerNum: (rate * res * secs) / 8,
+            unitLabel: 'bytes'
+          };
+        }
+
+        function genFileSizeUnit() {
+          const units = soundUnits(unitsMode);
+          const clean = [1, 2, 4, 8, 16, 32, 64, 128, 256, 0.5, 0.25, 0.75];
+          for (let i = 0; i < 400; i++) {
+            const unit = pick(units);
+            const ans = pick(clean);
+            const totalBits = ans * unit.bitsPerUnit;
+            const ratePool = /iB$/.test(unit.label) ? SOUND_RATES_IEC : SOUND_RATES_SI;
+            const rate = pick(ratePool);
+            const res = pick(SOUND_DEPTHS);
+            const secsExact = totalBits / (rate * res);
+            if (Number.isInteger(secsExact) && secsExact >= 1 && secsExact <= 600) {
+              return {
+                badge: 'File Size',
+                text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secsExact) + '</strong>.\n\nCalculate the file size in <strong>' + unit.label + '</strong>.',
+                answerNum: ans,
+                unitLabel: unit.label
+              };
+            }
+          }
+          return genFileSizeBits();
+        }
+
+        function genSolveResolution() {
+          const rate = pick(SOUND_RATES_HZ);
+          const res = pick(SOUND_DEPTHS);
+          const secs = pick(SOUND_DURATIONS);
+          return {
+            badge: 'Solve',
+            text: 'A sound file is <strong>' + (rate * res * secs).toLocaleString() + ' bits</strong> in size and lasts <strong>' + fmtSecs(secs) + '</strong>.\n\nIt was recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong>.\n\nWhat is the <strong>sample resolution</strong> in bits?',
+            answerNum: res,
+            unitLabel: 'bits'
+          };
+        }
+
+        function genNyquist() {
+          const freq = pick([4000, 5000, 8000, 10000, 11000, 15000, 16000, 20000]);
+          return {
+            badge: 'Nyquist',
+            text: 'A sound has a highest frequency component of <strong>' + fmtHz(freq) + '</strong>.\n\nWhat is the <strong>minimum sampling rate</strong> required to accurately represent it digitally?',
+            answerNum: freq * 2,
+            unitLabel: 'Hz'
+          };
+        }
+
+        function genHalvingEffect() {
+          const choices = [
+            { q: 'the sampling rate is <strong>halved</strong>', factor: 0.5 },
+            { q: 'the sample resolution is <strong>halved</strong>', factor: 0.5 },
+            { q: 'the sampling rate is <strong>doubled</strong>', factor: 2 },
+            { q: 'the sample resolution is <strong>doubled</strong>', factor: 2 },
+            { q: 'the duration is <strong>halved</strong>', factor: 0.5 },
+            { q: 'the duration is <strong>doubled</strong>', factor: 2 }
+          ];
+          const rate = pick(SOUND_RATES_HZ);
+          const res = pick(SOUND_DEPTHS);
+          const secs = pick(SOUND_DURATIONS);
+          const orig = rate * res * secs;
+          const ch = pick(choices);
+          return {
+            badge: 'File Size',
+            text: 'A sound file has a size of <strong>' + orig.toLocaleString() + ' bits</strong>.\n\nWhat is the new file size (in bits) if ' + ch.q + '?',
+            answerNum: orig * ch.factor,
+            unitLabel: 'bits'
+          };
+        }
+
+        function genDuration() {
+          const rate = pick(SOUND_RATES_HZ);
+          const res = pick(SOUND_DEPTHS);
+          const secs = pick(SOUND_DURATIONS);
+          return {
+            badge: 'Solve',
+            text: 'A sound file is <strong>' + (rate * res * secs).toLocaleString() + ' bits</strong> in size.\n\nIt was recorded at <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>.\n\nHow long is the recording in <strong>seconds</strong>?',
+            answerNum: secs,
+            unitLabel: 'seconds'
+          };
+        }
+
+        const base = [genFileSizeBits, genFileSizeBytes, genFileSizeUnit, genSolveResolution, genHalvingEffect, genDuration];
+        const gens = nyquistOn ? base.concat([genNyquist]) : base;
+        return pick(gens)();
       }
     }
   };

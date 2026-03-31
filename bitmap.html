@@ -11,6 +11,7 @@
   <link rel="manifest" href="site.webmanifest" />
   <link rel="stylesheet" href="style.css" />
   <script src="app.js" defer></script>
+  <script src="quiz-generators.js" defer></script>
   <style>
     /* ── Unified bitmap grid ────────────────────────────────────────
        4 columns: [pixel strip 1fr] [byte1 auto] [byte2 auto] [byte3 auto]
@@ -855,34 +856,6 @@
   // Units mode: 'mix' | 'si' | 'iec'
   let unitsMode = 'mix';
 
-  // Unit definitions
-  const SI_UNITS  = [
-    { label: 'kB',  factor: 8_000,          divisor: 1_000 },
-    { label: 'MB',  factor: 8_000_000,       divisor: 1_000_000 },
-    { label: 'GB',  factor: 8_000_000_000,   divisor: 1_000_000_000 },
-    { label: 'TB',  factor: 8_000_000_000_000, divisor: 1_000_000_000_000 },
-  ];
-  const IEC_UNITS = [
-    { label: 'kiB', factor: 8 * 1024,        divisor: 1024 },
-    { label: 'MiB', factor: 8 * 1048576,     divisor: 1048576 },
-    { label: 'GiB', factor: 8 * 1073741824,  divisor: 1073741824 },
-    { label: 'TiB', factor: 8 * 1099511627776, divisor: 1099511627776 },
-  ];
-
-  function availableUnits() {
-    if (unitsMode === 'si')  return SI_UNITS;
-    if (unitsMode === 'iec') return IEC_UNITS;
-    return [...SI_UNITS, ...IEC_UNITS];
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────
-  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-  function minBitsForColours(n) {
-    // minimum integer k such that 2^k >= n
-    return Math.ceil(Math.log2(n));
-  }
-
   // Format a number: whole numbers as integer, else as fraction string
   function fmtAnswer(n) {
     const frac = n - Math.floor(n);
@@ -891,148 +864,6 @@
     if (frac === 0.25) return n < 1 ? '0.25' : `${Math.floor(n)}.25`;
     if (frac === 0.75) return n < 1 ? '0.75' : `${Math.floor(n)}.75`;
     return String(n);
-  }
-
-  // ── Question generators ───────────────────────────────────────────
-  // Each returns { text, answerNum, unitLabel, badge }
-  // answerNum is the numeric correct answer; unitLabel is appended in UI.
-
-  // Type 1: given pixels + colours → size in bits
-  function genSizeBits() {
-    // Pick a bit depth 1-8, pick a pixel count so answer is a round number
-    const bitDepth = pick([1,2,3,4,6,8]);
-    const colours  = 2 ** bitDepth;
-    // pixel count: pick from friendly values
-    const pxSets = [
-      [100], [200], [400], [500], [1000], [2000], [4000],
-      [10, 10], [20, 20], [100, 100], [200, 150],
-      [1000, 800], [500, 400],
-    ];
-    const [w, h] = pick(pxSets);
-    const pixels = h ? w * h : w;
-    const answer = pixels * bitDepth;
-    const dimText = h ? `${w} pixel × ${h} pixel` : `${w} pixels`;
-    return {
-      badge: 'Size in bits',
-      text: h
-        ? `A ${dimText} bitmap image contains ${colours.toLocaleString()} different colours.\n\nCalculate the minimum file size of the image in <strong>bits</strong>.`
-        : `A bitmap image is made up of ${pixels.toLocaleString()} pixels and contains ${colours.toLocaleString()} colours.\n\nCalculate the minimum file size of the image in <strong>bits</strong>.`,
-      answerNum: answer,
-      unitLabel: 'bits',
-    };
-  }
-
-  // Type 2: given pixels + colours → size in a named unit
-  function genSizeUnit() {
-    const units = availableUnits();
-    // Work backwards from answer: pick a clean answer, then reverse into params
-    // Allowed multipliers (whole or simple fraction answers relative to 1 unit)
-    const answers = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 0.5, 0.25, 0.75];
-    const maxAttempts = 100;
-    for (let i = 0; i < maxAttempts; i++) {
-      const unit   = pick(units);
-      const ans    = pick(answers);
-      const totalBits = ans * unit.factor;
-      if (!Number.isInteger(totalBits)) continue;
-      // Try to factor into px × bitDepth
-      const bitDepth = pick([1,2,3,4,6,8]);
-      const colours  = 2 ** bitDepth;
-      if (totalBits % bitDepth !== 0) continue;
-      const pixels = totalBits / bitDepth;
-      // Find a nice w×h factoring
-      const dims = niceFactors(pixels);
-      if (!dims) continue;
-      const [w, h] = dims;
-      const dimText = h ? `${w.toLocaleString()} × ${h.toLocaleString()} pixels` : `${w.toLocaleString()} pixels`;
-      return {
-        badge: `Size in ${unit.label}`,
-        text: `A bitmap image is ${dimText} and contains ${colours.toLocaleString()} different colours.\n\nCalculate the minimum file size in <strong>${unit.label}</strong>.`,
-        answerNum: ans,
-        unitLabel: unit.label,
-      };
-    }
-    // Fallback to bits question
-    return genSizeBits();
-  }
-
-  // Return [w, h] (h may be null for 1D) or null if no nice factoring
-  function niceFactors(pixels) {
-    const nice = [100,200,400,500,800,1000,2000,4000,8000,10000,
-                  40000,80000,100000,400000,800000,1000000,
-                  4000000,
-                  // IEC-friendly
-                  128,256,512,1024,2048,4096,8192,16384,32768,65536,
-                  131072,262144,524288,1048576];
-    if (nice.includes(pixels)) return [pixels, null];
-    // Try w×h pairs
-    const wSizes = [10,20,100,200,400,500,800,1000,2000,4000,8000,
-                    128,256,512,1024,2048,4096];
-    for (const w of wSizes) {
-      if (pixels % w === 0) {
-        const h = pixels / w;
-        if (h >= 10 && h <= 8000) return [w, h];
-      }
-    }
-    return null;
-  }
-
-  // Type 3: given bit depth → max colours
-  function genMaxColoursDepth() {
-    const depth  = pick([1,2,3,4,5,6,7,8,10,12,16,24]);
-    const answer = 2 ** depth;
-    return {
-      badge: 'Max colours',
-      text: `State the maximum number of different colours that can be used in a bitmap image that has a colour depth of <strong>${depth} bits</strong>.`,
-      answerNum: answer,
-      unitLabel: 'colours',
-    };
-  }
-
-  // Type 4: given num colours → minimum colour depth (bits per pixel)
-  function genColourDepth() {
-    const depth   = pick([1,2,3,4,5,6,7,8,10,12,16,24]);
-    const colours = pick([2**depth - 1, 2**depth]); // sometimes not a power of 2
-    const answer  = minBitsForColours(colours);
-    return {
-      badge: 'Colour depth',
-      text: `A bitmap image uses ${colours.toLocaleString()} different colours.\n\nCalculate the minimum number of bits per pixel (colour depth) needed to store this image.`,
-      answerNum: answer,
-      unitLabel: 'bits per pixel',
-    };
-  }
-
-  // Type 5: given file size + pixel count → max colours
-  function genMaxColoursSize() {
-    const maxAttempts = 100;
-    for (let i = 0; i < maxAttempts; i++) {
-      const bitDepth = pick([1,2,4,8,16,24]);
-      const dims = niceFactors(pick([
-        100,200,400,800,1000,2000,4000,8000,
-        100*100, 200*150, 1000*800, 800*600, 4000*3000,
-        128*128, 256*256, 512*512,
-      ]));
-      if (!dims) continue;
-      const [w, h] = dims;
-      const pixels = h ? w * h : w;
-      const totalBits = pixels * bitDepth;
-      // Pick a unit to express the file size in
-      const allUnits = availableUnits();
-      const unit = pick(allUnits);
-      const sizeInUnit = totalBits / unit.factor;
-      // Must be whole or simple fraction
-      const frac = sizeInUnit - Math.floor(sizeInUnit);
-      if (![0, 0.5, 0.25, 0.75].includes(frac)) continue;
-      if (sizeInUnit < 0.25 || sizeInUnit > 100000) continue;
-      const maxColours = 2 ** bitDepth;
-      const dimText = h ? `${w.toLocaleString()} pixels wide by ${h.toLocaleString()} pixels high` : `${w.toLocaleString()} pixels`;
-      return {
-        badge: 'Max colours',
-        text: `A bitmap image is ${dimText}.\n\nThe image takes up <strong>${fmtAnswer(sizeInUnit)} ${unit.label}</strong> of storage space when represented as a bitmap, excluding metadata.\n\nCalculate the maximum number of different colours that could appear in the image.`,
-        answerNum: maxColours,
-        unitLabel: 'colours',
-      };
-    }
-    return genMaxColoursDepth();
   }
 
   // ── Quiz state ────────────────────────────────────────────────────
@@ -1050,8 +881,7 @@
   updateScoreDisplay();
 
   function genQuestion() {
-    const generators = [genSizeBits, genSizeUnit, genMaxColoursDepth, genColourDepth, genMaxColoursSize];
-    return pick(generators)();
+    return window.EncodrQuizGenerators.bitmap.generate(unitsMode);
   }
 
   function nextQuestion() {
