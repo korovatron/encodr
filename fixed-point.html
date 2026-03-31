@@ -447,15 +447,12 @@
     if (QS.currentType === '1') {
       badge.className = 'badge badge-m';
       badge.textContent = 'BIN → DEN';
-      generateBinToDenQuestion();
     } else if (QS.currentType === '2') {
       badge.className = 'badge badge-e';
       badge.textContent = 'DEN → BIN';
-      generateDenToBinQuestion();
     } else {
       badge.className = 'badge badge-r';
       badge.textContent = 'RANGE';
-      generateRangeQuestion();
     }
 
     document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
