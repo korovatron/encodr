@@ -97,35 +97,36 @@
     }
 
     /* Category backgrounds & glyph colours */
-    .cat-ctrl  { background: #000; box-shadow: 0 0 0 1px #f87171; }
+    .cat-ctrl  { background: rgba(248, 113, 113, 0.18); box-shadow: 0 0 0 1px #f87171; }
     .cat-ctrl .cc-abbr  { color: #f87171; }
     .cat-ctrl .cc-dec, .cat-ctrl .cc-hex { color: #7a3030; }
 
-    .cat-space { background: #000; box-shadow: 0 0 0 1px var(--dim); }
+    .cat-space { background: rgba(128, 144, 216, 0.16); box-shadow: 0 0 0 1px var(--dim); }
     .cat-space .cc-glyph { color: var(--dim); font-size: 15px; }
+    .cat-space .cc-abbr { color: var(--dim); }
     .cat-space .cc-dec, .cat-space .cc-hex { color: #3a4070; }
 
-    .cat-digit { background: #000; box-shadow: 0 0 0 1px var(--ml); }
+    .cat-digit { background: rgba(255, 255, 0, 0.16); box-shadow: 0 0 0 1px var(--ml); }
     .cat-digit .cc-glyph { color: var(--ml); }
     .cat-digit .cc-dec, .cat-digit .cc-hex { color: #6a5e00; }
 
-    .cat-upper { background: #000; box-shadow: 0 0 0 1px #7dd3f8; }
+    .cat-upper { background: rgba(125, 211, 248, 0.18); box-shadow: 0 0 0 1px #7dd3f8; }
     .cat-upper .cc-glyph { color: #7dd3f8; }
     .cat-upper .cc-dec, .cat-upper .cc-hex { color: #2a5060; }
 
-    .cat-lower { background: #000; box-shadow: 0 0 0 1px #c084fc; }
+    .cat-lower { background: rgba(192, 132, 252, 0.18); box-shadow: 0 0 0 1px #c084fc; }
     .cat-lower .cc-glyph { color: #c084fc; }
     .cat-lower .cc-dec, .cat-lower .cc-hex { color: #5a2880; }
 
-    .cat-sym { background: #000; box-shadow: 0 0 0 1px var(--dim); }
-    .cat-sym .cc-glyph { color: var(--muted); }
-    .cat-sym .cc-dec, .cat-sym .cc-hex { color: #3a4070; }
+    .cat-sym { background: rgba(251, 146, 60, 0.18); box-shadow: 0 0 0 1px #fb923c; }
+    .cat-sym .cc-glyph { color: #fb923c; }
+    .cat-sym .cc-dec, .cat-sym .cc-hex { color: #6a3010; }
 
-    .cat-del { background: #000; box-shadow: 0 0 0 1px #f87171; }
+    .cat-del { background: rgba(248, 113, 113, 0.18); box-shadow: 0 0 0 1px #f87171; }
     .cat-del .cc-abbr { color: #f87171; }
     .cat-del .cc-dec, .cat-del .cc-hex { color: #7a3030; }
 
-    .cat-ext { background: #000; box-shadow: 0 0 0 1px #7a8fff; }
+    .cat-ext { background: rgba(122, 143, 255, 0.18); box-shadow: 0 0 0 1px #7a8fff; }
     .cat-ext .cc-glyph { color: #7a8fff; }
     .cat-ext .cc-dec, .cat-ext .cc-hex { color: #2a3070; }
 
@@ -377,7 +378,7 @@
     <div class="legend-item"><span class="legend-dot" style="background:#ffff00"></span>Digits (48–57)</div>
     <div class="legend-item"><span class="legend-dot" style="background:#7dd3f8"></span>Uppercase (65–90)</div>
     <div class="legend-item"><span class="legend-dot" style="background:#c084fc"></span>Lowercase (97–122)</div>
-    <div class="legend-item"><span class="legend-dot" style="background:#c0d0ff"></span>Punctuation &amp; symbols</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#fb923c"></span>Punctuation &amp; symbols</div>
   </div>
 
   <div class="ext-intro" id="extIntro" style="display:none">
@@ -998,12 +999,12 @@ function rangeNote(code) {
   const ch = String.fromCharCode(code);
   const hex = code.toString(16).toUpperCase().padStart(2,'0');
   if (code >= 33  && code <= 47)  return 'Punctuation placed between space (32) and the digits (48). The ordering reflects the key layout of 1960s typewriter keyboards, where punctuation keys sat between the numeral row and the letter rows.';
-  if (code >= 48  && code <= 57)  return `Digits start at 48 (0x30), putting each digit\'s numeric value in the lower nibble of its code. '${ch}' is ${code}, and ${code} & 0x0F = ${code & 0xF} — the actual number. Hardware can convert any ASCII digit to its integer value with a single AND operation, which was a deliberate convenience for 1960s arithmetic circuits.`;
-  if (code >= 58  && code <= 64)  return 'Punctuation between the digit range and the uppercase letters: : ; < = > ? @ — these mirror the keys that sat between numerals and letters on typewriter keyboards, keeping related characters contiguous.';
-  if (code >= 65  && code <= 90)  return `Uppercase letters begin at 65 (0x41). '${ch}' (${code} = 0x${hex} = ${code.toString(2).padStart(7,'0')}₂). Subtracting 64 gives its 1-based ordinal position in the alphabet. The gap of 6 symbols between digits (57) and 'A' (65) accounts for : ; < = > ? @ and was left deliberately rather than padding with unused codes.`;
-  if (code >= 91  && code <= 96)  return 'The six symbols between uppercase and lowercase: [ \\ ] ^ _ `. Their positions were set by the typewriter keys that sat between the upper-case and lower-case letter groups.';
-  if (code >= 97  && code <= 122) return `Lowercase letters are exactly 32 (0x20) higher than their uppercase partners — a single bit difference: bit 5. '${ch}' is ${code} (0x${hex}); '${ch.toUpperCase()}' is ${code-32} (0x${(code-32).toString(16).toUpperCase()}). This means: ch | 0x20 always lowercases a letter; ch & 0xDF always uppercases; ch ^ 0x20 toggles case. A deliberate design choice enabling case conversion without a lookup table.`;
-  if (code >= 123 && code <= 126) return 'The last four symbols of standard ASCII: { | } ~. Placed after the lowercase letters to complete the printable character set.';
+  if (code >= 48  && code <= 57)  return `Digits start at 48 (0x30), placing each digit\'s value in the lower nibble of its code. ${code} AND 000 1111 = ${code & 0xF} — a deliberate convenience built into ASCII for 1960s arithmetic circuits.`;
+  if (code >= 58  && code <= 64)  return 'These 7 symbols (codes 58–64) sit between the digits and uppercase letters. Placing them here meant \'A\' could start at 65 — keeping all 26 uppercase letters in one unbroken run, which simplifies range checks and AND masking.';
+  if (code >= 65  && code <= 90)  return `Uppercase letters begin at 65 (0x41). '${ch}' is ${code} = ${code.toString(2).padStart(7,'0')}₂. ${code} AND 011 1111 = ${code & 0x3F} — its ordinal position in the alphabet.`;
+  if (code >= 91  && code <= 96)  return 'Symbols placed between the uppercase and lowercase letter blocks.';
+  if (code >= 97  && code <= 122) return `'${ch}' is ${code} = ${code.toString(2).padStart(7,'0')}₂ — bit 5 is set, placing it 32 above its uppercase partner. ${code} AND 101 1111 = ${code & 0x5F} ('${String.fromCharCode(code & 0x5F)}') clears bit 5 → uppercase. OR 010 0000 forces lowercase; XOR 010 0000 toggles case. A deliberate design enabling case conversion without a lookup table.`;
+  if (code >= 123 && code <= 126) return 'Symbols placed after the lowercase letter block, completing the printable ASCII set.';
   if (code >= 128 && code <= 255) return 'Extended ASCII (128–255) is not standardised — the same byte value means different things in different code pages. The most famous is IBM Code Page 437 (the original IBM PC), which packed in box-drawing characters, Greek letters, and accented Latin letters. Windows-1252, Latin-1 (ISO-8859-1), and hundreds of other code pages each map these codes differently. Unicode was created specifically to replace all of these with a single universal standard: every character in human history gets one unambiguous code point.';
   return '';
 }
@@ -1068,8 +1069,8 @@ function buildGrid() {
       gl.className = 'cc-abbr';
       gl.textContent = 'DEL';
     } else if (c === 'space') {
-      gl.className = 'cc-glyph';
-      gl.textContent = '·';
+      gl.className = 'cc-abbr';
+      gl.textContent = 'SPC';
     } else if (c === 'ext') {
       gl.className = 'cc-glyph';
       const extEntry = getExtEntry(i);
