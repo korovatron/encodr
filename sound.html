@@ -1241,8 +1241,8 @@
     const fb = document.getElementById('sq-modal-feedback');
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fb.innerHTML = correct
-      ? `<strong>Correct!</strong><br>The answer is <strong>${sqQuestion.answerNum.toLocaleString()} ${sqQuestion.unitLabel}</strong>.`
-      : `<strong>Incorrect.</strong><br>The correct answer is <strong>${sqQuestion.answerNum.toLocaleString()} ${sqQuestion.unitLabel}</strong>.`;
+      ? `✓ <strong>Correct!</strong><br>The answer is <strong>${sqQuestion.answerNum.toLocaleString()} ${sqQuestion.unitLabel}</strong>.`
+      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${sqQuestion.answerNum.toLocaleString()} ${sqQuestion.unitLabel}</strong>.`;
     document.getElementById('sq-modal').showModal();
   }
 

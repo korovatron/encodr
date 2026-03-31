@@ -1081,8 +1081,8 @@
     const fb = document.getElementById('bq-modal-feedback');
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fb.innerHTML = correct
-      ? `<strong>Correct!</strong><br>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}`
-      : `<strong>Incorrect.</strong><br>The correct answer is <strong>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}</strong>.`;
+      ? `✓ <strong>Correct!</strong><br>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}`
+      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}</strong>.`;
     document.getElementById('bq-modal').showModal();
   }
 

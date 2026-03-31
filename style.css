@@ -591,7 +591,8 @@ body:has(#save-dialog[open]) { overflow: hidden; }
   margin-bottom: 22px;
 }
 .modal-feedback-correct { color: #00ff00; }
-.modal-feedback-wrong   { color: #ff5555; }
+.modal-feedback-wrong   { color: #fff; }
+.modal-feedback-wrong .fb-wrong { color: #ff5555; }
 .modal-footer {
   display: flex; justify-content: flex-end;
 }

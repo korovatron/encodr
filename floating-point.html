@@ -238,13 +238,21 @@
   }
 
   // Plain-text breakdown formulas (no HTML needed, just Unicode)
+  function toSuperscript(n) {
+    const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+    return String(n).split('').map(ch => map[ch] || ch).join('');
+  }
+
+  function fracPower(i) {
+    return `2${toSuperscript(-i)}`;
+  }
+
   function mFormula(bits) {
-    const FRACS = ['', '½', '¼', '⅛'];
     const parts = [];
     if (bits[0]) parts.push('−1');
     for (let i = 1; i < bits.length; i++) {
       if (!bits[i]) continue;
-      parts.push(i < FRACS.length ? FRACS[i] : `2^-${i}`);
+      parts.push(fracPower(i));
     }
     return parts.length ? parts.join(' + ') : '(all bits are 0)';
   }
@@ -631,8 +639,8 @@
       } else {
         const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
         html =
-          `\u2717 Incorrect \u2014 you entered <strong>${fmtNum(student)}</strong>, ` +
-          `answer: <strong>${fmtNum(target)}</strong>.<br><br>` +
+          `<span class="fb-wrong">\u2717 Incorrect \u2014 you entered <strong>${fmtNum(student)}</strong>, ` +
+          `answer: <strong>${fmtNum(target)}</strong>.</span><br><br>` +
           `Working:<br>` +
           `\u00a0\u00a0Mantissa\u00a0= ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
           `\u00a0\u00a0Exponent = ${eFormula(QS.eBits)} = ${ev}<br>` +
@@ -654,8 +662,8 @@
       } else {
         const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
         html =
-          `\u2717 Incorrect \u2014 your bits give <strong>${fmtNum(sv)}</strong>, ` +
-          `target: <strong>${fmtNum(target)}</strong>.<br><br>` +
+          `<span class="fb-wrong">\u2717 Incorrect \u2014 your bits give <strong>${fmtNum(sv)}</strong>, ` +
+          `target: <strong>${fmtNum(target)}</strong>.</span><br><br>` +
           `The correct answer:<br>` +
           `\u00a0\u00a0Mantissa: <strong>${QS.mBits.join('\u00a0')}</strong><br>` +
           `\u00a0\u00a0Exponent: <strong>${QS.eBits.join('\u00a0')}</strong><br><br>` +
@@ -708,20 +716,21 @@
       } else {
         const tick = ok => ok ? '\u2713' : '\u2717';
         html =
-          `${tick(bitsCorrect)} Bit pattern: ` +
+          `<span class="fb-wrong">${tick(bitsCorrect)} Bit pattern: ` +
           (bitsCorrect
             ? `correct \u2014 stored value = <strong>${fmtNum(sv)}</strong>`
             : `your bits give <strong>${fmtNum(sv)}</strong>, expected <strong>${fmtNum(stored)}</strong>`) +
-          `<br>` +
-          `${tick(absCorrect)} Absolute error: ` +
+          `</span><br>` +
+          `<span class="fb-wrong">${tick(absCorrect)} Absolute error: ` +
           (absCorrect
             ? `<strong>${fmtNum(stuAbs)}</strong> \u2713`
             : `you entered <strong>${isNaN(stuAbs) ? '(blank)' : fmtNum(stuAbs)}</strong>, expected <strong>${fmtNum(expAbsErr)}</strong>`) +
-          `<br>` +
-          `${tick(relCorrect)} Relative error: ` +
+          `</span><br>` +
+          `<span class="fb-wrong">${tick(relCorrect)} Relative error: ` +
           (relCorrect
             ? `<strong>${stuRel}%</strong> \u2713`
             : `you entered <strong>${isNaN(stuRel) ? '(blank)' : stuRel + '%'}</strong>, expected <strong>${expRelErr.toPrecision(3)}%</strong>`) +
+          `</span>` +
           working;
         if (!bitsCorrect) {
           renderQuizGrid('m', QS.mBits, false);
