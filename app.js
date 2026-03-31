@@ -29,3 +29,11 @@ window.addEventListener('touchmove', (e) => {
 document.addEventListener('dragstart', (e) => {
   if (e.target.closest('a')) e.preventDefault();
 });
+
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // Keep this silent in production UI; PWA is progressive enhancement.
+    });
+  });
+}
