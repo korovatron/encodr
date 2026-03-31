@@ -358,7 +358,7 @@
           expectedMax: max,
           prompt: pick([
             'With ' + n + ' bits in total and ' + frac + ' bits after the binary point, what are the smallest and largest representable denary values?',
-            'State the representable denary range for fixed point (' + n + ' total bits, ' + frac + ' fractional bits).',
+            'State the minimum and maximum denary values representable using fixed point with ' + n + ' total bits and ' + frac + ' fractional bits.',
             'For ' + n + '-bit fixed point with ' + frac + ' bits after the point, give the minimum and maximum denary values.'
           ]),
           formatHint: 'Enter both endpoints of the range below.'
