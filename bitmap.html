@@ -1061,6 +1061,7 @@
   }
 
   document.getElementById('bq-submit').addEventListener('click', checkAnswer);
+  document.getElementById('bq-submit').addEventListener('touchend', (e) => { e.preventDefault(); checkAnswer(); });
   document.getElementById('bq-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
   document.getElementById('bq-next').addEventListener('click', () => {
     document.getElementById('bq-modal').close();
