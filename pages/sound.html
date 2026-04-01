@@ -84,6 +84,11 @@
       gap: 10px;
       margin-bottom: 0;
     }
+    .comp-slot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .comp-pill {
       display: flex;
       align-items: center;
@@ -113,12 +118,14 @@
       border-radius: 100px;
       cursor: pointer;
       padding: 3px 10px;
+      min-width: 52px;
+      text-align: center;
       line-height: 1.4;
       transition: opacity .12s, background .12s;
       flex-shrink: 0;
     }
     .comp-toggle:hover { opacity: .80; }
-    .comp-pill.inactive .comp-toggle {
+    .comp-toggle.inactive {
       background: transparent;
       color: var(--comp-col, #fff);
       box-shadow: 0 0 0 1.5px var(--comp-col, #fff);
@@ -132,6 +139,16 @@
     .comp-pill-a { --comp-col: #c0a0ff; }
     .comp-pill-b { --comp-col: #ff9944; }
     .comp-pill-c { --comp-col: #44ddaa; }
+    .comp-toggle-a { --comp-col: #c0a0ff; }
+    .comp-toggle-b { --comp-col: #ff9944; }
+    .comp-toggle-c { --comp-col: #44ddaa; }
+
+    @media (max-width: 560px) {
+      .comp-strip {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
 
     /* ── Sliders ─────────────────────────────── */
     .sliders-card {
@@ -477,30 +494,37 @@
       <!-- Component strip -->
       <div class="comp-strip">
 
-        <!-- A: always on -->
-        <div class="comp-pill comp-pill-a" id="comp-a-pill">
-          <span class="comp-lbl">A</span>
-          <button class="step" id="comp-a-minus" aria-label="Lower frequency A">−</button>
-          <span class="comp-freq-val" id="comp-a-freq">4 Hz</span>
-          <button class="step" id="comp-a-plus"  aria-label="Raise frequency A">+</button>
+        <!-- A: optional -->
+        <div class="comp-slot" id="comp-a-slot">
+          <button class="comp-toggle comp-toggle-a" id="comp-a-toggle">ON</button>
+          <div class="comp-pill comp-pill-a" id="comp-a-pill">
+            <span class="comp-lbl">A</span>
+            <button class="step" id="comp-a-minus" aria-label="Lower frequency A">−</button>
+            <span class="comp-freq-val" id="comp-a-freq">4 Hz</span>
+            <button class="step" id="comp-a-plus"  aria-label="Raise frequency A">+</button>
+          </div>
         </div>
 
         <!-- B: optional -->
-        <div class="comp-pill comp-pill-b inactive" id="comp-b-pill">
-          <span class="comp-lbl">B</span>
-          <button class="comp-toggle" id="comp-b-toggle">OFF</button>
-          <button class="step" id="comp-b-minus" aria-label="Lower frequency B">−</button>
-          <span class="comp-freq-val" id="comp-b-freq">7 Hz</span>
-          <button class="step" id="comp-b-plus"  aria-label="Raise frequency B">+</button>
+        <div class="comp-slot" id="comp-b-slot">
+          <button class="comp-toggle comp-toggle-b" id="comp-b-toggle">ON</button>
+          <div class="comp-pill comp-pill-b" id="comp-b-pill">
+            <span class="comp-lbl">B</span>
+            <button class="step" id="comp-b-minus" aria-label="Lower frequency B">−</button>
+            <span class="comp-freq-val" id="comp-b-freq">7 Hz</span>
+            <button class="step" id="comp-b-plus"  aria-label="Raise frequency B">+</button>
+          </div>
         </div>
 
         <!-- C: optional -->
-        <div class="comp-pill comp-pill-c inactive" id="comp-c-pill">
-          <span class="comp-lbl">C</span>
-          <button class="comp-toggle" id="comp-c-toggle">OFF</button>
-          <button class="step" id="comp-c-minus" aria-label="Lower frequency C">−</button>
-          <span class="comp-freq-val" id="comp-c-freq">13 Hz</span>
-          <button class="step" id="comp-c-plus"  aria-label="Raise frequency C">+</button>
+        <div class="comp-slot" id="comp-c-slot">
+          <button class="comp-toggle comp-toggle-c" id="comp-c-toggle">OFF</button>
+          <div class="comp-pill comp-pill-c inactive" id="comp-c-pill">
+            <span class="comp-lbl">C</span>
+            <button class="step" id="comp-c-minus" aria-label="Lower frequency C">−</button>
+            <span class="comp-freq-val" id="comp-c-freq">13 Hz</span>
+            <button class="step" id="comp-c-plus"  aria-label="Raise frequency C">+</button>
+          </div>
         </div>
 
       </div><!-- /.comp-strip -->
@@ -686,13 +710,14 @@
     { min: 10, max: 20, step: 1 },   // C
   ];
   const components = [
-    { freq: 4,  active: true  },   // A — always on
-    { freq: 7,  active: false },   // B
+    { freq: 4,  active: true  },   // A
+    { freq: 7,  active: true  },   // B
     { freq: 13, active: false },   // C
   ];
 
   function getMaxFreq() {
-    return Math.max(...components.filter(c => c.active).map(c => c.freq));
+    const activeFreqs = components.filter(c => c.active).map(c => c.freq);
+    return activeFreqs.length ? Math.max(...activeFreqs) : 0;
   }
 
   function waveAt(t) {
@@ -895,6 +920,11 @@
     const warn    = document.getElementById('nyquist-warn');
     const minEl   = document.getElementById('nyquist-min');
     const maxFreq = getMaxFreq();
+    if (maxFreq <= 0) {
+      minEl.textContent = '0 Hz';
+      warn.classList.remove('visible');
+      return;
+    }
     const minRate = maxFreq * 2;
     minEl.textContent = `${minRate} Hz`;
     if (sampleRate < minRate) {
@@ -912,10 +942,9 @@
     const comp = components[idx];
     const r    = COMP_RANGES[idx];
     document.getElementById(`comp-${id}-freq`).textContent = comp.freq + ' Hz';
-    if (idx > 0) {
-      document.getElementById(`comp-${id}-pill`).classList.toggle('inactive', !comp.active);
-      document.getElementById(`comp-${id}-toggle`).textContent = comp.active ? 'ON' : 'OFF';
-    }
+    document.getElementById(`comp-${id}-pill`).classList.toggle('inactive', !comp.active);
+    document.getElementById(`comp-${id}-toggle`).textContent = comp.active ? 'ON' : 'OFF';
+    document.getElementById(`comp-${id}-toggle`).classList.toggle('inactive', !comp.active);
     document.getElementById(`comp-${id}-minus`).disabled = comp.freq <= r.min;
     document.getElementById(`comp-${id}-plus` ).disabled = comp.freq >= r.max;
     updateNyquistWarning();
@@ -923,13 +952,11 @@
   }
 
   COMP_IDS.forEach((id, idx) => {
-    // Toggle (B and C only)
-    if (idx > 0) {
-      document.getElementById(`comp-${id}-toggle`).addEventListener('click', () => {
-        components[idx].active = !components[idx].active;
-        refreshComp(idx);
-      });
-    }
+    // Toggle
+    document.getElementById(`comp-${id}-toggle`).addEventListener('click', () => {
+      components[idx].active = !components[idx].active;
+      refreshComp(idx);
+    });
     // Steppers
     document.getElementById(`comp-${id}-minus`).addEventListener('click', () => {
       const r = COMP_RANGES[idx];

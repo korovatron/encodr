@@ -237,7 +237,9 @@
     const unsignedOrig = (2 ** n - 1) - flipUnsigned;
     const flipNote = `(2<sup>${n}</sup>&minus;1 &minus; ${unsignedOrig})`;
     let resultNote;
+    let resultNoteClass = 'ns-note';
     if (origVal === 0) {
+      resultNoteClass = 'ns-note ns-note-break-mobile';
       resultNote = `<span class="ns-warn">(zero negates to itself)</span>`;
     } else if (resultVal === origVal) {
       resultNote = `<span class="ns-warn">(overflow &mdash; min value negates to itself)</span>`;
@@ -247,7 +249,7 @@
     el.innerHTML =
       `<div class="negate-step"><span class="ns-lbl">Original</span><code class="ns-bits">${bstr(origBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(origVal)}</span></div>` +
       `<div class="negate-step"><span class="ns-lbl">Flip bits</span><code class="ns-bits">${bstr(flipBits)}</code><span class="ns-eq">=</span><span class="ns-val">${flipUnsigned}</span><span class="ns-note">${flipNote}</span></div>` +
-      `<div class="negate-step"><span class="ns-lbl">Add 1</span><code class="ns-bits">${bstr(resultBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(resultVal)}</span><span class="ns-note">${resultNote}</span></div>`;
+      `<div class="negate-step"><span class="ns-lbl">Add 1</span><code class="ns-bits">${bstr(resultBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(resultVal)}</span><span class="${resultNoteClass}">${resultNote}</span></div>`;
     el.hidden = false;
   }
 

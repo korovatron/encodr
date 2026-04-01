@@ -266,6 +266,15 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 .ns-tick { color: #39ff7a; }
 .ns-warn { color: #ff5555; font-size: 17px; }
 
+@media (max-width: 560px) {
+  .ns-note-break-mobile {
+    display: block;
+    flex-basis: 100%;
+    margin-left: 108px;
+    margin-top: 2px;
+  }
+}
+
 .card-sub { font-size: 14px; color: var(--muted); }
 
 /* ── Bit grid ─────────────────────────────────── */
