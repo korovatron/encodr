@@ -10,8 +10,14 @@
       'rect x=98 y=214 width=42 height=66 fill=#5a2d0c stroke=#ffffff strokeWidth=2',
       'rect x=160 y=205 width=30 height=30 fill=#8fd3ff stroke=#ffffff strokeWidth=2',
       'circle cx=320 cy=88 r=38 fill=#ffe45c stroke=#ffffff strokeWidth=3',
+      'line x1=320 y1=38 x2=320 y2=6 stroke=#ffe45c strokeWidth=4',
+      'line x1=320 y1=138 x2=320 y2=170 stroke=#ffe45c strokeWidth=4',
       'line x1=290 y1=88 x2=252 y2=88 stroke=#ffe45c strokeWidth=4',
-      'line x1=320 y1=58 x2=320 y2=20 stroke=#ffe45c strokeWidth=4'
+      'line x1=350 y1=88 x2=388 y2=88 stroke=#ffe45c strokeWidth=4',
+      'line x1=299 y1=67 x2=272 y2=40 stroke=#ffe45c strokeWidth=4',
+      'line x1=341 y1=67 x2=368 y2=40 stroke=#ffe45c strokeWidth=4',
+      'line x1=299 y1=109 x2=272 y2=136 stroke=#ffe45c strokeWidth=4',
+      'line x1=341 y1=109 x2=368 y2=136 stroke=#ffe45c strokeWidth=4'
     ].join('\n'),
     rocket: [
       'polygon points="240,30 290,110 190,110" fill=#ff5555 stroke=#ffffff strokeWidth=3',
@@ -23,12 +29,13 @@
       'text x=240 y=95 content="A" fill=#ffffff fontSize=28 textAnchor=middle fontWeight=700'
     ].join('\n'),
     logo: [
-      'rect x=30 y=40 width=420 height=240 rx=26 fill=#1d1246 stroke=#ffffff strokeWidth=3',
-      'circle cx=110 cy=160 r=54 fill=#ffd400 stroke=#ffffff strokeWidth=3',
-      'text x=110 y=176 content="E" fill=#000000 fontSize=58 fontFamily=Verdana fontWeight=700 textAnchor=middle',
-      'text x=220 y=132 content="vector" fill=#ffffff fontSize=42 fontFamily=Verdana fontWeight=700',
-      'text x=220 y=186 content="graphics" fill=#6ee7ff fontSize=42 fontFamily=Verdana fontWeight=700',
-      'line x1=220 y1=205 x2=395 y2=205 stroke=#ffd400 strokeWidth=6'
+      'rect x=112 y=52 width=256 height=256 rx=44 fill=#050505',
+      'rect x=158 y=250 width=164 height=24 rx=8 fill=#ffe500',
+      'rect x=158 y=196 width=24 height=78 rx=8 fill=#ffe500',
+      'rect x=228 y=208 width=24 height=66 rx=8 fill=#ffe500',
+      'rect x=298 y=196 width=24 height=78 rx=8 fill=#ffe500',
+      'rect x=194 y=86 width=92 height=92 rx=26 fill=#ff3b30',
+      'rect x=218 y=110 width=44 height=44 rx=14 fill=#050505'
     ].join('\n'),
     landscape: [
       'rect x=0 y=0 width=480 height=320 fill=#18103c',
@@ -36,8 +43,7 @@
       'polygon points="0,240 80,170 170,230 250,150 330,220 410,135 480,210 480,320 0,320" fill=#50368d',
       'polygon points="0,270 90,220 170,255 250,205 320,250 400,215 480,255 480,320 0,320" fill=#2bb673',
       'rect x=62 y=208 width=12 height=74 fill=#5a2d0c',
-      'circle cx=68 cy=193 r=27 fill=#00c95c',
-      'polyline points="20,280 70,250 120,280 170,245 220,280 270,252 320,280" fill=none stroke=#c8fff1 strokeWidth=4'
+      'circle cx=68 cy=193 r=27 fill=#00c95c'
     ].join('\n')
   };
 

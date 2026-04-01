@@ -71,7 +71,7 @@ header {
   border-radius: 8px;
   box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(255,255,0,.35);
   user-select: none;
-  font-family: 'Courier New', 'Consolas', monospace;
+  font-family: 'Arial Rounded MT Bold', 'Trebuchet MS', 'Segoe UI', Verdana, sans-serif;
 }
 .logo em { color: #ff0000; font-style: normal; }
 
