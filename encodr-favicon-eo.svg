@@ -12,7 +12,7 @@
     <rect x="34" y="186" width="78" height="24" rx="8" fill="#ffe500"/>
 
     <!-- Red o -->
-    <rect x="130" y="80" width="92" height="92" rx="26" fill="#ff3b30"/>
-    <rect x="154" y="104" width="44" height="44" rx="14" fill="#050505"/>
+    <rect x="130" y="82" width="92" height="92" rx="26" fill="#ff3b30"/>
+    <rect x="154" y="106" width="44" height="44" rx="14" fill="#050505"/>
   </g>
 </svg>
