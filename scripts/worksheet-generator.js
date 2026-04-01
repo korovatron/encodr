@@ -463,11 +463,13 @@
     return items;
   }
 
-  async function buildPdf(items, title) {
+  async function buildPdf(items, title, layoutOptions) {
     var jsPDF = window.jspdf && window.jspdf.jsPDF;
     if (!jsPDF) {
       throw new Error("jsPDF did not load.");
     }
+
+    var compactMode = !!(layoutOptions && layoutOptions.compactMode);
 
     var doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4", compress: true });
     var pageW = doc.internal.pageSize.getWidth();
@@ -500,10 +502,10 @@
       drawPageDecorations();
     }
 
-    function wrappedLines(text, fontSize, isBold) {
+    function wrappedLines(text, fontSize, isBold, maxWidth) {
       doc.setFont("helvetica", isBold ? "bold" : "normal");
       doc.setFontSize(fontSize || 11);
-      return doc.splitTextToSize(String(text), pageW - margin * 2);
+      return doc.splitTextToSize(String(text), maxWidth || (pageW - margin * 2));
     }
 
     function writeLines(lines, fontSize, isBold) {
@@ -532,19 +534,70 @@
     writeCentred(normalizeTitle(title), 20, true);
     y += lineH;
 
-    items.forEach(function (item) {
-      var l1 = wrappedLines("Q" + item.number, 12, true);
-      var l2 = wrappedLines(item.prompt, 11, false);
-      var l4 = wrappedLines("Answer: ________________________________________________", 11, false);
-      var blockHeight = (l1.length + l2.length) * lineH + l4.length * lineH + lineH + (3 * 4) + 8;
+    if (!compactMode) {
+      items.forEach(function (item) {
+        var l1 = wrappedLines("Q" + item.number, 12, true);
+        var l2 = wrappedLines(item.prompt, 11, false);
+        var l4 = wrappedLines("Answer: ________________________________________________", 11, false);
+        var blockHeight = (l1.length + l2.length) * lineH + l4.length * lineH + lineH + (3 * 4) + 8;
 
-      ensureSpace(blockHeight);
-      writeLines(l1, 12, true);
-      writeLines(l2, 11, false);
-      y += lineH;
-      writeLines(l4, 11, false);
-      y += 8;
-    });
+        ensureSpace(blockHeight);
+        writeLines(l1, 12, true);
+        writeLines(l2, 11, false);
+        y += lineH;
+        writeLines(l4, 11, false);
+        y += 8;
+      });
+    } else {
+      var columnGap = 22;
+      var columnWidth = (pageW - margin * 2 - columnGap) / 2;
+      var leftX = margin;
+      var rightX = margin + columnWidth + columnGap;
+      var contentTop = y;
+      var column = 0;
+      var compactQFont = 11;
+      var compactPFont = 9;
+      var compactQLineH = 13;
+      var compactPLineH = 12;
+      var compactGapAfterQ = 2;
+      var compactGapAfterBlock = 5;
+
+      function ensureCompactSpace(heightNeeded) {
+        if (y + heightNeeded <= contentBottom) return;
+        if (column === 0) {
+          column = 1;
+          y = contentTop;
+          return;
+        }
+        doc.addPage("a4", "portrait");
+        drawPageDecorations();
+        column = 0;
+        y = margin;
+        contentTop = margin;
+      }
+
+      items.forEach(function (item) {
+        var x = column === 0 ? leftX : rightX;
+        var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
+        var pLines = wrappedLines(item.prompt, compactPFont, false, columnWidth);
+        var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pLines.length * compactPLineH + compactGapAfterBlock;
+
+        ensureCompactSpace(blockHeight);
+        x = column === 0 ? leftX : rightX;
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(compactQFont);
+        doc.setTextColor(0);
+        doc.text(qLines, x, y);
+        y += qLines.length * compactQLineH + compactGapAfterQ;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(compactPFont);
+        doc.setTextColor(0);
+        doc.text(pLines, x, y);
+        y += pLines.length * compactPLineH + compactGapAfterBlock;
+      });
+    }
 
     doc.addPage("a4", "portrait");
     y = margin;
@@ -573,6 +626,7 @@
     var title = normalizeTitle(byId("ws-title") ? byId("ws-title").value : DEFAULT_TITLE);
     var countInput = byId("ws-count");
     var count = Math.round(safeNum(countInput ? countInput.value : 20, 20));
+    var compactMode = !!(byId("ws-compact-mode") && byId("ws-compact-mode").checked);
 
     if (count < 1 || count > 100) {
       setStatus("Choose a question count from 1 to 100.", "error");
@@ -597,7 +651,7 @@
     try {
       var items = buildWorksheetItems(count, selections);
       setStatus("Rendering PDF...", "");
-      var pdf = await buildPdf(items, title);
+      var pdf = await buildPdf(items, title, { compactMode: compactMode });
       var filename = slugify(title) + "-" + new Date().toISOString().slice(0, 10) + ".pdf";
       pdf.save(filename);
       setStatus("Downloaded " + filename, "success");
