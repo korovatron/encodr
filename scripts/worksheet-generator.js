@@ -774,10 +774,20 @@
     function renderAnswerArea(item) {
       var layout = item.answerLayout;
       if (!layout) {
-        var l4 = wrappedLines("Answer: ________________________________________________", 11, false);
-        y += lineH;
-        writeLines(l4, 11, false);
-        y += 8;
+        var label = "Answer:";
+        var labelX = margin;
+        var baselineY = y + lineH;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.setTextColor(0);
+        doc.text(label, labelX, baselineY);
+        var labelWidth = doc.getTextWidth(label);
+        var lineStart = labelX + labelWidth + 8;
+        var lineEnd = pageW - margin;
+        doc.setLineWidth(0.9);
+        doc.line(lineStart, baselineY + 1, lineEnd, baselineY + 1);
+        // Keep the same vertical footprint as the previous wrapped-text answer line.
+        y += (lineH * 2) + 12;
         return;
       }
 
