@@ -20,13 +20,17 @@
       'line x1=341 y1=109 x2=368 y2=136 stroke=#ffe45c strokeWidth=4'
     ].join('\n'),
     rocket: [
-      'polygon points="240,30 290,110 190,110" fill=#ff5555 stroke=#ffffff strokeWidth=3',
-      'rect x=195 y=110 width=90 height=135 rx=18 fill=#d9e4ff stroke=#ffffff strokeWidth=3',
-      'circle cx=240 cy=158 r=22 fill=#00c8ff stroke=#ffffff strokeWidth=3',
-      'polygon points="195,205 150,250 195,245" fill=#5e76ff stroke=#ffffff strokeWidth=3',
-      'polygon points="285,205 330,250 285,245" fill=#5e76ff stroke=#ffffff strokeWidth=3',
-      'polygon points="214,245 240,305 266,245" fill=#ff9a3d stroke=#ffffff strokeWidth=3',
-      'text x=240 y=95 content="A" fill=#ffffff fontSize=28 textAnchor=middle fontWeight=700'
+      'circle cx=410 cy=70 r=28 fill=#f5f1c8 stroke=#ffffff strokeWidth=3',
+      'circle cx=398 cy=58 r=5 fill=#d9d2a8 opacity=0.7',
+      'circle cx=421 cy=78 r=4 fill=#d9d2a8 opacity=0.7',
+      'polygon points="160,40 210,120 110,120" fill=#ff5555 stroke=#ffffff strokeWidth=3',
+      'rect x=115 y=120 width=90 height=135 rx=18 fill=#d9e4ff stroke=#ffffff strokeWidth=3',
+      'circle cx=160 cy=168 r=22 fill=#00c8ff stroke=#ffffff strokeWidth=3',
+      'polygon points="115,215 70,260 115,255" fill=#5e76ff stroke=#ffffff strokeWidth=3',
+      'polygon points="205,215 250,260 205,255" fill=#5e76ff stroke=#ffffff strokeWidth=3',
+      'polygon points="134,255 160,315 186,255" fill=#ff9a3d stroke=#ffffff strokeWidth=3',
+      'text x=160 y=105 content="A" fill=#ffffff fontSize=28 textAnchor=middle fontWeight=700',
+      'text x=160 y=345 content="ARTEMIS II, APRIL 1st 2026" fill=#ffffff fontSize=24 textAnchor=middle fontWeight=700'
     ].join('\n'),
     logo: [
       'rect x=112 y=52 width=256 height=256 rx=44 fill=#050505',
