@@ -70,9 +70,7 @@
       id: "sound",
       label: "Sound Sampling",
       subtypes: [
-        { id: "fileSizeBits", label: "File size in bits" },
-        { id: "fileSizeBytes", label: "File size in bytes" },
-        { id: "fileSizeUnit", label: "File size in unit" },
+        { id: "fileSize", label: "File size" },
         { id: "solveResolution", label: "Solve resolution" },
         { id: "halvingEffect", label: "Size after change" },
         { id: "duration", label: "Solve duration" },
@@ -131,6 +129,9 @@
       .replace(/^-+|-+$/g, "");
     return slug || "encodr-worksheet";
   }
+
+  var soundFileSizeLastKind = null;
+  var soundFileSizeStreak = 0;
 
   function instructionForAnswerKind(kind) {
     if (kind === "bin") return "Write your answer as a binary number.";
@@ -349,11 +350,39 @@
       };
     }
 
-    var sq = generators.sound.generate({
-      unitsMode: source.options.unitsMode || "mix",
-      nyquistOn: true,
-      questionTypes: [source.subtypeId]
-    });
+    var soundTypes = source.subtypeId === "fileSize"
+      ? ["fileSizeBits", "fileSizeBytes", "fileSizeUnit"]
+      : [source.subtypeId];
+
+    var sq;
+    if (source.subtypeId === "fileSize") {
+      for (var tries = 0; tries < 12; tries++) {
+        sq = generators.sound.generate({
+          unitsMode: source.options.unitsMode || "mix",
+          nyquistOn: true,
+          questionTypes: soundTypes
+        });
+        var kind = sq.unitLabel === "bits"
+          ? "fileSizeBits"
+          : (sq.unitLabel === "bytes" ? "fileSizeBytes" : "fileSizeUnit");
+        if (soundFileSizeStreak < 2 || kind !== soundFileSizeLastKind || tries === 11) {
+          if (kind === soundFileSizeLastKind) {
+            soundFileSizeStreak += 1;
+          } else {
+            soundFileSizeLastKind = kind;
+            soundFileSizeStreak = 1;
+          }
+          break;
+        }
+      }
+    } else {
+      sq = generators.sound.generate({
+        unitsMode: source.options.unitsMode || "mix",
+        nyquistOn: true,
+        questionTypes: soundTypes
+      });
+    }
+
     return {
       topic: source.topicLabel,
       prompt: plainText(sq.text),
@@ -363,6 +392,9 @@
   }
 
   function buildWorksheetItems(count, selections) {
+    soundFileSizeLastKind = null;
+    soundFileSizeStreak = 0;
+
     // Distribute count evenly across selected topics
     var numTopics = selections.length;
     var base = Math.floor(count / numTopics);

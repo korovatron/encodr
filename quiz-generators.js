@@ -770,13 +770,55 @@
           return genFileSizeBits();
         }
 
+        function formatSizeValue(n) {
+          if (Number.isInteger(n)) return n.toLocaleString();
+          var rounded = Math.round(n * 10000) / 10000;
+          return rounded.toLocaleString(undefined, { maximumFractionDigits: 4 });
+        }
+
+        function isNiceNumber(n) {
+          const frac = n - Math.floor(n);
+          return frac === 0 || frac === 0.5 || frac === 0.25 || frac === 0.75;
+        }
+
+        function pickSoundSizeDisplay(totalBits, rate, res) {
+          const displayUnits = [{ label: 'bits', bitsPerUnit: 1 }, { label: 'bytes', bitsPerUnit: 8 }]
+            .concat(soundUnits(unitsMode).map(function (u) {
+              return { label: u.label, bitsPerUnit: u.bitsPerUnit };
+            }));
+
+          const candidates = displayUnits.map(function (unit) {
+            return { label: unit.label, value: totalBits / unit.bitsPerUnit, bitsPerUnit: unit.bitsPerUnit };
+          }).filter(function (c) {
+            if (!Number.isFinite(c.value) || c.value <= 0) return false;
+            // Validate that if we reverse-calculate duration, we get a nice answer
+            if (rate && res) {
+              const duration = (c.value * c.bitsPerUnit) / (rate * res);
+              if (!isNiceNumber(duration) || duration < 0.5 || duration > 1800) {
+                return false;
+              }
+            }
+            if (c.label === 'GB' || c.label === 'GiB' || c.label === 'MB' || c.label === 'MiB' || c.label === 'kB' || c.label === 'kiB') {
+              return c.value >= 0.25;
+            }
+            if (c.label === 'bytes') return c.value >= 1;
+            return true;
+          });
+
+          if (!candidates.length) return { value: totalBits, label: 'bits' };
+
+          return pick(candidates);
+        }
+
         function genSolveResolution() {
           const rate = pick(SOUND_RATES_HZ);
           const res = pick(SOUND_DEPTHS);
           const secs = pick(SOUND_DURATIONS);
+          const totalBits = rate * res * secs;
+          const shownSize = pickSoundSizeDisplay(totalBits, rate, res);
           return {
             badge: 'Solve',
-            text: 'A sound file is <strong>' + (rate * res * secs).toLocaleString() + ' bits</strong> in size and lasts <strong>' + fmtSecs(secs) + '</strong>.\n\nIt was recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong>.\n\nWhat is the <strong>sample resolution</strong> in bits?',
+            text: 'A sound file is <strong>' + formatSizeValue(shownSize.value) + ' ' + shownSize.label + '</strong> in size and lasts <strong>' + fmtSecs(secs) + '</strong>.\n\nIt was recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong>.\n\nWhat is the <strong>sample resolution</strong> in bits?',
             answerNum: res,
             unitLabel: 'bits'
           };
@@ -818,9 +860,11 @@
           const rate = pick(SOUND_RATES_HZ);
           const res = pick(SOUND_DEPTHS);
           const secs = pick(SOUND_DURATIONS);
+          const totalBits = rate * res * secs;
+          const shownSize = pickSoundSizeDisplay(totalBits, rate, res);
           return {
             badge: 'Solve',
-            text: 'A sound file is <strong>' + (rate * res * secs).toLocaleString() + ' bits</strong> in size.\n\nIt was recorded at <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>.\n\nHow long is the recording in <strong>seconds</strong>?',
+            text: 'A sound file is <strong>' + formatSizeValue(shownSize.value) + ' ' + shownSize.label + '</strong> in size.\n\nIt was recorded at <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>.\n\nHow long is the recording in <strong>seconds</strong>?',
             answerNum: secs,
             unitLabel: 'seconds'
           };
