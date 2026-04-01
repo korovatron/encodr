@@ -30,7 +30,7 @@
       'polygon points="205,215 250,260 205,255" fill=#5e76ff stroke=#ffffff strokeWidth=3',
       'polygon points="134,255 160,315 186,255" fill=#ff9a3d stroke=#ffffff strokeWidth=3',
       'text x=160 y=105 content="A" fill=#ffffff fontSize=28 textAnchor=middle fontWeight=700',
-      'text x=160 y=345 content="ARTEMIS II, APRIL 1st 2026" fill=#ffffff fontSize=24 textAnchor=middle fontWeight=700'
+      'text x=160 y=345 content="Artemis II, APRIL 1st 2026" fill=#ffffff fontSize=24 textAnchor=middle fontWeight=700'
     ].join('\n'),
     logo: [
       'rect x=112 y=52 width=256 height=256 rx=44 fill=#050505',
