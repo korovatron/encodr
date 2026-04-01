@@ -843,16 +843,59 @@
             { q: 'the duration is <strong>halved</strong>', factor: 0.5 },
             { q: 'the duration is <strong>doubled</strong>', factor: 2 }
           ];
-          const rate = pick(SOUND_RATES_HZ);
-          const res = pick(SOUND_DEPTHS);
-          const secs = pick(SOUND_DURATIONS);
-          const orig = rate * res * secs;
+          const displayUnits = [{ label: 'bits', bitsPerUnit: 1 }, { label: 'bytes', bitsPerUnit: 8 }]
+            .concat(soundUnits(unitsMode).map(function (u) {
+              return { label: u.label, bitsPerUnit: u.bitsPerUnit };
+            }));
+
+          function cleanSizeCandidates(totalBits) {
+            return displayUnits.map(function (unit) {
+              return { label: unit.label, bitsPerUnit: unit.bitsPerUnit, value: totalBits / unit.bitsPerUnit };
+            }).filter(function (c) {
+              if (!Number.isFinite(c.value) || c.value <= 0) return false;
+              if (!isNiceNumber(c.value)) return false;
+              if (c.label === 'bytes' && c.value < 1) return false;
+              if ((c.label === 'kB' || c.label === 'kiB' || c.label === 'MB' || c.label === 'MiB' || c.label === 'GB' || c.label === 'GiB') && c.value < 0.25) return false;
+              return true;
+            });
+          }
+
+          for (let i = 0; i < 500; i++) {
+            const rate = pick(SOUND_RATES_HZ);
+            const res = pick(SOUND_DEPTHS);
+            const secs = pick(SOUND_DURATIONS);
+            const ch = pick(choices);
+            const origBits = rate * res * secs;
+            const newBits = origBits * ch.factor;
+            if (!Number.isInteger(newBits)) continue;
+
+            const origCandidates = cleanSizeCandidates(origBits);
+            const ansCandidates = cleanSizeCandidates(newBits);
+            if (!origCandidates.length || !ansCandidates.length) continue;
+
+            const answerUnit = pick(ansCandidates);
+            const altPromptCandidates = origCandidates.filter(function (c) { return c.label !== answerUnit.label; });
+            const promptUnit = altPromptCandidates.length ? pick(altPromptCandidates) : pick(origCandidates);
+
+            return {
+              badge: 'File Size',
+              text: 'A sound file has a size of <strong>' + formatSizeValue(promptUnit.value) + ' ' + promptUnit.label + '</strong>.\n\nWhat is the new file size in <strong>' + answerUnit.label + '</strong> if ' + ch.q + '?',
+              answerNum: newBits / answerUnit.bitsPerUnit,
+              unitLabel: answerUnit.label
+            };
+          }
+
           const ch = pick(choices);
+          const rate = pick([8000, 16000, 22050]);
+          const res = pick([8, 16]);
+          const secs = pick([10, 20, 30, 60]);
+          const origBits = rate * res * secs;
+          const answerUnit = { label: 'bytes', bitsPerUnit: 8 };
           return {
             badge: 'File Size',
-            text: 'A sound file has a size of <strong>' + orig.toLocaleString() + ' bits</strong>.\n\nWhat is the new file size (in bits) if ' + ch.q + '?',
-            answerNum: orig * ch.factor,
-            unitLabel: 'bits'
+            text: 'A sound file has a size of <strong>' + formatSizeValue(origBits / 8) + ' bytes</strong>.\n\nWhat is the new file size in <strong>' + answerUnit.label + '</strong> if ' + ch.q + '?',
+            answerNum: (origBits * ch.factor) / answerUnit.bitsPerUnit,
+            unitLabel: answerUnit.label
           };
         }
 
