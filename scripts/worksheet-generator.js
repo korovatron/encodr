@@ -347,7 +347,8 @@
             label: "Binary value:",
             bitText: uqToken,
             bits: bitsInBinaryString(uqToken),
-            pointIndex: binaryPointIndex(uqToken)
+            pointIndex: binaryPointIndex(uqToken),
+            showLabel: false
           });
         }
       }
@@ -375,7 +376,8 @@
           label: "Fixed-point value:",
           bitText: fq.expectedBits,
           bits: Number.isFinite(fq.totalBits) ? fq.totalBits : bitsInBinaryString(fq.expectedBits),
-          pointIndex: Number.isFinite(fq.leftBits) ? fq.leftBits : binaryPointIndex(fq.expectedBits)
+          pointIndex: Number.isFinite(fq.leftBits) ? fq.leftBits : binaryPointIndex(fq.expectedBits),
+          showLabel: false
         });
       }
       if (fq.answerKind === "bin") {
@@ -409,7 +411,8 @@
           label: "Two's complement value:",
           bitText: tq.expectedBits,
           bits: Number.isFinite(tq.bits) ? tq.bits : bitsInBinaryString(tq.expectedBits),
-          pointIndex: null
+          pointIndex: null,
+          showLabel: false
         });
       }
       if (tq.answerKind === "bin") {
@@ -647,16 +650,19 @@
       var boxH = 16;
       var labelGap = 4;
       var rowGap = 8;
+      var showLabel = opts.showLabel !== false;
       var cellW = Math.max(10, Math.min(18, Math.floor(available / safeBits)));
       var totalW = cellW * safeBits;
       var bitText = (opts.bitText || "").replace(/[^01]/g, "");
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(0);
-      doc.text(label || "Answer:", x, yStart);
-
-      var boxY = yStart + labelGap;
+      var boxY = yStart;
+      if (showLabel) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(0);
+        doc.text(label || "Answer:", x, yStart);
+        boxY = yStart + labelGap;
+      }
       doc.setLineWidth(0.9);
       doc.rect(x, boxY, totalW, boxH);
       for (var i = 1; i < safeBits; i++) {
@@ -685,7 +691,7 @@
         }
       }
 
-      return lineH + rowGap + boxH;
+      return (showLabel ? lineH : 0) + rowGap + boxH;
     }
 
     function promptBitBoxesHeight(item, maxWidth) {
@@ -696,8 +702,8 @@
         var safeBits = Math.max(2, Math.min(32, Math.floor(entry.bits || bitsInBinaryString(entry.bitText))));
         var cellW = Math.max(10, Math.min(18, Math.floor(width / safeBits)));
         var boxH = 16;
-        var labelH = lineH;
-        total += labelH + 4 + boxH + 8;
+        var showLabel = entry.showLabel !== false;
+        total += (showLabel ? lineH : 0) + 4 + boxH + 8;
       });
       return total;
     }
@@ -713,7 +719,8 @@
           Number.isFinite(entry.pointIndex) ? entry.pointIndex : binaryPointIndex(entry.bitText),
           {
             maxWidth: maxWidth,
-            bitText: entry.bitText
+            bitText: entry.bitText,
+            showLabel: entry.showLabel
           }
         );
       });
