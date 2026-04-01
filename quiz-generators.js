@@ -138,15 +138,18 @@
   const SOUND_RATES_HZ = [8000, 11025, 16000, 22050, 44100, 48000, 96000];
   const SOUND_RATES_SI = [8000, 16000, 32000, 48000, 96000];
   const SOUND_RATES_IEC = [8192, 16384, 32768];
+  const SOUND_RATES_IEC_LARGE = [8192, 16384, 32768, 65536];
   const SOUND_DEPTHS = [4, 8, 12, 16, 24, 32];
   const SOUND_DURATIONS = [5, 10, 15, 20, 30, 60, 90, 120, 180, 300];
   const SOUND_SI_UNITS = [
     { label: 'kB', bitsPerUnit: 8000 },
-    { label: 'MB', bitsPerUnit: 8000000 }
+    { label: 'MB', bitsPerUnit: 8000000 },
+    { label: 'GB', bitsPerUnit: 8000000000 }
   ];
   const SOUND_IEC_UNITS = [
     { label: 'kiB', bitsPerUnit: 8 * 1024 },
-    { label: 'MiB', bitsPerUnit: 8 * 1024 * 1024 }
+    { label: 'MiB', bitsPerUnit: 8 * 1024 * 1024 },
+    { label: 'GiB', bitsPerUnit: 8 * 1024 * 1024 * 1024 }
   ];
 
   function soundUnits(mode) {
@@ -662,9 +665,26 @@
           : ['fileSizeBits', 'fileSizeBytes', 'fileSizeUnit', 'solveResolution', 'halvingEffect', 'duration', 'nyquist'];
 
         function genFileSizeBits() {
-          const rate = pick(SOUND_RATES_HZ);
-          const res = pick(SOUND_DEPTHS);
-          const secs = pick(SOUND_DURATIONS);
+          const shortRates = [8000, 11025, 16000, 22050, 32000, 44100];
+          const shortDepths = [4, 8, 12, 16];
+          const shortDurations = [1, 2, 3, 4, 5, 8, 10, 12, 15, 20, 30, 45, 60];
+          for (let i = 0; i < 250; i++) {
+            const rate = pick(shortRates);
+            const res = pick(shortDepths);
+            const secs = pick(shortDurations);
+            const answer = rate * res * secs;
+            if (answer >= 64000 && answer <= 8000000) {
+              return {
+                badge: 'File Size',
+                text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secs) + '</strong>.\n\nCalculate the file size in <strong>bits</strong>.',
+                answerNum: answer,
+                unitLabel: 'bits'
+              };
+            }
+          }
+          const rate = pick([8000, 16000, 22050]);
+          const res = pick([8, 16]);
+          const secs = pick([5, 10, 15, 20, 30]);
           return {
             badge: 'File Size',
             text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secs) + '</strong>.\n\nCalculate the file size in <strong>bits</strong>.',
@@ -674,9 +694,26 @@
         }
 
         function genFileSizeBytes() {
-          const rate = pick(SOUND_RATES_HZ);
-          const res = pick([8, 16, 24, 32]);
-          const secs = pick(SOUND_DURATIONS);
+          const shortRates = [8000, 11025, 16000, 22050, 32000, 44100];
+          const shortDepths = [8, 16];
+          const shortDurations = [1, 2, 3, 4, 5, 8, 10, 12, 15, 20, 30, 45, 60];
+          for (let i = 0; i < 250; i++) {
+            const rate = pick(shortRates);
+            const res = pick(shortDepths);
+            const secs = pick(shortDurations);
+            const answer = (rate * res * secs) / 8;
+            if (answer >= 8000 && answer <= 1000000) {
+              return {
+                badge: 'File Size',
+                text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secs) + '</strong>.\n\nCalculate the file size in <strong>bytes</strong>.',
+                answerNum: answer,
+                unitLabel: 'bytes'
+              };
+            }
+          }
+          const rate = pick([8000, 16000, 22050]);
+          const res = pick([8, 16]);
+          const secs = pick([5, 10, 15, 20, 30]);
           return {
             badge: 'File Size',
             text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secs) + '</strong>.\n\nCalculate the file size in <strong>bytes</strong>.',
@@ -688,15 +725,40 @@
         function genFileSizeUnit() {
           const units = soundUnits(unitsMode);
           const clean = [1, 2, 4, 8, 16, 32, 64, 128, 256, 0.5, 0.25, 0.75];
+          const largeUnits = units.filter(function (u) { return u.label === 'GB' || u.label === 'GiB'; });
+          const smallUnits = units.filter(function (u) { return u.label !== 'GB' && u.label !== 'GiB'; });
+
+          // Give GB/GiB a dedicated path so they appear in practice.
+          if (largeUnits.length && Math.random() < 0.4) {
+            const largeSecs = [300, 600, 900, 1200, 1500, 1800];
+            for (let i = 0; i < 300; i++) {
+              const unit = pick(largeUnits);
+              const ratePool = unit.label === 'GiB' ? SOUND_RATES_IEC_LARGE : SOUND_RATES_SI;
+              const rate = pick(ratePool);
+              const res = pick([8, 16, 24, 32]);
+              const secs = pick(largeSecs);
+              const ans = (rate * res * secs) / unit.bitsPerUnit;
+              if (ans >= 0.25 && ans <= 8) {
+                return {
+                  badge: 'File Size',
+                  text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secs) + '</strong>.\n\nCalculate the file size in <strong>' + unit.label + '</strong>.',
+                  answerNum: parseFloat(ans.toFixed(4)),
+                  unitLabel: unit.label
+                };
+              }
+            }
+          }
+
+          const weightedUnits = (smallUnits.length ? smallUnits : units);
           for (let i = 0; i < 400; i++) {
-            const unit = pick(units);
-            const ans = pick(clean);
-            const totalBits = ans * unit.bitsPerUnit;
+            const unit = pick(weightedUnits);
             const ratePool = /iB$/.test(unit.label) ? SOUND_RATES_IEC : SOUND_RATES_SI;
             const rate = pick(ratePool);
             const res = pick(SOUND_DEPTHS);
+            const ans = pick(clean);
+            const totalBits = ans * unit.bitsPerUnit;
             const secsExact = totalBits / (rate * res);
-            if (Number.isInteger(secsExact) && secsExact >= 1 && secsExact <= 600) {
+            if (Number.isInteger(secsExact) && secsExact >= 1 && secsExact <= 1800) {
               return {
                 badge: 'File Size',
                 text: 'A sound clip is recorded at a sampling rate of <strong>' + fmtHz(rate) + '</strong> with a sample resolution of <strong>' + res + ' bits</strong>, lasting <strong>' + fmtSecs(secsExact) + '</strong>.\n\nCalculate the file size in <strong>' + unit.label + '</strong>.',
