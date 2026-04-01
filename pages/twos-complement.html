@@ -4,91 +4,59 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="theme-color" content="#050505" />
-  <title>Encodr - Fixed Point Binary</title>
-  <link rel="icon" href="encodr-favicon-eo.svg" type="image/svg+xml" />
-  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png" />
-  <link rel="apple-touch-icon" href="icons/icon-180.png" sizes="180x180" />
-  <link rel="manifest" href="site.webmanifest" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="app.js" defer></script>
-  <script src="quiz-generators.js" defer></script>
+  <title>Encodr - Two's Complement</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/quiz-generators.js" defer></script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
   <!-- End Cloudflare Web Analytics -->
-  <style>
-    .point-col {
-      width: 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .point-wt {
-      min-height: 20px;
-      width: 100%;
-    }
-    .point-slot {
-      width: 100%;
-      height: var(--box-size, 56px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .point-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #ff0000;
-      box-shadow: 0 0 0 1px rgba(255,255,255,.45), 0 0 8px rgba(255,0,0,.6);
-    }
-  </style>
 </head>
 <body>
 
 <header>
-  <a class="logo" href="index.html">Enc<em>o</em>dr</a>
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
   <span class="breadcrumb-sep">&rsaquo;</span>
-  <span class="hsub">Fixed Point Binary</span>
-  <a class="home-btn" href="index.html">Home</a>
+  <span class="hsub">Two's Complement</span>
+  <a class="home-btn" href="../index.html">Home</a>
 </header>
 
 <main>
-  <h1>Fixed Point Binary</h1>
+  <h1>Two's Complement</h1>
   <div class="mode-tabs" role="tablist">
     <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
     <button class="mode-tab" id="tab-quiz" role="tab">Test</button>
   </div>
 
   <div id="explore-section">
-    <p class="intro">Toggle any bit and move the binary point to explore fixed point values.</p>
+    <p class="intro">Toggle bits to build a two's complement value. The final bit is the negative weight bit.</p>
 
     <div class="controls">
       <div class="chip chip-m">
         <span class="chip-lbl chip-lbl-m">Bits</span>
-        <button class="step" id="f-minus" aria-label="Use fewer bits">-</button>
-        <span class="step-val" id="f-count">8</span>
-        <button class="step" id="f-plus" aria-label="Use more bits">+</button>
-        <span class="chip-lbl chip-lbl-u">(2-16)</span>
+        <button class="step" id="t-minus" aria-label="Use fewer bits">-</button>
+        <span class="step-val" id="t-count">8</span>
+        <button class="step" id="t-plus" aria-label="Use more bits">+</button>
+        <span class="chip-lbl chip-lbl-u">(4-16)</span>
       </div>
-
-      <div class="chip chip-e">
-        <span class="chip-lbl chip-lbl-e">Point</span>
-        <button class="step" id="p-minus" aria-label="Move point left">-</button>
-        <span class="step-val" id="p-count">4</span>
-        <button class="step" id="p-plus" aria-label="Move point right">+</button>
-        <span class="chip-lbl chip-lbl-u">left bits</span>
+      <div class="chip chip-m">
+        <button class="negate-btn" id="btn-negate">Negate</button>
       </div>
     </div>
 
     <div class="result-card">
       <div class="res-block">
         <div class="labelled-grid-row">
-          <span class="badge badge-m row-badge">Fixed Point Bits</span>
+          <span class="badge badge-m row-badge">Two's Complement Bits</span>
           <div class="grid-wrap">
-            <div class="bit-grid" id="f-grid"></div>
+            <div class="bit-grid" id="t-grid"></div>
           </div>
         </div>
+          <div class="negate-steps" id="negate-steps" hidden></div>
       </div>
     </div>
 
@@ -97,9 +65,9 @@
         <div class="labelled-grid-row">
           <span class="badge badge-r row-badge">Denary Value</span>
           <div class="row-main">
-            <div class="res-big" id="den-big">0</div>
+            <div class="res-big" id="res-big">0</div>
             <div class="res-eq-row">
-              <div class="res-eq" id="den-eq">0 = 0</div>
+              <div class="res-eq" id="res-eq">0 = 0</div>
             </div>
           </div>
         </div>
@@ -111,7 +79,7 @@
         <div class="labelled-grid-row">
           <span class="badge badge-o row-badge">Range</span>
           <div class="row-main">
-            <div class="res-eq" id="res-range-f">Range: 0 to 15.9375</div>
+            <div class="res-eq" id="res-range">Range: &minus;128 to 127</div>
           </div>
         </div>
       </div>
@@ -159,12 +127,12 @@
           <div>
             <div class="q-err-lbl">Smallest value</div>
             <input class="q-denary-input q-err-input" type="text" id="q-min-input"
-                   placeholder="e.g. 0" autocomplete="off" spellcheck="false" />
+                   placeholder="e.g. -512" autocomplete="off" spellcheck="false" />
           </div>
           <div>
             <div class="q-err-lbl">Largest value</div>
             <input class="q-denary-input q-err-input" type="text" id="q-max-input"
-                   placeholder="e.g. 15.9375" autocomplete="off" spellcheck="false" />
+                   placeholder="e.g. 511" autocomplete="off" spellcheck="false" />
           </div>
         </div>
       </div>
@@ -190,44 +158,105 @@
 <script>
   const S = {
     bits: Array(8).fill(0),
-    point: 4
+    negateSteps: null
   };
 
-  function toSuperscript(n) {
-    const map = { '-': '\u207b', '0': '\u2070', '1': '\u00b9', '2': '\u00b2', '3': '\u00b3', '4': '\u2074', '5': '\u2075', '6': '\u2076', '7': '\u2077', '8': '\u2078', '9': '\u2079' };
-    return String(n).split('').map(ch => map[ch] || ch).join('');
+  function weightAt(i, n) {
+    if (i === 0) return -(2 ** (n - 1));
+    return 2 ** (n - 1 - i);
   }
 
-  function fixedValue(bits, point) {
-    let total = 0;
-    for (let i = 0; i < bits.length; i++) {
-      if (!bits[i]) continue;
-      const exp = point - 1 - i;
-      total += 2 ** exp;
+  function exponentAt(i, n) {
+    return i === 0 ? (n - 1) : (n - 1 - i);
+  }
+
+  function weightLabelHTML(i, n) {
+    const wt = weightAt(i, n);
+    const exp = exponentAt(i, n);
+    const abs = Math.abs(wt);
+    if (abs >= 1000) {
+      const pow = `2<sup>${exp}</sup>`;
+      return wt < 0 ? `&minus;${pow}` : pow;
     }
-    return total;
+    return wt < 0 ? `&minus;${abs}` : String(abs);
   }
 
-  function formatNum(n) {
-    if (n === 0) return '0';
-    const rounded = parseFloat(n.toPrecision(12));
-    if (Math.abs(rounded) >= 1e10 || (Math.abs(rounded) < 1e-6 && rounded !== 0)) {
-      return rounded.toExponential(6);
+  function weightTermHTML(i, n) {
+    const wt = weightAt(i, n);
+    const exp = exponentAt(i, n);
+    const abs = Math.abs(wt);
+    if (abs >= 1000) {
+      const pow = `2<sup>${exp}</sup>`;
+      return wt < 0 ? `(&minus;${pow})` : pow;
     }
-    return rounded.toString();
+    return wt < 0 ? `(&minus;${abs})` : String(abs);
   }
 
-  function fitGrid(gridId, n, includesPoint = false) {
+  function valueOf(bits) {
+    return bits.reduce((sum, bit, i) => sum + (bit ? weightAt(i, bits.length) : 0), 0);
+  }
+
+  function clearSteps() {
+    S.negateSteps = null;
+    const el = document.getElementById('negate-steps');
+    if (!el) return;
+    el.hidden = true;
+    el.innerHTML = '';
+  }
+
+  function computeNegate() {
+    const n = S.bits.length;
+    const origBits = [...S.bits];
+    const origVal = valueOf(origBits);
+    const flipBits = origBits.map(b => b ^ 1);
+    const flipUnsigned = flipBits.reduce((s, b, i) => s + (b ? 2 ** (n - 1 - i) : 0), 0);
+    const resultBits = [...flipBits];
+    let carry = 1;
+    for (let i = n - 1; i >= 0; i--) {
+      const sum = resultBits[i] + carry;
+      resultBits[i] = sum & 1;
+      carry = sum >> 1;
+    }
+    const resultVal = valueOf(resultBits);
+    return { origBits, origVal, flipBits, flipUnsigned, resultBits, resultVal, n };
+  }
+
+  function doNegate() {
+    const steps = computeNegate();
+    S.bits = steps.resultBits;
+    S.negateSteps = steps;
+    renderAll();
+  }
+
+  function renderNegateSteps() {
+    const el = document.getElementById('negate-steps');
+    if (!S.negateSteps) { el.hidden = true; return; }
+    const { origBits, origVal, flipBits, flipUnsigned, resultBits, resultVal, n } = S.negateSteps;
+    const bstr = arr => arr.join('');
+    const vhtml = v => v < 0 ? `&minus;${Math.abs(v)}` : String(v);
+    const unsignedOrig = (2 ** n - 1) - flipUnsigned;
+    const flipNote = `(2<sup>${n}</sup>&minus;1 &minus; ${unsignedOrig})`;
+    let resultNote;
+    if (origVal === 0) {
+      resultNote = `<span class="ns-warn">(zero negates to itself)</span>`;
+    } else if (resultVal === origVal) {
+      resultNote = `<span class="ns-warn">(overflow &mdash; min value negates to itself)</span>`;
+    } else {
+      resultNote = `<span class="ns-tick">&#x2713;</span>`;
+    }
+    el.innerHTML =
+      `<div class="negate-step"><span class="ns-lbl">Original</span><code class="ns-bits">${bstr(origBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(origVal)}</span></div>` +
+      `<div class="negate-step"><span class="ns-lbl">Flip bits</span><code class="ns-bits">${bstr(flipBits)}</code><span class="ns-eq">=</span><span class="ns-val">${flipUnsigned}</span><span class="ns-note">${flipNote}</span></div>` +
+      `<div class="negate-step"><span class="ns-lbl">Add 1</span><code class="ns-bits">${bstr(resultBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(resultVal)}</span><span class="ns-note">${resultNote}</span></div>`;
+    el.hidden = false;
+  }
+
+  function fitGrid(gridId, n) {
     const grid = document.getElementById(gridId);
     if (!grid || !grid.parentElement) return;
     const available = grid.parentElement.clientWidth;
     if (!available) return;
-
-    const gap = 5;
-    const pointWidth = includesPoint ? 14 : 0;
-    const totalGaps = includesPoint ? n : Math.max(0, n - 1);
-    const size = Math.max(24, Math.min(56, Math.floor((available - totalGaps * gap - pointWidth) / n)));
-
+    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
     grid.style.setProperty('--box-size', size + 'px');
     grid.style.setProperty('--box-fs', Math.round(size * 26 / 56) + 'px');
     grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
@@ -236,53 +265,31 @@
   function renderGrid() {
     const bits = S.bits;
     const n = bits.length;
-    const grid = document.getElementById('f-grid');
+    const grid = document.getElementById('t-grid');
     grid.innerHTML = '';
 
-    const addPointDot = () => {
-      const pointCol = document.createElement('div');
-      pointCol.className = 'point-col';
-
-      const pointWt = document.createElement('div');
-      pointWt.className = 'point-wt';
-
-      const pointSlot = document.createElement('div');
-      pointSlot.className = 'point-slot';
-
-      const pointDot = document.createElement('div');
-      pointDot.className = 'point-dot';
-      pointDot.setAttribute('aria-hidden', 'true');
-
-      pointSlot.appendChild(pointDot);
-      pointCol.append(pointWt, pointSlot);
-      grid.appendChild(pointCol);
-    };
-
     bits.forEach((bit, i) => {
-      if (i === S.point) addPointDot();
-
-      const exp = S.point - 1 - i;
-
       const col = document.createElement('div');
       col.className = 'bit-col';
 
       const wtEl = document.createElement('div');
       wtEl.className = 'bit-wt';
-      if (exp === 0) wtEl.textContent = '1';
-      else wtEl.innerHTML = exp < 0
-        ? `2<sup>&minus;${Math.abs(exp)}</sup>`
-        : `2<sup>${exp}</sup>`;
+      wtEl.innerHTML = weightLabelHTML(i, n);
 
       const box = document.createElement('div');
-      box.className = `bit-box mb${bit}`;
+      const isNegativeBit = i === 0;
+      box.className = `bit-box ${isNegativeBit ? 'ms' : 'mb'}${bit}`;
       box.textContent = bit;
       box.setAttribute('role', 'button');
       box.setAttribute('tabindex', '0');
       box.setAttribute('aria-label', `Bit ${i + 1} of ${n}, currently ${bit}`);
+
       const doToggle = () => {
+        clearSteps();
         S.bits[i] ^= 1;
         renderAll();
       };
+
       box.addEventListener('click', doToggle);
       box.addEventListener('keydown', ev => {
         if (ev.key === ' ' || ev.key === 'Enter') {
@@ -295,35 +302,30 @@
       grid.appendChild(col);
     });
 
-    if (S.point === n) addPointDot();
-
-    fitGrid('f-grid', n, true);
+    fitGrid('t-grid', n);
   }
 
-  function denaryFormula(bits, point, value) {
-    const parts = [];
-    for (let i = 0; i < bits.length; i++) {
-      if (!bits[i]) continue;
-      const exp = point - 1 - i;
-      if (exp === 0) parts.push('1');
-      else parts.push(`2${toSuperscript(exp)}`);
-    }
-    return `${parts.length ? parts.join(' + ') : '0'} = ${formatNum(value)}`;
-  }
+  function renderResult() {
+    const bits = S.bits;
+    const terms = [];
+    bits.forEach((bit, i) => {
+      if (!bit) return;
+      terms.push(weightTermHTML(i, bits.length));
+    });
 
-  function renderResults() {
-    const n = S.bits.length;
-    const p = S.point;
-    const max = 2 ** p - 2 ** (p - n);
-    const val = fixedValue(S.bits, S.point);
-    document.getElementById('den-big').textContent = formatNum(val);
-    document.getElementById('den-eq').textContent = denaryFormula(S.bits, S.point, val);
-    document.getElementById('res-range-f').innerHTML = `Range: <span class="vm">0</span> to <span class="vm">${formatNum(max)}</span>`;
+    const n = bits.length;
+    const value = valueOf(bits);
+    const min = -(2 ** (n - 1));
+    const max = 2 ** (n - 1) - 1;
+    document.getElementById('res-big').textContent = String(value);
+    document.getElementById('res-eq').innerHTML = `${terms.length ? terms.join(' + ') : '0'} = <span class="vm">${value}</span>`;
+    document.getElementById('res-range').innerHTML = `Range: <span class="vm">${min}</span> to <span class="vm">${max}</span>`;
   }
 
   function changeBits(delta) {
+    clearSteps();
     const cur = S.bits.length;
-    const next = Math.max(2, Math.min(16, cur + delta));
+    const next = Math.max(4, Math.min(16, cur + delta));
     if (next === cur) return;
 
     if (next > cur) {
@@ -332,14 +334,6 @@
       while (S.bits.length > next) S.bits.pop();
     }
 
-    if (S.point > S.bits.length) S.point = S.bits.length;
-    renderAll();
-  }
-
-  function changePoint(delta) {
-    const next = Math.max(0, Math.min(S.bits.length, S.point + delta));
-    if (next === S.point) return;
-    S.point = next;
     renderAll();
   }
 
@@ -369,27 +363,25 @@
     answerKind: 'den', // 'den' | 'bin' | 'range'
     prompt: '',
     formatHint: '',
+    bits: 8,
     expectedValue: 0,
     expectedBits: '',
-    totalBits: 8,
-    fracBits: 4,
-    leftBits: 4,
-    expectedMin: 0,
-    expectedMax: 15.9375
+    expectedMin: -128,
+    expectedMax: 127
   };
 
-  const LS_SCORE_FIXED = 'encodr-fixed-score';
+  const LS_SCORE_TWOS = 'encodr-twos-score';
 
-  function loadScoreFixed() {
+  function loadScoreTwos() {
     try {
-      return JSON.parse(localStorage.getItem(LS_SCORE_FIXED)) || { correct: 0, wrong: 0, total: 0 };
+      return JSON.parse(localStorage.getItem(LS_SCORE_TWOS)) || { correct: 0, wrong: 0, total: 0 };
     } catch {
       return { correct: 0, wrong: 0, total: 0 };
     }
   }
 
-  function saveScoreFixed() {
-    localStorage.setItem(LS_SCORE_FIXED, JSON.stringify({
+  function saveScoreTwos() {
+    localStorage.setItem(LS_SCORE_TWOS, JSON.stringify({
       correct: QS.correct,
       wrong: QS.wrong,
       total: QS.total
@@ -410,19 +402,23 @@
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  function bitsWithPoint(rawBits, leftBits) {
-    return rawBits.slice(0, leftBits) + '.' + rawBits.slice(leftBits);
+  function twosBitsFor(value, n) {
+    const unsigned = value < 0 ? (2 ** n + value) : value;
+    return unsigned.toString(2).padStart(n, '0');
   }
 
-  function normalizeBinaryWithPoint(raw) {
+  function twosValueFromBits(bitString) {
+    const n = bitString.length;
+    const u = parseInt(bitString, 2);
+    return bitString[0] === '1' ? u - 2 ** n : u;
+  }
+
+  function normalizeBinary(raw) {
     if (!raw) return null;
     let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
     if (/^0b/i.test(s)) s = s.slice(2);
-    const parts = s.split('.');
-    if (parts.length > 2) return null;
-    const merged = parts.join('');
-    if (!/^[01]+$/.test(merged)) return null;
-    return { merged, hasPoint: parts.length === 2, fracCount: parts.length === 2 ? parts[1].length : 0 };
+    if (!/^[01]+$/.test(s)) return null;
+    return s;
   }
 
   function openModal() {
@@ -440,7 +436,7 @@
   }
 
   function generateQuizQuestion() {
-    Object.assign(QS, window.EncodrQuizGenerators.fixedPoint.generate(QS.questionType));
+    Object.assign(QS, window.EncodrQuizGenerators.twosComplement.generate(QS.questionType));
     QS.answered = false;
 
     const badge = document.getElementById('q-type-badge');
@@ -458,16 +454,16 @@
     document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
     document.getElementById('q-text').textContent = QS.prompt;
     document.getElementById('q-format-hint').textContent = QS.formatHint;
-    document.getElementById('q-answer-lbl').textContent = 'Your Answer';
 
-    const isRange = QS.answerKind === 'range';
-    document.getElementById('q-answer-card').hidden = isRange;
-    document.getElementById('q-range-area').hidden = !isRange;
+    const single = document.getElementById('q-answer-card');
+    const range = document.getElementById('q-range-area');
+    single.hidden = QS.answerKind === 'range';
+    range.hidden = QS.answerKind !== 'range';
 
     const inp = document.getElementById('q-input');
     inp.value = '';
     inp.disabled = false;
-    inp.placeholder = QS.answerKind === 'den' ? 'e.g. 12.75' : `e.g. ${QS.expectedBits.replace(/1/g, '0')}`;
+    inp.placeholder = QS.answerKind === 'den' ? 'e.g. -42' : 'e.g. 11010110';
 
     document.getElementById('q-min-input').value = '';
     document.getElementById('q-max-input').value = '';
@@ -483,54 +479,48 @@
     if (QS.answered) return;
 
     let correct = false;
-    let studentDisplay = '';
+    let html = '';
 
     if (QS.answerKind === 'range') {
       const minRaw = (document.getElementById('q-min-input').value || '').trim();
       const maxRaw = (document.getElementById('q-max-input').value || '').trim();
-      const minVal = parseFloat(minRaw.replace(',', '.'));
-      const maxVal = parseFloat(maxRaw.replace(',', '.'));
-      if (!isFinite(minVal)) { document.getElementById('q-min-input').focus(); return; }
-      if (!isFinite(maxVal)) { document.getElementById('q-max-input').focus(); return; }
+      if (!/^-?\d+$/.test(minRaw)) { document.getElementById('q-min-input').focus(); return; }
+      if (!/^-?\d+$/.test(maxRaw)) { document.getElementById('q-max-input').focus(); return; }
 
-      studentDisplay = `${formatNum(minVal)} to ${formatNum(maxVal)}`;
-      const tolMin = Math.abs(QS.expectedMin) > 1e-12 ? Math.abs(QS.expectedMin) * 1e-6 : 1e-9;
-      const tolMax = Math.abs(QS.expectedMax) > 1e-12 ? Math.abs(QS.expectedMax) * 1e-6 : 1e-9;
-      correct = Math.abs(minVal - QS.expectedMin) <= tolMin && Math.abs(maxVal - QS.expectedMax) <= tolMax;
+      const minVal = parseInt(minRaw, 10);
+      const maxVal = parseInt(maxRaw, 10);
+      correct = minVal === QS.expectedMin && maxVal === QS.expectedMax;
+
+      html = correct
+        ? `✓ Correct! Range is <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${minVal}</strong> to <strong>${maxVal}</strong>, ` +
+          `answer: <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.</span>`;
 
       document.getElementById('q-min-input').disabled = true;
       document.getElementById('q-max-input').disabled = true;
-    } else {
-      const input = document.getElementById('q-input');
-      const raw = (input.value || '').trim();
-      if (!raw) {
-        input.focus();
-        return;
-      }
-      studentDisplay = raw;
+    } else if (QS.answerKind === 'den') {
+      const raw = (document.getElementById('q-input').value || '').trim();
+      if (!/^-?\d+$/.test(raw)) { document.getElementById('q-input').focus(); return; }
+      const student = parseInt(raw, 10);
+      correct = student === QS.expectedValue;
 
-      if (QS.answerKind === 'den') {
-      const student = parseFloat(raw.replace(',', '.'));
-      if (!isFinite(student)) {
-        input.focus();
-        return;
-      }
-      studentDisplay = formatNum(student);
-      const tol = Math.abs(QS.expectedValue) > 1e-12 ? Math.abs(QS.expectedValue) * 1e-6 : 1e-9;
-      correct = Math.abs(student - QS.expectedValue) <= tol;
-      } else {
-      const parsed = normalizeBinaryWithPoint(raw);
-      if (!parsed) {
-        input.focus();
-        return;
-      }
-      const expectedMerged = QS.expectedBits.replace('.', '');
-      const expectedFrac = QS.fracBits;
-      studentDisplay = parsed.hasPoint
-        ? parsed.merged.slice(0, parsed.merged.length - parsed.fracCount) + '.' + parsed.merged.slice(parsed.merged.length - parsed.fracCount)
-        : parsed.merged;
-      correct = parsed.merged === expectedMerged && parsed.fracCount === expectedFrac;
-      }
+      html = correct
+        ? `✓ Correct! Denary value is <strong>${QS.expectedValue}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${student}</strong>, answer: <strong>${QS.expectedValue}</strong>.</span>`;
+
+      document.getElementById('q-input').disabled = true;
+    } else {
+      const raw = (document.getElementById('q-input').value || '').trim();
+      const parsed = normalizeBinary(raw);
+      if (!parsed) { document.getElementById('q-input').focus(); return; }
+
+      const sameLen = parsed.length === QS.bits;
+      const sameValue = twosValueFromBits(parsed) === QS.expectedValue;
+      correct = sameLen && sameValue;
+
+      html = correct
+        ? `✓ Correct! ${QS.expectedValue} in ${QS.bits} bits is <strong>${QS.expectedBits}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${parsed}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
 
       document.getElementById('q-input').disabled = true;
     }
@@ -539,17 +529,9 @@
     QS.total++;
     document.getElementById('q-submit').disabled = true;
 
-    const expected = QS.answerKind === 'range'
-      ? `${formatNum(QS.expectedMin)} to ${formatNum(QS.expectedMax)}`
-      : (QS.answerKind === 'den' ? formatNum(QS.expectedValue) : QS.expectedBits);
-
-    const html = correct
-      ? `✓ Correct! The answer is <strong>${expected}</strong>.`
-      : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
-
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
-    saveScoreFixed();
+    saveScoreTwos();
 
     const fbEl = document.getElementById('q-modal-feedback');
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
@@ -559,20 +541,19 @@
   }
 
   function renderAll() {
-    document.getElementById('f-count').textContent = S.bits.length;
-    document.getElementById('p-count').textContent = S.point;
+    document.getElementById('t-count').textContent = S.bits.length;
     renderGrid();
-    renderResults();
+    renderResult();
+    renderNegateSteps();
   }
 
-  document.getElementById('f-minus').addEventListener('click', () => changeBits(-1));
-  document.getElementById('f-plus').addEventListener('click', () => changeBits(+1));
-  document.getElementById('p-minus').addEventListener('click', () => changePoint(-1));
-  document.getElementById('p-plus').addEventListener('click', () => changePoint(+1));
+  document.getElementById('t-minus').addEventListener('click', () => { clearSteps(); changeBits(-1); });
+  document.getElementById('t-plus').addEventListener('click', () => { clearSteps(); changeBits(+1); });
+  document.getElementById('btn-negate').addEventListener('click', doNegate);
   document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
   document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
 
-  const _score = loadScoreFixed();
+  const _score = loadScoreTwos();
   QS.correct = _score.correct;
   QS.wrong = _score.wrong;
   QS.total = _score.total;
@@ -610,7 +591,7 @@
     QS.wrong = 0;
     QS.total = 0;
     QS.questionNum = 1;
-    localStorage.removeItem(LS_SCORE_FIXED);
+    localStorage.removeItem(LS_SCORE_TWOS);
     updateScoreDisplay();
     generateQuizQuestion();
   });

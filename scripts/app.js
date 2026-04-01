@@ -32,7 +32,11 @@ document.addEventListener('dragstart', (e) => {
 
 if ('serviceWorker' in navigator && window.isSecureContext) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {
+    const isNestedPage = window.location.pathname.includes('/pages/');
+    const swPath = isNestedPage ? '../sw.js' : './sw.js';
+    const swScope = isNestedPage ? '../' : './';
+
+    navigator.serviceWorker.register(swPath, { scope: swScope }).catch(() => {
       // Keep this silent in production UI; PWA is progressive enhancement.
     });
   });

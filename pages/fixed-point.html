@@ -4,53 +4,89 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="theme-color" content="#050505" />
-  <title>Encodr - Unsigned Binary &amp; Hexadecimal</title>
-  <link rel="icon" href="encodr-favicon-eo.svg" type="image/svg+xml" />
-  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png" />
-  <link rel="apple-touch-icon" href="icons/icon-180.png" sizes="180x180" />
-  <link rel="manifest" href="site.webmanifest" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="app.js" defer></script>
-  <script src="quiz-generators.js" defer></script>
+  <title>Encodr - Fixed Point Binary</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/quiz-generators.js" defer></script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
   <!-- End Cloudflare Web Analytics -->
+  <style>
+    .point-col {
+      width: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .point-wt {
+      min-height: 20px;
+      width: 100%;
+    }
+    .point-slot {
+      width: 100%;
+      height: var(--box-size, 56px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .point-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff0000;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.45), 0 0 8px rgba(255,0,0,.6);
+    }
+  </style>
 </head>
 <body>
 
 <header>
-  <a class="logo" href="index.html">Enc<em>o</em>dr</a>
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
   <span class="breadcrumb-sep">&rsaquo;</span>
-  <span class="hsub">Unsigned Binary &amp; Hexadecimal</span>
-  <a class="home-btn" href="index.html">Home</a>
+  <span class="hsub">Fixed Point Binary</span>
+  <a class="home-btn" href="../index.html">Home</a>
 </header>
 
 <main>
-  <h1>Unsigned Binary &amp; Hexadecimal</h1>
+  <h1>Fixed Point Binary</h1>
   <div class="mode-tabs" role="tablist">
     <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
     <button class="mode-tab" id="tab-quiz" role="tab">Test</button>
   </div>
 
   <div id="explore-section">
-    <p class="intro">Click bits to toggle 0/1, or click denary/hex digits below to increment them.</p>
+    <p class="intro">Toggle any bit and move the binary point to explore fixed point values.</p>
 
     <div class="controls">
       <div class="chip chip-m">
         <span class="chip-lbl chip-lbl-m">Bits</span>
-        <button class="step" id="u-minus" aria-label="Use fewer bits">-</button>
-        <span class="step-val" id="u-count">8</span>
-        <button class="step" id="u-plus" aria-label="Use more bits">+</button>
+        <button class="step" id="f-minus" aria-label="Use fewer bits">-</button>
+        <span class="step-val" id="f-count">8</span>
+        <button class="step" id="f-plus" aria-label="Use more bits">+</button>
         <span class="chip-lbl chip-lbl-u">(2-16)</span>
+      </div>
+
+      <div class="chip chip-e">
+        <span class="chip-lbl chip-lbl-e">Point</span>
+        <button class="step" id="p-minus" aria-label="Move point left">-</button>
+        <span class="step-val" id="p-count">4</span>
+        <button class="step" id="p-plus" aria-label="Move point right">+</button>
+        <span class="chip-lbl chip-lbl-u">left bits</span>
       </div>
     </div>
 
     <div class="result-card">
       <div class="res-block">
         <div class="labelled-grid-row">
-          <span class="badge badge-m row-badge">Unsigned Binary</span>
+          <span class="badge badge-m row-badge">Fixed Point Bits</span>
           <div class="grid-wrap">
-            <div class="bit-grid" id="u-grid"></div>
+            <div class="bit-grid" id="f-grid"></div>
           </div>
         </div>
       </div>
@@ -62,9 +98,6 @@
           <span class="badge badge-r row-badge">Denary Value</span>
           <div class="row-main">
             <div class="res-big" id="den-big">0</div>
-            <div class="grid-wrap">
-              <div class="bit-grid" id="den-grid"></div>
-            </div>
             <div class="res-eq-row">
               <div class="res-eq" id="den-eq">0 = 0</div>
             </div>
@@ -76,26 +109,9 @@
     <div class="result-card">
       <div class="res-block">
         <div class="labelled-grid-row">
-          <span class="badge badge-e row-badge">Hex Value</span>
-          <div class="row-main">
-            <div class="res-big" id="hex-big" style="color: var(--exl);">00</div>
-            <div class="grid-wrap">
-              <div class="bit-grid" id="hex-grid"></div>
-            </div>
-            <div class="res-eq-row">
-              <div class="res-eq" id="hex-eq">0 = 00</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="result-card">
-      <div class="res-block">
-        <div class="labelled-grid-row">
           <span class="badge badge-o row-badge">Range</span>
           <div class="row-main">
-            <div class="res-eq" id="res-range-u">Range: 0 to 255</div>
+            <div class="res-eq" id="res-range-f">Range: 0 to 15.9375</div>
           </div>
         </div>
       </div>
@@ -107,6 +123,9 @@
       <div class="qtype-group">
         <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
         <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
+        <button class="qtype-btn" data-qt="1"><span class="qt-long">Binary &rarr; Denary</span><span class="qt-short">B&rarr;D</span></button>
+        <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">D&rarr;B</span></button>
+        <button class="qtype-btn" data-qt="3"><span class="qt-long">Range</span><span class="qt-short">RNG</span></button>
       </div>
       <div class="quiz-score-area">
         <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
@@ -145,7 +164,7 @@
           <div>
             <div class="q-err-lbl">Largest value</div>
             <input class="q-denary-input q-err-input" type="text" id="q-max-input"
-                   placeholder="e.g. 255" autocomplete="off" spellcheck="false" />
+                   placeholder="e.g. 15.9375" autocomplete="off" spellcheck="false" />
           </div>
         </div>
       </div>
@@ -170,89 +189,89 @@
 
 <script>
   const S = {
-    bits: Array(8).fill(0)
+    bits: Array(8).fill(0),
+    point: 4
   };
-
-  function groupBits(bits) {
-    const s = bits.join('');
-    return s.replace(/(.{4})(?=.)/g, '$1 ');
-  }
 
   function toSuperscript(n) {
     const map = { '-': '\u207b', '0': '\u2070', '1': '\u00b9', '2': '\u00b2', '3': '\u00b3', '4': '\u2074', '5': '\u2075', '6': '\u2076', '7': '\u2077', '8': '\u2078', '9': '\u2079' };
     return String(n).split('').map(ch => map[ch] || ch).join('');
   }
 
-  function unsignedValue(bits) {
+  function fixedValue(bits, point) {
     let total = 0;
-    const n = bits.length;
-    for (let i = 0; i < n; i++) {
-      if (bits[i]) total += 2 ** (n - 1 - i);
+    for (let i = 0; i < bits.length; i++) {
+      if (!bits[i]) continue;
+      const exp = point - 1 - i;
+      total += 2 ** exp;
     }
     return total;
   }
 
-  function hexDigitsFor(bits) {
-    const nibbles = Math.ceil(bits.length / 4);
-    const raw = parseInt(bits.join('') || '0', 2).toString(16).toUpperCase();
-    return raw.padStart(nibbles, '0');
+  function formatNum(n) {
+    if (n === 0) return '0';
+    const rounded = parseFloat(n.toPrecision(12));
+    if (Math.abs(rounded) >= 1e10 || (Math.abs(rounded) < 1e-6 && rounded !== 0)) {
+      return rounded.toExponential(6);
+    }
+    return rounded.toString();
   }
 
-  function maxValue() {
-    return 2 ** S.bits.length - 1;
-  }
-
-  function setValue(v) {
-    const modulus = maxValue() + 1;
-    const norm = ((v % modulus) + modulus) % modulus;
-    const bin = norm.toString(2).padStart(S.bits.length, '0');
-    S.bits = [...bin].map(ch => Number(ch));
-  }
-
-  function incrementDigitString(digits, idx, base) {
-    const symbols = base === 16 ? '0123456789ABCDEF' : '0123456789';
-    const chars = digits.split('');
-    const cur = symbols.indexOf(chars[idx]);
-    const next = (cur + 1) % base;
-    chars[idx] = symbols[next];
-    return chars.join('');
-  }
-
-  function weightLabelHTML(exp) {
-    const wt = 2 ** exp;
-    return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
-  }
-
-  function weightTermHTML(exp) {
-    const wt = 2 ** exp;
-    return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
-  }
-
-  function fitGrid(gridId, n) {
+  function fitGrid(gridId, n, includesPoint = false) {
     const grid = document.getElementById(gridId);
     if (!grid || !grid.parentElement) return;
     const available = grid.parentElement.clientWidth;
     if (!available) return;
-    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
+
+    const gap = 5;
+    const pointWidth = includesPoint ? 14 : 0;
+    const totalGaps = includesPoint ? n : Math.max(0, n - 1);
+    const size = Math.max(24, Math.min(56, Math.floor((available - totalGaps * gap - pointWidth) / n)));
+
     grid.style.setProperty('--box-size', size + 'px');
     grid.style.setProperty('--box-fs', Math.round(size * 26 / 56) + 'px');
     grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
   }
 
-  function renderBitGrid() {
+  function renderGrid() {
     const bits = S.bits;
     const n = bits.length;
-    const grid = document.getElementById('u-grid');
+    const grid = document.getElementById('f-grid');
     grid.innerHTML = '';
 
+    const addPointDot = () => {
+      const pointCol = document.createElement('div');
+      pointCol.className = 'point-col';
+
+      const pointWt = document.createElement('div');
+      pointWt.className = 'point-wt';
+
+      const pointSlot = document.createElement('div');
+      pointSlot.className = 'point-slot';
+
+      const pointDot = document.createElement('div');
+      pointDot.className = 'point-dot';
+      pointDot.setAttribute('aria-hidden', 'true');
+
+      pointSlot.appendChild(pointDot);
+      pointCol.append(pointWt, pointSlot);
+      grid.appendChild(pointCol);
+    };
+
     bits.forEach((bit, i) => {
-      const exp = n - 1 - i;
+      if (i === S.point) addPointDot();
+
+      const exp = S.point - 1 - i;
+
       const col = document.createElement('div');
       col.className = 'bit-col';
 
       const wtEl = document.createElement('div');
       wtEl.className = 'bit-wt';
-      wtEl.innerHTML = weightLabelHTML(exp);
+      if (exp === 0) wtEl.textContent = '1';
+      else wtEl.innerHTML = exp < 0
+        ? `2<sup>&minus;${Math.abs(exp)}</sup>`
+        : `2<sup>${exp}</sup>`;
 
       const box = document.createElement('div');
       box.className = `bit-box mb${bit}`;
@@ -276,98 +295,30 @@
       grid.appendChild(col);
     });
 
-    fitGrid('u-grid', n);
+    if (S.point === n) addPointDot();
+
+    fitGrid('f-grid', n, true);
   }
 
-  function renderValueGrid(gridId, digits, base, onIncrement) {
-    const grid = document.getElementById(gridId);
-    grid.innerHTML = '';
-    const exponents = Array.from({ length: digits.length }, (_, i) => digits.length - 1 - i);
-
-    digits.split('').forEach((digit, i) => {
-      const col = document.createElement('div');
-      col.className = 'bit-col';
-
-      const wtEl = document.createElement('div');
-      wtEl.className = 'bit-wt';
-      wtEl.innerHTML = `${base}<sup>${exponents[i]}</sup>`;
-
-      const box = document.createElement('div');
-      box.className = `bit-box ${base === 10 ? 'mb1' : 'eb1'}`;
-      box.textContent = digit;
-      box.setAttribute('role', 'button');
-      box.setAttribute('tabindex', '0');
-      box.setAttribute('aria-label', `Base ${base} digit ${i + 1} of ${digits.length}, currently ${digit}. Activate to increment.`);
-
-      const doIncrement = () => onIncrement(i);
-      box.addEventListener('click', doIncrement);
-      box.addEventListener('keydown', ev => {
-        if (ev.key === ' ' || ev.key === 'Enter') {
-          ev.preventDefault();
-          doIncrement();
-        }
-      });
-
-      col.append(wtEl, box);
-      grid.appendChild(col);
-    });
-
-    fitGrid(gridId, digits.length);
-  }
-
-  function denaryFormula(bits, value) {
-    const n = bits.length;
+  function denaryFormula(bits, point, value) {
     const parts = [];
-    for (let i = 0; i < n; i++) {
-      if (bits[i]) parts.push(weightTermHTML(n - 1 - i));
+    for (let i = 0; i < bits.length; i++) {
+      if (!bits[i]) continue;
+      const exp = point - 1 - i;
+      if (exp === 0) parts.push('1');
+      else parts.push(`2${toSuperscript(exp)}`);
     }
-    return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
-  }
-
-  function hexFormula(hex, value) {
-    const parts = [];
-    const chars = hex.split('');
-    chars.forEach((ch, i) => {
-      const exp = chars.length - 1 - i;
-      const digitVal = parseInt(ch, 16);
-      if (digitVal === 0) return;
-      const displayDigit = digitVal > 9 ? ch : digitVal.toString();
-      parts.push(`${displayDigit}\u00d716${toSuperscript(exp)}`);
-    });
-    return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
+    return `${parts.length ? parts.join(' + ') : '0'} = ${formatNum(value)}`;
   }
 
   function renderResults() {
-    const bits = S.bits;
-    const max = maxValue();
-    const denary = unsignedValue(bits);
-    const denDigits = String(denary).padStart(String(max).length, '0');
-    const hex = hexDigitsFor(bits);
-
-    document.getElementById('den-big').textContent = denary.toLocaleString();
-    document.getElementById('hex-big').textContent = hex;
-
-    renderValueGrid('den-grid', denDigits, 10, idx => {
-      const nextDigits = incrementDigitString(denDigits, idx, 10);
-      setValue(parseInt(nextDigits, 10));
-      renderAll();
-    });
-
-    renderValueGrid('hex-grid', hex, 16, idx => {
-      const nextHex = incrementDigitString(hex, idx, 16);
-      setValue(parseInt(nextHex, 16));
-      renderAll();
-    });
-
-    document.getElementById('den-eq').innerHTML = denaryFormula(bits, denary.toLocaleString());
-    document.getElementById('hex-eq').textContent = `${groupBits(bits)} = ${hex}  (${hexFormula(hex, denary.toLocaleString())})`;
-    document.getElementById('res-range-u').innerHTML = `Range: <span class="vm">0</span> to <span class="vm">${max.toLocaleString()}</span>`;
-  }
-
-  function renderAll() {
-    document.getElementById('u-count').textContent = S.bits.length;
-    renderBitGrid();
-    renderResults();
+    const n = S.bits.length;
+    const p = S.point;
+    const max = 2 ** p - 2 ** (p - n);
+    const val = fixedValue(S.bits, S.point);
+    document.getElementById('den-big').textContent = formatNum(val);
+    document.getElementById('den-eq').textContent = denaryFormula(S.bits, S.point, val);
+    document.getElementById('res-range-f').innerHTML = `Range: <span class="vm">0</span> to <span class="vm">${formatNum(max)}</span>`;
   }
 
   function changeBits(delta) {
@@ -375,10 +326,20 @@
     const next = Math.max(2, Math.min(16, cur + delta));
     if (next === cur) return;
 
-    const currentValue = unsignedValue(S.bits);
-    S.bits = Array(next).fill(0);
-    setValue(currentValue);
+    if (next > cur) {
+      while (S.bits.length < next) S.bits.push(0);
+    } else {
+      while (S.bits.length > next) S.bits.pop();
+    }
 
+    if (S.point > S.bits.length) S.point = S.bits.length;
+    renderAll();
+  }
+
+  function changePoint(delta) {
+    const next = Math.max(0, Math.min(S.bits.length, S.point + delta));
+    if (next === S.point) return;
+    S.point = next;
     renderAll();
   }
 
@@ -398,36 +359,37 @@
   }
 
   const QS = {
-    questionType: 'mixed', // 'mixed' | '1' | '2' | '3' | '4' | '5' | '6'
+    questionType: 'mixed', // 'mixed' | '1' | '2' | '3'
     currentType: '1',
     questionNum: 1,
     correct: 0,
     wrong: 0,
     total: 0,
     answered: false,
+    answerKind: 'den', // 'den' | 'bin' | 'range'
     prompt: '',
     formatHint: '',
-    answerKind: 'den', // 'den' | 'bin' | 'hex' | 'range'
-    expectedText: '',
     expectedValue: 0,
-    rangeMax: 255,
-    rangeBits: 8,
+    expectedBits: '',
+    totalBits: 8,
+    fracBits: 4,
+    leftBits: 4,
     expectedMin: 0,
-    expectedMax: 255
+    expectedMax: 15.9375
   };
 
-  const LS_SCORE_UNSIGNED = 'encodr-unsigned-score';
+  const LS_SCORE_FIXED = 'encodr-fixed-score';
 
-  function loadScoreUnsigned() {
+  function loadScoreFixed() {
     try {
-      return JSON.parse(localStorage.getItem(LS_SCORE_UNSIGNED)) || { correct: 0, wrong: 0, total: 0 };
+      return JSON.parse(localStorage.getItem(LS_SCORE_FIXED)) || { correct: 0, wrong: 0, total: 0 };
     } catch {
       return { correct: 0, wrong: 0, total: 0 };
     }
   }
 
-  function saveScoreUnsigned() {
-    localStorage.setItem(LS_SCORE_UNSIGNED, JSON.stringify({
+  function saveScoreFixed() {
+    localStorage.setItem(LS_SCORE_FIXED, JSON.stringify({
       correct: QS.correct,
       wrong: QS.wrong,
       total: QS.total
@@ -448,30 +410,19 @@
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  function fmtBin(v, width) {
-    return v.toString(2).padStart(width, '0');
+  function bitsWithPoint(rawBits, leftBits) {
+    return rawBits.slice(0, leftBits) + '.' + rawBits.slice(leftBits);
   }
 
-  function fmtHex(v, width = 0) {
-    const h = v.toString(16).toUpperCase();
-    return width > 0 ? h.padStart(width, '0') : h;
-  }
-
-  function normalizeBinary(raw) {
+  function normalizeBinaryWithPoint(raw) {
     if (!raw) return null;
     let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
     if (/^0b/i.test(s)) s = s.slice(2);
-    if (!/^[01]+$/.test(s)) return null;
-    return s;
-  }
-
-  function normalizeHex(raw) {
-    if (!raw) return null;
-    let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
-    if (/^0x/i.test(s)) s = s.slice(2);
-    s = s.toUpperCase();
-    if (!/^[0-9A-F]+$/.test(s)) return null;
-    return s;
+    const parts = s.split('.');
+    if (parts.length > 2) return null;
+    const merged = parts.join('');
+    if (!/^[01]+$/.test(merged)) return null;
+    return { merged, hasPoint: parts.length === 2, fracCount: parts.length === 2 ? parts[1].length : 0 };
   }
 
   function openModal() {
@@ -488,26 +439,22 @@
     document.body.classList.remove('modal-open');
   }
 
-  function setQuestion(type) {
-    const labels = {
-      '1': 'BIN → DEN',
-      '2': 'DEN → BIN',
-      '3': 'DEN → HEX',
-      '4': 'HEX → DEN',
-      '5': 'BIN → HEX',
-      '6': 'HEX → BIN',
-      '7': 'RANGE'
-    };
-
-    const generated = window.EncodrQuizGenerators.unsigned.generate(type);
-    Object.assign(QS, generated);
+  function generateQuizQuestion() {
+    Object.assign(QS, window.EncodrQuizGenerators.fixedPoint.generate(QS.questionType));
+    QS.answered = false;
 
     const badge = document.getElementById('q-type-badge');
-    badge.className = 'badge ' + (QS.currentType === '1' || QS.currentType === '5' ? 'badge-m' : QS.currentType === '2' || QS.currentType === '6' ? 'badge-e' : 'badge-r');
-    badge.textContent = labels[QS.currentType];
-  }
+    if (QS.currentType === '1') {
+      badge.className = 'badge badge-m';
+      badge.textContent = 'BIN → DEN';
+    } else if (QS.currentType === '2') {
+      badge.className = 'badge badge-e';
+      badge.textContent = 'DEN → BIN';
+    } else {
+      badge.className = 'badge badge-r';
+      badge.textContent = 'RANGE';
+    }
 
-  function renderQuizQuestion() {
     document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
     document.getElementById('q-text').textContent = QS.prompt;
     document.getElementById('q-format-hint').textContent = QS.formatHint;
@@ -520,11 +467,7 @@
     const inp = document.getElementById('q-input');
     inp.value = '';
     inp.disabled = false;
-    inp.placeholder = QS.answerKind === 'den'
-      ? 'e.g. 202'
-      : QS.answerKind === 'bin'
-      ? 'e.g. 11001010'
-      : 'e.g. CA';
+    inp.placeholder = QS.answerKind === 'den' ? 'e.g. 12.75' : `e.g. ${QS.expectedBits.replace(/1/g, '0')}`;
 
     document.getElementById('q-min-input').value = '';
     document.getElementById('q-max-input').value = '';
@@ -536,12 +479,6 @@
     document.getElementById('q-submit').disabled = false;
   }
 
-  function generateQuizQuestion() {
-    QS.answered = false;
-    setQuestion(QS.questionType);
-    renderQuizQuestion();
-  }
-
   function checkQuizAnswer() {
     if (QS.answered) return;
 
@@ -551,13 +488,16 @@
     if (QS.answerKind === 'range') {
       const minRaw = (document.getElementById('q-min-input').value || '').trim();
       const maxRaw = (document.getElementById('q-max-input').value || '').trim();
-      if (!/^-?\d+$/.test(minRaw)) { document.getElementById('q-min-input').focus(); return; }
-      if (!/^-?\d+$/.test(maxRaw)) { document.getElementById('q-max-input').focus(); return; }
+      const minVal = parseFloat(minRaw.replace(',', '.'));
+      const maxVal = parseFloat(maxRaw.replace(',', '.'));
+      if (!isFinite(minVal)) { document.getElementById('q-min-input').focus(); return; }
+      if (!isFinite(maxVal)) { document.getElementById('q-max-input').focus(); return; }
 
-      const minVal = parseInt(minRaw, 10);
-      const maxVal = parseInt(maxRaw, 10);
-      studentDisplay = `${minVal} to ${maxVal}`;
-      correct = minVal === QS.expectedMin && maxVal === QS.expectedMax;
+      studentDisplay = `${formatNum(minVal)} to ${formatNum(maxVal)}`;
+      const tolMin = Math.abs(QS.expectedMin) > 1e-12 ? Math.abs(QS.expectedMin) * 1e-6 : 1e-9;
+      const tolMax = Math.abs(QS.expectedMax) > 1e-12 ? Math.abs(QS.expectedMax) * 1e-6 : 1e-9;
+      correct = Math.abs(minVal - QS.expectedMin) <= tolMin && Math.abs(maxVal - QS.expectedMax) <= tolMax;
+
       document.getElementById('q-min-input').disabled = true;
       document.getElementById('q-max-input').disabled = true;
     } else {
@@ -570,29 +510,26 @@
       studentDisplay = raw;
 
       if (QS.answerKind === 'den') {
-      if (!/^-?\d+$/.test(raw)) {
+      const student = parseFloat(raw.replace(',', '.'));
+      if (!isFinite(student)) {
         input.focus();
         return;
       }
-      const student = parseInt(raw, 10);
-      studentDisplay = student.toString();
-      correct = student === QS.expectedValue;
-      } else if (QS.answerKind === 'bin') {
-      const b = normalizeBinary(raw);
-      if (!b) {
-        input.focus();
-        return;
-      }
-      studentDisplay = b;
-      correct = parseInt(b, 2) === QS.expectedValue;
+      studentDisplay = formatNum(student);
+      const tol = Math.abs(QS.expectedValue) > 1e-12 ? Math.abs(QS.expectedValue) * 1e-6 : 1e-9;
+      correct = Math.abs(student - QS.expectedValue) <= tol;
       } else {
-      const h = normalizeHex(raw);
-      if (!h) {
+      const parsed = normalizeBinaryWithPoint(raw);
+      if (!parsed) {
         input.focus();
         return;
       }
-      studentDisplay = h;
-      correct = parseInt(h, 16) === QS.expectedValue;
+      const expectedMerged = QS.expectedBits.replace('.', '');
+      const expectedFrac = QS.fracBits;
+      studentDisplay = parsed.hasPoint
+        ? parsed.merged.slice(0, parsed.merged.length - parsed.fracCount) + '.' + parsed.merged.slice(parsed.merged.length - parsed.fracCount)
+        : parsed.merged;
+      correct = parsed.merged === expectedMerged && parsed.fracCount === expectedFrac;
       }
 
       document.getElementById('q-input').disabled = true;
@@ -602,16 +539,17 @@
     QS.total++;
     document.getElementById('q-submit').disabled = true;
 
-    const expected = QS.answerKind === 'range' ? `${QS.expectedMin} to ${QS.expectedMax}` : QS.expectedText;
-    const answerName = QS.answerKind === 'den' ? 'denary' : QS.answerKind === 'bin' ? 'binary' : QS.answerKind === 'hex' ? 'hexadecimal' : 'range';
+    const expected = QS.answerKind === 'range'
+      ? `${formatNum(QS.expectedMin)} to ${formatNum(QS.expectedMax)}`
+      : (QS.answerKind === 'den' ? formatNum(QS.expectedValue) : QS.expectedBits);
 
     const html = correct
-      ? `✓ Correct! The ${answerName} answer is <strong>${expected}</strong>.`
+      ? `✓ Correct! The answer is <strong>${expected}</strong>.`
       : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
 
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
-    saveScoreUnsigned();
+    saveScoreFixed();
 
     const fbEl = document.getElementById('q-modal-feedback');
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
@@ -620,16 +558,37 @@
     openModal();
   }
 
-  document.getElementById('u-minus').addEventListener('click', () => changeBits(-1));
-  document.getElementById('u-plus').addEventListener('click', () => changeBits(+1));
+  function renderAll() {
+    document.getElementById('f-count').textContent = S.bits.length;
+    document.getElementById('p-count').textContent = S.point;
+    renderGrid();
+    renderResults();
+  }
+
+  document.getElementById('f-minus').addEventListener('click', () => changeBits(-1));
+  document.getElementById('f-plus').addEventListener('click', () => changeBits(+1));
+  document.getElementById('p-minus').addEventListener('click', () => changePoint(-1));
+  document.getElementById('p-plus').addEventListener('click', () => changePoint(+1));
   document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
   document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
 
-  const _score = loadScoreUnsigned();
+  const _score = loadScoreFixed();
   QS.correct = _score.correct;
   QS.wrong = _score.wrong;
   QS.total = _score.total;
   updateScoreDisplay();
+
+  document.querySelectorAll('.qtype-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('active')) return;
+      document.querySelectorAll('.qtype-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      QS.questionType = btn.dataset.qt;
+      closeModal();
+      QS.questionNum++;
+      generateQuizQuestion();
+    });
+  });
 
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
   document.getElementById('q-input').addEventListener('keydown', ev => {
@@ -651,7 +610,7 @@
     QS.wrong = 0;
     QS.total = 0;
     QS.questionNum = 1;
-    localStorage.removeItem(LS_SCORE_UNSIGNED);
+    localStorage.removeItem(LS_SCORE_FIXED);
     updateScoreDisplay();
     generateQuizQuestion();
   });

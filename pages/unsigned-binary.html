@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="theme-color" content="#050505" />
-  <title>Encodr - Two's Complement</title>
-  <link rel="icon" href="encodr-favicon-eo.svg" type="image/svg+xml" />
-  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png" />
-  <link rel="apple-touch-icon" href="icons/icon-180.png" sizes="180x180" />
-  <link rel="manifest" href="site.webmanifest" />
-  <link rel="stylesheet" href="style.css" />
-  <script src="app.js" defer></script>
-  <script src="quiz-generators.js" defer></script>
+  <title>Encodr - Unsigned Binary &amp; Hexadecimal</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/quiz-generators.js" defer></script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
   <!-- End Cloudflare Web Analytics -->
@@ -19,44 +19,40 @@
 <body>
 
 <header>
-  <a class="logo" href="index.html">Enc<em>o</em>dr</a>
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
   <span class="breadcrumb-sep">&rsaquo;</span>
-  <span class="hsub">Two's Complement</span>
-  <a class="home-btn" href="index.html">Home</a>
+  <span class="hsub">Unsigned Binary &amp; Hexadecimal</span>
+  <a class="home-btn" href="../index.html">Home</a>
 </header>
 
 <main>
-  <h1>Two's Complement</h1>
+  <h1>Unsigned Binary &amp; Hexadecimal</h1>
   <div class="mode-tabs" role="tablist">
     <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
     <button class="mode-tab" id="tab-quiz" role="tab">Test</button>
   </div>
 
   <div id="explore-section">
-    <p class="intro">Toggle bits to build a two's complement value. The final bit is the negative weight bit.</p>
+    <p class="intro">Click bits to toggle 0/1, or click denary/hex digits below to increment them.</p>
 
     <div class="controls">
       <div class="chip chip-m">
         <span class="chip-lbl chip-lbl-m">Bits</span>
-        <button class="step" id="t-minus" aria-label="Use fewer bits">-</button>
-        <span class="step-val" id="t-count">8</span>
-        <button class="step" id="t-plus" aria-label="Use more bits">+</button>
-        <span class="chip-lbl chip-lbl-u">(4-16)</span>
-      </div>
-      <div class="chip chip-m">
-        <button class="negate-btn" id="btn-negate">Negate</button>
+        <button class="step" id="u-minus" aria-label="Use fewer bits">-</button>
+        <span class="step-val" id="u-count">8</span>
+        <button class="step" id="u-plus" aria-label="Use more bits">+</button>
+        <span class="chip-lbl chip-lbl-u">(2-16)</span>
       </div>
     </div>
 
     <div class="result-card">
       <div class="res-block">
         <div class="labelled-grid-row">
-          <span class="badge badge-m row-badge">Two's Complement Bits</span>
+          <span class="badge badge-m row-badge">Unsigned Binary</span>
           <div class="grid-wrap">
-            <div class="bit-grid" id="t-grid"></div>
+            <div class="bit-grid" id="u-grid"></div>
           </div>
         </div>
-          <div class="negate-steps" id="negate-steps" hidden></div>
       </div>
     </div>
 
@@ -65,9 +61,29 @@
         <div class="labelled-grid-row">
           <span class="badge badge-r row-badge">Denary Value</span>
           <div class="row-main">
-            <div class="res-big" id="res-big">0</div>
+            <div class="res-big" id="den-big">0</div>
+            <div class="grid-wrap">
+              <div class="bit-grid" id="den-grid"></div>
+            </div>
             <div class="res-eq-row">
-              <div class="res-eq" id="res-eq">0 = 0</div>
+              <div class="res-eq" id="den-eq">0 = 0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-e row-badge">Hex Value</span>
+          <div class="row-main">
+            <div class="res-big" id="hex-big" style="color: var(--exl);">00</div>
+            <div class="grid-wrap">
+              <div class="bit-grid" id="hex-grid"></div>
+            </div>
+            <div class="res-eq-row">
+              <div class="res-eq" id="hex-eq">0 = 00</div>
             </div>
           </div>
         </div>
@@ -79,7 +95,7 @@
         <div class="labelled-grid-row">
           <span class="badge badge-o row-badge">Range</span>
           <div class="row-main">
-            <div class="res-eq" id="res-range">Range: &minus;128 to 127</div>
+            <div class="res-eq" id="res-range-u">Range: 0 to 255</div>
           </div>
         </div>
       </div>
@@ -91,9 +107,6 @@
       <div class="qtype-group">
         <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
         <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
-        <button class="qtype-btn" data-qt="1"><span class="qt-long">Binary &rarr; Denary</span><span class="qt-short">B&rarr;D</span></button>
-        <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">D&rarr;B</span></button>
-        <button class="qtype-btn" data-qt="3"><span class="qt-long">Range</span><span class="qt-short">RNG</span></button>
       </div>
       <div class="quiz-score-area">
         <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
@@ -127,12 +140,12 @@
           <div>
             <div class="q-err-lbl">Smallest value</div>
             <input class="q-denary-input q-err-input" type="text" id="q-min-input"
-                   placeholder="e.g. -512" autocomplete="off" spellcheck="false" />
+                   placeholder="e.g. 0" autocomplete="off" spellcheck="false" />
           </div>
           <div>
             <div class="q-err-lbl">Largest value</div>
             <input class="q-denary-input q-err-input" type="text" id="q-max-input"
-                   placeholder="e.g. 511" autocomplete="off" spellcheck="false" />
+                   placeholder="e.g. 255" autocomplete="off" spellcheck="false" />
           </div>
         </div>
       </div>
@@ -157,98 +170,62 @@
 
 <script>
   const S = {
-    bits: Array(8).fill(0),
-    negateSteps: null
+    bits: Array(8).fill(0)
   };
 
-  function weightAt(i, n) {
-    if (i === 0) return -(2 ** (n - 1));
-    return 2 ** (n - 1 - i);
+  function groupBits(bits) {
+    const s = bits.join('');
+    return s.replace(/(.{4})(?=.)/g, '$1 ');
   }
 
-  function exponentAt(i, n) {
-    return i === 0 ? (n - 1) : (n - 1 - i);
+  function toSuperscript(n) {
+    const map = { '-': '\u207b', '0': '\u2070', '1': '\u00b9', '2': '\u00b2', '3': '\u00b3', '4': '\u2074', '5': '\u2075', '6': '\u2076', '7': '\u2077', '8': '\u2078', '9': '\u2079' };
+    return String(n).split('').map(ch => map[ch] || ch).join('');
   }
 
-  function weightLabelHTML(i, n) {
-    const wt = weightAt(i, n);
-    const exp = exponentAt(i, n);
-    const abs = Math.abs(wt);
-    if (abs >= 1000) {
-      const pow = `2<sup>${exp}</sup>`;
-      return wt < 0 ? `&minus;${pow}` : pow;
+  function unsignedValue(bits) {
+    let total = 0;
+    const n = bits.length;
+    for (let i = 0; i < n; i++) {
+      if (bits[i]) total += 2 ** (n - 1 - i);
     }
-    return wt < 0 ? `&minus;${abs}` : String(abs);
+    return total;
   }
 
-  function weightTermHTML(i, n) {
-    const wt = weightAt(i, n);
-    const exp = exponentAt(i, n);
-    const abs = Math.abs(wt);
-    if (abs >= 1000) {
-      const pow = `2<sup>${exp}</sup>`;
-      return wt < 0 ? `(&minus;${pow})` : pow;
-    }
-    return wt < 0 ? `(&minus;${abs})` : String(abs);
+  function hexDigitsFor(bits) {
+    const nibbles = Math.ceil(bits.length / 4);
+    const raw = parseInt(bits.join('') || '0', 2).toString(16).toUpperCase();
+    return raw.padStart(nibbles, '0');
   }
 
-  function valueOf(bits) {
-    return bits.reduce((sum, bit, i) => sum + (bit ? weightAt(i, bits.length) : 0), 0);
+  function maxValue() {
+    return 2 ** S.bits.length - 1;
   }
 
-  function clearSteps() {
-    S.negateSteps = null;
-    const el = document.getElementById('negate-steps');
-    if (!el) return;
-    el.hidden = true;
-    el.innerHTML = '';
+  function setValue(v) {
+    const modulus = maxValue() + 1;
+    const norm = ((v % modulus) + modulus) % modulus;
+    const bin = norm.toString(2).padStart(S.bits.length, '0');
+    S.bits = [...bin].map(ch => Number(ch));
   }
 
-  function computeNegate() {
-    const n = S.bits.length;
-    const origBits = [...S.bits];
-    const origVal = valueOf(origBits);
-    const flipBits = origBits.map(b => b ^ 1);
-    const flipUnsigned = flipBits.reduce((s, b, i) => s + (b ? 2 ** (n - 1 - i) : 0), 0);
-    const resultBits = [...flipBits];
-    let carry = 1;
-    for (let i = n - 1; i >= 0; i--) {
-      const sum = resultBits[i] + carry;
-      resultBits[i] = sum & 1;
-      carry = sum >> 1;
-    }
-    const resultVal = valueOf(resultBits);
-    return { origBits, origVal, flipBits, flipUnsigned, resultBits, resultVal, n };
+  function incrementDigitString(digits, idx, base) {
+    const symbols = base === 16 ? '0123456789ABCDEF' : '0123456789';
+    const chars = digits.split('');
+    const cur = symbols.indexOf(chars[idx]);
+    const next = (cur + 1) % base;
+    chars[idx] = symbols[next];
+    return chars.join('');
   }
 
-  function doNegate() {
-    const steps = computeNegate();
-    S.bits = steps.resultBits;
-    S.negateSteps = steps;
-    renderAll();
+  function weightLabelHTML(exp) {
+    const wt = 2 ** exp;
+    return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
   }
 
-  function renderNegateSteps() {
-    const el = document.getElementById('negate-steps');
-    if (!S.negateSteps) { el.hidden = true; return; }
-    const { origBits, origVal, flipBits, flipUnsigned, resultBits, resultVal, n } = S.negateSteps;
-    const bstr = arr => arr.join('');
-    const vhtml = v => v < 0 ? `&minus;${Math.abs(v)}` : String(v);
-    const unsignedOrig = (2 ** n - 1) - flipUnsigned;
-    const flipNote = `(2<sup>${n}</sup>&minus;1 &minus; ${unsignedOrig})`;
-    let resultNote;
-    if (origVal === 0) {
-      resultNote = `<span class="ns-warn">(zero negates to itself)</span>`;
-    } else if (resultVal === origVal) {
-      resultNote = `<span class="ns-warn">(overflow &mdash; min value negates to itself)</span>`;
-    } else {
-      resultNote = `<span class="ns-tick">&#x2713;</span>`;
-    }
-    el.innerHTML =
-      `<div class="negate-step"><span class="ns-lbl">Original</span><code class="ns-bits">${bstr(origBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(origVal)}</span></div>` +
-      `<div class="negate-step"><span class="ns-lbl">Flip bits</span><code class="ns-bits">${bstr(flipBits)}</code><span class="ns-eq">=</span><span class="ns-val">${flipUnsigned}</span><span class="ns-note">${flipNote}</span></div>` +
-      `<div class="negate-step"><span class="ns-lbl">Add 1</span><code class="ns-bits">${bstr(resultBits)}</code><span class="ns-eq">=</span><span class="ns-val">${vhtml(resultVal)}</span><span class="ns-note">${resultNote}</span></div>`;
-    el.hidden = false;
+  function weightTermHTML(exp) {
+    const wt = 2 ** exp;
+    return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
   }
 
   function fitGrid(gridId, n) {
@@ -262,34 +239,31 @@
     grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
   }
 
-  function renderGrid() {
+  function renderBitGrid() {
     const bits = S.bits;
     const n = bits.length;
-    const grid = document.getElementById('t-grid');
+    const grid = document.getElementById('u-grid');
     grid.innerHTML = '';
 
     bits.forEach((bit, i) => {
+      const exp = n - 1 - i;
       const col = document.createElement('div');
       col.className = 'bit-col';
 
       const wtEl = document.createElement('div');
       wtEl.className = 'bit-wt';
-      wtEl.innerHTML = weightLabelHTML(i, n);
+      wtEl.innerHTML = weightLabelHTML(exp);
 
       const box = document.createElement('div');
-      const isNegativeBit = i === 0;
-      box.className = `bit-box ${isNegativeBit ? 'ms' : 'mb'}${bit}`;
+      box.className = `bit-box mb${bit}`;
       box.textContent = bit;
       box.setAttribute('role', 'button');
       box.setAttribute('tabindex', '0');
       box.setAttribute('aria-label', `Bit ${i + 1} of ${n}, currently ${bit}`);
-
       const doToggle = () => {
-        clearSteps();
         S.bits[i] ^= 1;
         renderAll();
       };
-
       box.addEventListener('click', doToggle);
       box.addEventListener('keydown', ev => {
         if (ev.key === ' ' || ev.key === 'Enter') {
@@ -302,37 +276,108 @@
       grid.appendChild(col);
     });
 
-    fitGrid('t-grid', n);
+    fitGrid('u-grid', n);
   }
 
-  function renderResult() {
-    const bits = S.bits;
-    const terms = [];
-    bits.forEach((bit, i) => {
-      if (!bit) return;
-      terms.push(weightTermHTML(i, bits.length));
+  function renderValueGrid(gridId, digits, base, onIncrement) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+    const exponents = Array.from({ length: digits.length }, (_, i) => digits.length - 1 - i);
+
+    digits.split('').forEach((digit, i) => {
+      const col = document.createElement('div');
+      col.className = 'bit-col';
+
+      const wtEl = document.createElement('div');
+      wtEl.className = 'bit-wt';
+      wtEl.innerHTML = `${base}<sup>${exponents[i]}</sup>`;
+
+      const box = document.createElement('div');
+      box.className = `bit-box ${base === 10 ? 'mb1' : 'eb1'}`;
+      box.textContent = digit;
+      box.setAttribute('role', 'button');
+      box.setAttribute('tabindex', '0');
+      box.setAttribute('aria-label', `Base ${base} digit ${i + 1} of ${digits.length}, currently ${digit}. Activate to increment.`);
+
+      const doIncrement = () => onIncrement(i);
+      box.addEventListener('click', doIncrement);
+      box.addEventListener('keydown', ev => {
+        if (ev.key === ' ' || ev.key === 'Enter') {
+          ev.preventDefault();
+          doIncrement();
+        }
+      });
+
+      col.append(wtEl, box);
+      grid.appendChild(col);
     });
 
+    fitGrid(gridId, digits.length);
+  }
+
+  function denaryFormula(bits, value) {
     const n = bits.length;
-    const value = valueOf(bits);
-    const min = -(2 ** (n - 1));
-    const max = 2 ** (n - 1) - 1;
-    document.getElementById('res-big').textContent = String(value);
-    document.getElementById('res-eq').innerHTML = `${terms.length ? terms.join(' + ') : '0'} = <span class="vm">${value}</span>`;
-    document.getElementById('res-range').innerHTML = `Range: <span class="vm">${min}</span> to <span class="vm">${max}</span>`;
+    const parts = [];
+    for (let i = 0; i < n; i++) {
+      if (bits[i]) parts.push(weightTermHTML(n - 1 - i));
+    }
+    return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
+  }
+
+  function hexFormula(hex, value) {
+    const parts = [];
+    const chars = hex.split('');
+    chars.forEach((ch, i) => {
+      const exp = chars.length - 1 - i;
+      const digitVal = parseInt(ch, 16);
+      if (digitVal === 0) return;
+      const displayDigit = digitVal > 9 ? ch : digitVal.toString();
+      parts.push(`${displayDigit}\u00d716${toSuperscript(exp)}`);
+    });
+    return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
+  }
+
+  function renderResults() {
+    const bits = S.bits;
+    const max = maxValue();
+    const denary = unsignedValue(bits);
+    const denDigits = String(denary).padStart(String(max).length, '0');
+    const hex = hexDigitsFor(bits);
+
+    document.getElementById('den-big').textContent = denary.toLocaleString();
+    document.getElementById('hex-big').textContent = hex;
+
+    renderValueGrid('den-grid', denDigits, 10, idx => {
+      const nextDigits = incrementDigitString(denDigits, idx, 10);
+      setValue(parseInt(nextDigits, 10));
+      renderAll();
+    });
+
+    renderValueGrid('hex-grid', hex, 16, idx => {
+      const nextHex = incrementDigitString(hex, idx, 16);
+      setValue(parseInt(nextHex, 16));
+      renderAll();
+    });
+
+    document.getElementById('den-eq').innerHTML = denaryFormula(bits, denary.toLocaleString());
+    document.getElementById('hex-eq').textContent = `${groupBits(bits)} = ${hex}  (${hexFormula(hex, denary.toLocaleString())})`;
+    document.getElementById('res-range-u').innerHTML = `Range: <span class="vm">0</span> to <span class="vm">${max.toLocaleString()}</span>`;
+  }
+
+  function renderAll() {
+    document.getElementById('u-count').textContent = S.bits.length;
+    renderBitGrid();
+    renderResults();
   }
 
   function changeBits(delta) {
-    clearSteps();
     const cur = S.bits.length;
-    const next = Math.max(4, Math.min(16, cur + delta));
+    const next = Math.max(2, Math.min(16, cur + delta));
     if (next === cur) return;
 
-    if (next > cur) {
-      while (S.bits.length < next) S.bits.push(0);
-    } else {
-      while (S.bits.length > next) S.bits.pop();
-    }
+    const currentValue = unsignedValue(S.bits);
+    S.bits = Array(next).fill(0);
+    setValue(currentValue);
 
     renderAll();
   }
@@ -353,35 +398,36 @@
   }
 
   const QS = {
-    questionType: 'mixed', // 'mixed' | '1' | '2' | '3'
+    questionType: 'mixed', // 'mixed' | '1' | '2' | '3' | '4' | '5' | '6'
     currentType: '1',
     questionNum: 1,
     correct: 0,
     wrong: 0,
     total: 0,
     answered: false,
-    answerKind: 'den', // 'den' | 'bin' | 'range'
     prompt: '',
     formatHint: '',
-    bits: 8,
+    answerKind: 'den', // 'den' | 'bin' | 'hex' | 'range'
+    expectedText: '',
     expectedValue: 0,
-    expectedBits: '',
-    expectedMin: -128,
-    expectedMax: 127
+    rangeMax: 255,
+    rangeBits: 8,
+    expectedMin: 0,
+    expectedMax: 255
   };
 
-  const LS_SCORE_TWOS = 'encodr-twos-score';
+  const LS_SCORE_UNSIGNED = 'encodr-unsigned-score';
 
-  function loadScoreTwos() {
+  function loadScoreUnsigned() {
     try {
-      return JSON.parse(localStorage.getItem(LS_SCORE_TWOS)) || { correct: 0, wrong: 0, total: 0 };
+      return JSON.parse(localStorage.getItem(LS_SCORE_UNSIGNED)) || { correct: 0, wrong: 0, total: 0 };
     } catch {
       return { correct: 0, wrong: 0, total: 0 };
     }
   }
 
-  function saveScoreTwos() {
-    localStorage.setItem(LS_SCORE_TWOS, JSON.stringify({
+  function saveScoreUnsigned() {
+    localStorage.setItem(LS_SCORE_UNSIGNED, JSON.stringify({
       correct: QS.correct,
       wrong: QS.wrong,
       total: QS.total
@@ -402,15 +448,13 @@
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  function twosBitsFor(value, n) {
-    const unsigned = value < 0 ? (2 ** n + value) : value;
-    return unsigned.toString(2).padStart(n, '0');
+  function fmtBin(v, width) {
+    return v.toString(2).padStart(width, '0');
   }
 
-  function twosValueFromBits(bitString) {
-    const n = bitString.length;
-    const u = parseInt(bitString, 2);
-    return bitString[0] === '1' ? u - 2 ** n : u;
+  function fmtHex(v, width = 0) {
+    const h = v.toString(16).toUpperCase();
+    return width > 0 ? h.padStart(width, '0') : h;
   }
 
   function normalizeBinary(raw) {
@@ -418,6 +462,15 @@
     let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
     if (/^0b/i.test(s)) s = s.slice(2);
     if (!/^[01]+$/.test(s)) return null;
+    return s;
+  }
+
+  function normalizeHex(raw) {
+    if (!raw) return null;
+    let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
+    if (/^0x/i.test(s)) s = s.slice(2);
+    s = s.toUpperCase();
+    if (!/^[0-9A-F]+$/.test(s)) return null;
     return s;
   }
 
@@ -435,35 +488,43 @@
     document.body.classList.remove('modal-open');
   }
 
-  function generateQuizQuestion() {
-    Object.assign(QS, window.EncodrQuizGenerators.twosComplement.generate(QS.questionType));
-    QS.answered = false;
+  function setQuestion(type) {
+    const labels = {
+      '1': 'BIN → DEN',
+      '2': 'DEN → BIN',
+      '3': 'DEN → HEX',
+      '4': 'HEX → DEN',
+      '5': 'BIN → HEX',
+      '6': 'HEX → BIN',
+      '7': 'RANGE'
+    };
+
+    const generated = window.EncodrQuizGenerators.unsigned.generate(type);
+    Object.assign(QS, generated);
 
     const badge = document.getElementById('q-type-badge');
-    if (QS.currentType === '1') {
-      badge.className = 'badge badge-m';
-      badge.textContent = 'BIN → DEN';
-    } else if (QS.currentType === '2') {
-      badge.className = 'badge badge-e';
-      badge.textContent = 'DEN → BIN';
-    } else {
-      badge.className = 'badge badge-r';
-      badge.textContent = 'RANGE';
-    }
+    badge.className = 'badge ' + (QS.currentType === '1' || QS.currentType === '5' ? 'badge-m' : QS.currentType === '2' || QS.currentType === '6' ? 'badge-e' : 'badge-r');
+    badge.textContent = labels[QS.currentType];
+  }
 
+  function renderQuizQuestion() {
     document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
     document.getElementById('q-text').textContent = QS.prompt;
     document.getElementById('q-format-hint').textContent = QS.formatHint;
+    document.getElementById('q-answer-lbl').textContent = 'Your Answer';
 
-    const single = document.getElementById('q-answer-card');
-    const range = document.getElementById('q-range-area');
-    single.hidden = QS.answerKind === 'range';
-    range.hidden = QS.answerKind !== 'range';
+    const isRange = QS.answerKind === 'range';
+    document.getElementById('q-answer-card').hidden = isRange;
+    document.getElementById('q-range-area').hidden = !isRange;
 
     const inp = document.getElementById('q-input');
     inp.value = '';
     inp.disabled = false;
-    inp.placeholder = QS.answerKind === 'den' ? 'e.g. -42' : 'e.g. 11010110';
+    inp.placeholder = QS.answerKind === 'den'
+      ? 'e.g. 202'
+      : QS.answerKind === 'bin'
+      ? 'e.g. 11001010'
+      : 'e.g. CA';
 
     document.getElementById('q-min-input').value = '';
     document.getElementById('q-max-input').value = '';
@@ -475,11 +536,17 @@
     document.getElementById('q-submit').disabled = false;
   }
 
+  function generateQuizQuestion() {
+    QS.answered = false;
+    setQuestion(QS.questionType);
+    renderQuizQuestion();
+  }
+
   function checkQuizAnswer() {
     if (QS.answered) return;
 
     let correct = false;
-    let html = '';
+    let studentDisplay = '';
 
     if (QS.answerKind === 'range') {
       const minRaw = (document.getElementById('q-min-input').value || '').trim();
@@ -489,38 +556,44 @@
 
       const minVal = parseInt(minRaw, 10);
       const maxVal = parseInt(maxRaw, 10);
+      studentDisplay = `${minVal} to ${maxVal}`;
       correct = minVal === QS.expectedMin && maxVal === QS.expectedMax;
-
-      html = correct
-        ? `✓ Correct! Range is <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.`
-        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${minVal}</strong> to <strong>${maxVal}</strong>, ` +
-          `answer: <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.</span>`;
-
       document.getElementById('q-min-input').disabled = true;
       document.getElementById('q-max-input').disabled = true;
-    } else if (QS.answerKind === 'den') {
-      const raw = (document.getElementById('q-input').value || '').trim();
-      if (!/^-?\d+$/.test(raw)) { document.getElementById('q-input').focus(); return; }
-      const student = parseInt(raw, 10);
-      correct = student === QS.expectedValue;
-
-      html = correct
-        ? `✓ Correct! Denary value is <strong>${QS.expectedValue}</strong>.`
-        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${student}</strong>, answer: <strong>${QS.expectedValue}</strong>.</span>`;
-
-      document.getElementById('q-input').disabled = true;
     } else {
-      const raw = (document.getElementById('q-input').value || '').trim();
-      const parsed = normalizeBinary(raw);
-      if (!parsed) { document.getElementById('q-input').focus(); return; }
+      const input = document.getElementById('q-input');
+      const raw = (input.value || '').trim();
+      if (!raw) {
+        input.focus();
+        return;
+      }
+      studentDisplay = raw;
 
-      const sameLen = parsed.length === QS.bits;
-      const sameValue = twosValueFromBits(parsed) === QS.expectedValue;
-      correct = sameLen && sameValue;
-
-      html = correct
-        ? `✓ Correct! ${QS.expectedValue} in ${QS.bits} bits is <strong>${QS.expectedBits}</strong>.`
-        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${parsed}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
+      if (QS.answerKind === 'den') {
+      if (!/^-?\d+$/.test(raw)) {
+        input.focus();
+        return;
+      }
+      const student = parseInt(raw, 10);
+      studentDisplay = student.toString();
+      correct = student === QS.expectedValue;
+      } else if (QS.answerKind === 'bin') {
+      const b = normalizeBinary(raw);
+      if (!b) {
+        input.focus();
+        return;
+      }
+      studentDisplay = b;
+      correct = parseInt(b, 2) === QS.expectedValue;
+      } else {
+      const h = normalizeHex(raw);
+      if (!h) {
+        input.focus();
+        return;
+      }
+      studentDisplay = h;
+      correct = parseInt(h, 16) === QS.expectedValue;
+      }
 
       document.getElementById('q-input').disabled = true;
     }
@@ -529,9 +602,16 @@
     QS.total++;
     document.getElementById('q-submit').disabled = true;
 
+    const expected = QS.answerKind === 'range' ? `${QS.expectedMin} to ${QS.expectedMax}` : QS.expectedText;
+    const answerName = QS.answerKind === 'den' ? 'denary' : QS.answerKind === 'bin' ? 'binary' : QS.answerKind === 'hex' ? 'hexadecimal' : 'range';
+
+    const html = correct
+      ? `✓ Correct! The ${answerName} answer is <strong>${expected}</strong>.`
+      : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
+
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
-    saveScoreTwos();
+    saveScoreUnsigned();
 
     const fbEl = document.getElementById('q-modal-feedback');
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
@@ -540,36 +620,16 @@
     openModal();
   }
 
-  function renderAll() {
-    document.getElementById('t-count').textContent = S.bits.length;
-    renderGrid();
-    renderResult();
-    renderNegateSteps();
-  }
-
-  document.getElementById('t-minus').addEventListener('click', () => { clearSteps(); changeBits(-1); });
-  document.getElementById('t-plus').addEventListener('click', () => { clearSteps(); changeBits(+1); });
-  document.getElementById('btn-negate').addEventListener('click', doNegate);
+  document.getElementById('u-minus').addEventListener('click', () => changeBits(-1));
+  document.getElementById('u-plus').addEventListener('click', () => changeBits(+1));
   document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
   document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
 
-  const _score = loadScoreTwos();
+  const _score = loadScoreUnsigned();
   QS.correct = _score.correct;
   QS.wrong = _score.wrong;
   QS.total = _score.total;
   updateScoreDisplay();
-
-  document.querySelectorAll('.qtype-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('active')) return;
-      document.querySelectorAll('.qtype-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      QS.questionType = btn.dataset.qt;
-      closeModal();
-      QS.questionNum++;
-      generateQuizQuestion();
-    });
-  });
 
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
   document.getElementById('q-input').addEventListener('keydown', ev => {
@@ -591,7 +651,7 @@
     QS.wrong = 0;
     QS.total = 0;
     QS.questionNum = 1;
-    localStorage.removeItem(LS_SCORE_TWOS);
+    localStorage.removeItem(LS_SCORE_UNSIGNED);
     updateScoreDisplay();
     generateQuizQuestion();
   });
