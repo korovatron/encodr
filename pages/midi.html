@@ -164,30 +164,79 @@
       inset: 8px;
     }
 
+    .md-span {
+      position: absolute;
+      height: 12px;
+      border-radius: 999px;
+      opacity: .5;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+      min-width: 26px;
+      pointer-events: none;
+    }
+
+    .md-span-note {
+      background: rgba(255,255,0,.22);
+    }
+
+    .md-span-chord {
+      background: rgba(90, 255, 255, .24);
+    }
+
+    .md-span-rest {
+      background: rgba(255,255,255,.14);
+    }
+
     .md-bar {
       position: absolute;
-      height: 26px;
-      border-radius: 6px;
+      width: 22px;
+      height: 128px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
-      padding: 0 8px;
-      font-size: 12px;
-      font-family: 'Consolas', 'Courier New', monospace;
-      color: #fff;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+      justify-content: center;
+      padding: 4px 0;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+      transform: translateX(-50%);
+      cursor: pointer;
+    }
+
+    .md-bar-label {
+      writing-mode: horizontal-tb;
+      font-size: 13px;
+      font-family: 'Segoe UI', 'Verdana', sans-serif;
+      line-height: 1;
+      letter-spacing: .3px;
+      white-space: nowrap;
+      user-select: none;
+      color: #111;
+      font-weight: 800;
+      transform: rotate(90deg);
+      transform-origin: center;
     }
 
     .md-bar-note {
-      background: rgba(255,255,0,.22);
-      color: #fff8a8;
+      background: rgba(255,255,0,.75);
+    }
+
+    .md-bar-note .md-bar-label {
+      color: #1f1800;
+    }
+
+    .md-bar-chord {
+      background: rgba(90, 255, 255, .82);
+    }
+
+    .md-bar-chord .md-bar-label {
+      color: #00262a;
     }
 
     .md-bar-rest {
-      background: rgba(255,255,255,.1);
-      color: var(--muted);
+      background: rgba(255,255,255,.55);
+      height: 96px;
+    }
+
+    .md-bar-rest .md-bar-label {
+      color: #1a1a1a;
     }
 
     .md-bar-active {
@@ -211,6 +260,18 @@
       display: flex;
       flex-direction: column;
       height: 500px;
+    }
+
+    .md-roll-help {
+      position: absolute;
+      right: 8px;
+      bottom: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(0,0,0,.35);
+      border-radius: 999px;
+      padding: 2px 8px;
+      pointer-events: none;
     }
 
     .md-events-scroll {
@@ -368,6 +429,7 @@
           <div class="md-roll" aria-label="MIDI timeline preview">
             <div class="md-grid"></div>
             <div id="midi-bars" class="md-bars"></div>
+            <div class="md-roll-help">Hover markers for details</div>
           </div>
         </div>
       </section>

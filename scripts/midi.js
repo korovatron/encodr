@@ -288,21 +288,58 @@
     }
 
     var total = parsed.totalBeats > 0 ? parsed.totalBeats : 1;
-    var noteLane = 24;
-    var restLane = 58;
+    var laneHeight = barsEl.clientHeight || 260;
+
+    // Layout constants mirror CSS marker/span dimensions.
+    var noteMarkerH = 128;
+    var restMarkerH = 96;
+    var spanH = 12;
+
+    // Relative positions within the timeline block.
+    var noteMarkerTopRel = 0;
+    var noteSpanTopRel = 92;
+    var restMarkerTopRel = 144;
+    var restSpanTopRel = 212;
+
+    var blockBottom = Math.max(
+      noteMarkerTopRel + noteMarkerH,
+      noteSpanTopRel + spanH,
+      restMarkerTopRel + restMarkerH,
+      restSpanTopRel + spanH
+    );
+    var blockTop = Math.max(0, Math.floor((laneHeight - blockBottom) / 2));
+
+    var noteMarkerTop = blockTop + noteMarkerTopRel;
+    var noteSpanTop = blockTop + noteSpanTopRel;
+    var restMarkerTop = blockTop + restMarkerTopRel;
+    var restSpanTop = blockTop + restSpanTopRel;
 
     barsEl.innerHTML = events.map(function (ev, idx) {
       var left = (ev.startBeat / total) * 100;
       var width = Math.max((ev.beats / total) * 100, 2);
       var isNoteLike = ev.type === 'note' || ev.type === 'chord';
-      var cls = isNoteLike ? 'md-bar md-bar-note' : 'md-bar md-bar-rest';
-      var top = isNoteLike ? noteLane : restLane;
       var label = ev.type === 'note'
         ? escapeHtml(ev.pitch) + ' (' + ev.beats + 'b)'
         : (ev.type === 'chord'
           ? 'chord ' + escapeHtml(ev.pitches.join('/')) + ' (' + ev.beats + 'b)'
           : 'rest (' + ev.beats + 'b)');
-      return '<div class="' + cls + '" data-event-index="' + idx + '" style="left:' + left + '%;width:' + width + '%;top:' + top + 'px;">' + label + '</div>';
+      var markerLabel = ev.type === 'note'
+        ? escapeHtml(ev.pitch) + ' ' + ev.beats + 'b'
+        : (ev.type === 'chord'
+          ? 'CH ' + escapeHtml(ev.pitches.join('/')) + ' ' + ev.beats + 'b'
+          : 'REST ' + ev.beats + 'b');
+      var spanClass = ev.type === 'note'
+        ? 'md-span md-span-note'
+        : (ev.type === 'chord' ? 'md-span md-span-chord' : 'md-span md-span-rest');
+      var markerClass = ev.type === 'note'
+        ? 'md-bar md-bar-note'
+        : (ev.type === 'chord' ? 'md-bar md-bar-chord' : 'md-bar md-bar-rest');
+      var markerTop = isNoteLike ? noteMarkerTop : restMarkerTop;
+      var spanTop = isNoteLike ? noteSpanTop : restSpanTop;
+      var markerTitle = 'Event ' + (idx + 1) + ': ' + label;
+
+      return '<div class="' + spanClass + '" style="left:' + left + '%;width:' + width + '%;top:' + spanTop + 'px;"></div>' +
+        '<div class="' + markerClass + '" data-event-index="' + idx + '" title="' + markerTitle + '" style="left:' + left + '%;top:' + markerTop + 'px;"><span class="md-bar-label">' + markerLabel + '</span></div>';
     }).join('');
   }
 
