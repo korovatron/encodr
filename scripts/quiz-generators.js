@@ -482,7 +482,7 @@
           result.storedValue = val;
           result.targetDenary = val;
           if (currentType === '2') {
-            result.isInexact = Math.random() < 0.25;
+            result.isInexact = Math.random() < 0.5;
             if (result.isInexact) {
               const uls = 2 ** (floatingEVal(eb) - mLen + 1);
               const offset = uls * (0.10 + Math.random() * 0.35);
