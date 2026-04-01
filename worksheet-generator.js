@@ -44,19 +44,15 @@
     },
     {
       id: "bitmap",
-      label: "Bitmap",
+      label: "Bitmapped images",
       subtypes: [
-        { id: "sizeBits", label: "File size in bits" },
-        { id: "sizeUnit", label: "File size in unit" },
-        { id: "maxColoursDepth", label: "Max colours from depth" },
-        { id: "colourDepth", label: "Depth from colours" },
-        { id: "maxColoursSize", label: "Max colours from size" }
+        { id: "mixed", label: "Mixed questions" }
       ],
       options: [
         {
           id: "unitsMode",
           label: "Units mode",
-          kind: "select",
+          kind: "radio",
           values: [
             { value: "mix", label: "Mixed SI + IEC" },
             { value: "si", label: "SI only (kB, MB...)" },
@@ -70,17 +66,19 @@
       id: "sound",
       label: "Sound Sampling",
       subtypes: [
-        { id: "fileSize", label: "File size" },
-        { id: "solveResolution", label: "Calculate sample resolution" },
-        { id: "halvingEffect", label: "Size after change" },
-        { id: "duration", label: "Calculate duration" },
-        { id: "nyquist", label: "Nyquist" }
+        { id: "mixed", label: "Mixed questions" }
       ],
       options: [
         {
+          id: "includeNyquist",
+          label: "Include Nyquist questions",
+          kind: "checkbox",
+          defaultValue: true
+        },
+        {
           id: "unitsMode",
           label: "Units mode",
-          kind: "select",
+          kind: "radio",
           values: [
             { value: "mix", label: "Mixed SI + IEC" },
             { value: "si", label: "SI only (kB, MB...)" },
@@ -146,8 +144,9 @@
 
     root.innerHTML = TOPICS.map(function (topic) {
       var optionsHtml = "";
+      var hasMultipleSubtypes = Array.isArray(topic.subtypes) && topic.subtypes.length > 1;
       if (Array.isArray(topic.options) && topic.options.length) {
-        optionsHtml = '<div class="ws-options">' + topic.options.map(function (opt) {
+        optionsHtml = '<div class="ws-subtypes ws-options">' + topic.options.map(function (opt) {
           if (opt.kind === "select") {
             return '<label class="ws-cb" for="opt-' + topic.id + '-' + opt.id + '">' +
               '<span>' + opt.label + '</span>' +
@@ -159,6 +158,26 @@
               "</select>" +
               "</label>";
           }
+          if (opt.kind === "radio") {
+            return '<div class="ws-radio-group">' +
+              '<div class="ws-radio-title">' + opt.label + '</div>' +
+              opt.values.map(function (entry, idx) {
+                var id = 'opt-' + topic.id + '-' + opt.id + '-' + idx;
+                var checked = entry.value === opt.defaultValue ? ' checked' : '';
+                return '<label class="ws-cb" for="' + id + '">' +
+                  '<input type="radio" id="' + id + '" name="opt-' + topic.id + '-' + opt.id + '" value="' + entry.value + '"' + checked + ' />' +
+                  '<span>' + entry.label + '</span>' +
+                  '</label>';
+              }).join('') +
+              '</div>';
+          }
+          if (opt.kind === "checkbox") {
+            var checked = opt.defaultValue ? " checked" : "";
+            return '<label class="ws-cb" for="opt-' + topic.id + '-' + opt.id + '">' +
+              '<input type="checkbox" id="opt-' + topic.id + '-' + opt.id + '"' + checked + ' />' +
+              '<span>' + opt.label + '</span>' +
+              '</label>';
+          }
           return "";
         }).join("") + "</div>";
       }
@@ -168,14 +187,16 @@
         '<input type="checkbox" class="ws-topic-enable" id="topic-' + topic.id + '" checked />' +
         '<span>' + topic.label + '</span>' +
         '</label>' +
-        '<div class="ws-subtypes" id="subs-' + topic.id + '">' +
-        topic.subtypes.map(function (sub) {
-          return '<label class="ws-cb">' +
-            '<input type="checkbox" class="ws-sub" data-topic="' + topic.id + '" value="' + sub.id + '" checked />' +
-            '<span>' + sub.label + '</span>' +
-            '</label>';
-        }).join("") +
-        "</div>" +
+        (hasMultipleSubtypes
+          ? ('<div class="ws-subtypes" id="subs-' + topic.id + '">' +
+            topic.subtypes.map(function (sub) {
+              return '<label class="ws-cb">' +
+                '<input type="checkbox" class="ws-sub" data-topic="' + topic.id + '" value="' + sub.id + '" checked />' +
+                '<span>' + sub.label + '</span>' +
+                '</label>';
+            }).join("") +
+            "</div>")
+          : '') +
         optionsHtml +
         "</section>";
     }).join("");
@@ -186,16 +207,28 @@
         var topicId = toggle.id.replace("topic-", "");
         var subWrap = byId("subs-" + topicId);
         var topicSection = root.querySelector('[data-topic="' + topicId + '"]');
-        if (!subWrap || !topicSection) return;
+        if (!topicSection) return;
 
-        var subChecks = subWrap.querySelectorAll("input[type='checkbox']");
-        subChecks.forEach(function (cb) {
-          cb.disabled = !toggle.checked;
-        });
+        if (subWrap) {
+          var subChecks = subWrap.querySelectorAll("input[type='checkbox']");
+          subChecks.forEach(function (cb) {
+            cb.disabled = !toggle.checked;
+          });
+        }
 
         var selects = topicSection.querySelectorAll("select");
         selects.forEach(function (sel) {
           sel.disabled = !toggle.checked;
+        });
+
+        var optionChecks = topicSection.querySelectorAll(".ws-options input[type='checkbox']");
+        optionChecks.forEach(function (cb) {
+          cb.disabled = !toggle.checked;
+        });
+
+        var optionRadios = topicSection.querySelectorAll(".ws-options input[type='radio']");
+        optionRadios.forEach(function (rb) {
+          rb.disabled = !toggle.checked;
         });
       });
     });
@@ -210,13 +243,27 @@
 
       var checkedSubs = Array.from(document.querySelectorAll('.ws-sub[data-topic="' + topic.id + '"]:checked'));
       var subtypeIds = checkedSubs.map(function (cb) { return cb.value; });
+      if (!subtypeIds.length && Array.isArray(topic.subtypes) && topic.subtypes.length === 1) {
+        subtypeIds = [topic.subtypes[0].id];
+      }
       if (!subtypeIds.length) return;
 
       var options = {};
       if (Array.isArray(topic.options)) {
         topic.options.forEach(function (opt) {
-          var el = byId("opt-" + topic.id + "-" + opt.id);
-          if (el) options[opt.id] = el.value;
+          var baseId = "opt-" + topic.id + "-" + opt.id;
+          if (opt.kind === "checkbox") {
+            var el = byId(baseId);
+            if (!el) return;
+            options[opt.id] = !!el.checked;
+          } else if (opt.kind === "radio") {
+            var selected = document.querySelector('input[name="' + baseId + '"]:checked');
+            if (selected) options[opt.id] = selected.value;
+          } else {
+            var el = byId(baseId);
+            if (!el) return;
+            options[opt.id] = el.value;
+          }
         });
       }
 
@@ -338,9 +385,12 @@
     }
 
     if (source.topicId === "bitmap") {
+      var bitmapTypes = source.subtypeId === "mixed"
+        ? ["sizeBits", "sizeUnit", "maxColoursDepth", "colourDepth", "maxColoursSize"]
+        : [source.subtypeId];
       var bq = generators.bitmap.generate({
         unitsMode: source.options.unitsMode || "mix",
-        questionTypes: [source.subtypeId]
+        questionTypes: bitmapTypes
       });
       return {
         topic: source.topicLabel,
@@ -350,38 +400,15 @@
       };
     }
 
-    var soundTypes = source.subtypeId === "fileSize"
-      ? ["fileSizeBits", "fileSizeBytes", "fileSizeUnit"]
-      : [source.subtypeId];
+    var includeNyquist = source.options.includeNyquist !== false;
+    var soundTypes = ["fileSizeBits", "fileSizeBytes", "fileSizeUnit", "solveResolution", "halvingEffect", "duration"];
+    if (includeNyquist) soundTypes.push("nyquist");
 
-    var sq;
-    if (source.subtypeId === "fileSize") {
-      for (var tries = 0; tries < 12; tries++) {
-        sq = generators.sound.generate({
-          unitsMode: source.options.unitsMode || "mix",
-          nyquistOn: true,
-          questionTypes: soundTypes
-        });
-        var kind = sq.unitLabel === "bits"
-          ? "fileSizeBits"
-          : (sq.unitLabel === "bytes" ? "fileSizeBytes" : "fileSizeUnit");
-        if (soundFileSizeStreak < 2 || kind !== soundFileSizeLastKind || tries === 11) {
-          if (kind === soundFileSizeLastKind) {
-            soundFileSizeStreak += 1;
-          } else {
-            soundFileSizeLastKind = kind;
-            soundFileSizeStreak = 1;
-          }
-          break;
-        }
-      }
-    } else {
-      sq = generators.sound.generate({
-        unitsMode: source.options.unitsMode || "mix",
-        nyquistOn: true,
-        questionTypes: soundTypes
-      });
-    }
+    var sq = generators.sound.generate({
+      unitsMode: source.options.unitsMode || "mix",
+      nyquistOn: includeNyquist,
+      questionTypes: soundTypes
+    });
 
     return {
       topic: source.topicLabel,
