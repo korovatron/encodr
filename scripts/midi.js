@@ -23,7 +23,7 @@
       'note pitch=E4 beats=1 velocity=100',
       'note pitch=D4 beats=1 velocity=100',
       'note pitch=D4 beats=1 velocity=100',
-      'note pitch=C4 beats=2 velocity=108'
+      'chord pitches="C4,E4,G4" beats=2 velocity=108'
     ].join('\n'),
     arp: [
       'tempo bpm=110',
@@ -56,22 +56,16 @@
       'note pitch=E3 beats=0.5 velocity=112',
       'rest beats=0.25',
       'note pitch=D3 beats=0.25 velocity=104',
-      'note pitch=E3 beats=1 velocity=114'
+      'chord pitches="E3,G3,B3" beats=1 velocity=114'
     ].join('\n'),
     chords: [
       'tempo bpm=90',
       'instrument wave=sawtooth',
-      'note pitch=C4 beats=2 velocity=95',
-      'note pitch=E4 beats=2 velocity=90',
-      'note pitch=G4 beats=2 velocity=90',
+      'chord pitches="C4,E4,G4" beats=2 velocity=95',
       'rest beats=0.5',
-      'note pitch=F4 beats=2 velocity=95',
-      'note pitch=A4 beats=2 velocity=90',
-      'note pitch=C5 beats=2 velocity=90',
+      'chord pitches="F4,A4,C5" beats=2 velocity=95',
       'rest beats=0.5',
-      'note pitch=G4 beats=3 velocity=95',
-      'note pitch=B4 beats=3 velocity=90',
-      'note pitch=D5 beats=3 velocity=90'
+      'chord pitches="G4,B4,D5" beats=3 velocity=95'
     ].join('\n')
   };
 
@@ -121,6 +115,15 @@
     if (accidental === 'b') semitone -= 1;
 
     return (octave + 1) * 12 + semitone;
+  }
+
+  function parsePitchList(raw) {
+    if (typeof raw !== 'string') return [];
+    return raw.split(',').map(function (token) {
+      return token.trim();
+    }).filter(function (token) {
+      return token.length > 0;
+    });
   }
 
   function midiToFrequency(midi) {
@@ -213,6 +216,55 @@
         continue;
       }
 
+      if (cmd === 'chord') {
+        var chordPitches = parsePitchList(args.pitches);
+        var chordBeats = Number(args.beats);
+        var chordVelocity = args.velocity == null ? 100 : Number(args.velocity);
+
+        if (chordPitches.length < 2) {
+          errors.push('Line ' + lineNo + ': chord pitches must contain at least two notes, e.g. pitches="C4,E4,G4".');
+          continue;
+        }
+        if (!Number.isFinite(chordBeats) || chordBeats <= 0) {
+          errors.push('Line ' + lineNo + ': chord beats must be greater than 0.');
+          continue;
+        }
+        if (!Number.isFinite(chordVelocity)) {
+          errors.push('Line ' + lineNo + ': velocity must be numeric (0-127).');
+          continue;
+        }
+
+        var chordMidis = [];
+        var invalidPitch = null;
+        chordPitches.forEach(function (pitch) {
+          var midi = parsePitchToMidi(pitch);
+          if (midi == null) {
+            invalidPitch = pitch;
+            return;
+          }
+          chordMidis.push(midi);
+        });
+        if (invalidPitch) {
+          errors.push('Line ' + lineNo + ': invalid chord pitch "' + invalidPitch + '". Use values like C4, F#3, Bb2.');
+          continue;
+        }
+
+        chordVelocity = clamp(Math.round(chordVelocity), 0, 127);
+        events.push({
+          type: 'chord',
+          lineNo: lineNo,
+          startBeat: beat,
+          beats: chordBeats,
+          pitches: chordPitches,
+          midis: chordMidis,
+          frequencies: chordMidis.map(midiToFrequency),
+          velocity: chordVelocity,
+          args: { pitches: chordPitches.join(','), beats: chordBeats, velocity: chordVelocity }
+        });
+        beat += chordBeats;
+        continue;
+      }
+
       errors.push('Line ' + lineNo + ': unsupported command ' + cmd + '.');
     }
 
@@ -242,11 +294,14 @@
     barsEl.innerHTML = events.map(function (ev, idx) {
       var left = (ev.startBeat / total) * 100;
       var width = Math.max((ev.beats / total) * 100, 2);
-      var cls = ev.type === 'note' ? 'md-bar md-bar-note' : 'md-bar md-bar-rest';
-      var top = ev.type === 'note' ? noteLane : restLane;
+      var isNoteLike = ev.type === 'note' || ev.type === 'chord';
+      var cls = isNoteLike ? 'md-bar md-bar-note' : 'md-bar md-bar-rest';
+      var top = isNoteLike ? noteLane : restLane;
       var label = ev.type === 'note'
         ? escapeHtml(ev.pitch) + ' (' + ev.beats + 'b)'
-        : 'rest (' + ev.beats + 'b)';
+        : (ev.type === 'chord'
+          ? 'chord ' + escapeHtml(ev.pitches.join('/')) + ' (' + ev.beats + 'b)'
+          : 'rest (' + ev.beats + 'b)');
       return '<div class="' + cls + '" data-event-index="' + idx + '" style="left:' + left + '%;width:' + width + '%;top:' + top + 'px;">' + label + '</div>';
     }).join('');
   }
@@ -333,9 +388,9 @@
       return;
     }
 
-    if (!parsed.events.some(function (ev) { return ev.type === 'note'; })) {
+    if (!parsed.events.some(function (ev) { return ev.type === 'note' || ev.type === 'chord'; })) {
       status.className = 'md-status error';
-      status.textContent = 'No note events to play.';
+      status.textContent = 'No note/chord events to play.';
       return;
     }
 
@@ -352,30 +407,34 @@
     var startAt = ctx.currentTime + 0.05;
 
     parsed.events.forEach(function (ev, idx) {
-      if (ev.type !== 'note') return;
+      if (ev.type !== 'note' && ev.type !== 'chord') return;
 
       var when = startAt + (ev.startBeat * secPerBeat);
       var duration = Math.max(ev.beats * secPerBeat, 0.03);
 
-      var osc = ctx.createOscillator();
-      var gain = ctx.createGain();
+      var frequencies = ev.type === 'chord' ? ev.frequencies : [ev.frequency];
+      var voiceScale = 1 / Math.max(1, frequencies.length);
+      frequencies.forEach(function (freq) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
 
-      osc.type = parsed.wave;
-      osc.frequency.value = ev.frequency;
+        osc.type = parsed.wave;
+        osc.frequency.value = freq;
 
-      var level = (ev.velocity / 127) * 0.28;
-      gain.gain.setValueAtTime(0.0001, when);
-      gain.gain.linearRampToValueAtTime(level, when + 0.01);
-      gain.gain.linearRampToValueAtTime(0.0001, when + duration - 0.02);
+        var level = (ev.velocity / 127) * 0.28 * voiceScale;
+        gain.gain.setValueAtTime(0.0001, when);
+        gain.gain.linearRampToValueAtTime(level, when + 0.01);
+        gain.gain.linearRampToValueAtTime(0.0001, when + duration - 0.02);
 
-      osc.connect(gain);
-      gain.connect(masterGain);
+        osc.connect(gain);
+        gain.connect(masterGain);
 
-      osc.start(when);
-      osc.stop(when + duration);
+        osc.start(when);
+        osc.stop(when + duration);
 
-      activeNodes.push(osc);
-      activeNodes.push(gain);
+        activeNodes.push(osc);
+        activeNodes.push(gain);
+      });
 
       var highlightDelayMs = Math.max((when - ctx.currentTime) * 1000, 0);
       var clearDelayMs = Math.max((when + duration - ctx.currentTime) * 1000, 0);
@@ -421,14 +480,21 @@
     if (!Object.prototype.hasOwnProperty.call(SAMPLES, name)) return;
     byId('midi-editor').value = SAMPLES[name];
     render(currentParse());
+    setActiveSampleButton(name);
+  }
+
+  function setActiveSampleButton(name) {
+    document.querySelectorAll('[data-midi-sample]').forEach(function (button) {
+      var sampleName = button.getAttribute('data-midi-sample');
+      button.classList.toggle('btn-submit', sampleName === name);
+    });
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     var editor = byId('midi-editor');
     if (!editor) return;
 
-    editor.value = SAMPLES.scale;
-    render(currentParse());
+    loadSample('scale');
 
     editor.addEventListener('input', function () {
       render(currentParse());
@@ -443,6 +509,7 @@
     byId('midi-clear').addEventListener('click', function () {
       editor.value = '';
       render(currentParse());
+      setActiveSampleButton('');
       editor.focus();
     });
 
