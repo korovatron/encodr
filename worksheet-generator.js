@@ -71,9 +71,9 @@
       label: "Sound Sampling",
       subtypes: [
         { id: "fileSize", label: "File size" },
-        { id: "solveResolution", label: "Solve resolution" },
+        { id: "solveResolution", label: "Calculate sample resolution" },
         { id: "halvingEffect", label: "Size after change" },
-        { id: "duration", label: "Solve duration" },
+        { id: "duration", label: "Calculate duration" },
         { id: "nyquist", label: "Nyquist" }
       ],
       options: [
