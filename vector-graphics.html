@@ -29,9 +29,23 @@
     }
 
     .vg-primary-card {
-      height: 620px;
+      height: 500px;
       display: flex;
       flex-direction: column;
+    }
+
+    .vg-card-syntax,
+    .vg-card-objects {
+      display: flex;
+      flex-direction: column;
+      height: 500px;
+    }
+
+    .vg-scroll {
+      min-height: 0;
+      flex: 1;
+      overflow: auto;
+      padding-right: 4px;
     }
 
     .vg-row {
@@ -196,6 +210,10 @@
       color: #ff8f8f;
     }
 
+    .vg-objects-intro {
+      margin-bottom: 10px;
+    }
+
     .vg-empty {
       color: var(--muted);
       font-size: 14px;
@@ -263,10 +281,11 @@
 
       <section class="card vg-card-syntax">
         <div class="card-head"><span class="badge badge-r">Syntax</span></div>
-        <div class="vg-help">
-          <div class="vg-help-block">
-            <h3>Command Examples</h3>
-            <pre><span class="vg-cmd">rect</span> <span class="vg-prop">x</span>=40 <span class="vg-prop">y</span>=40 <span class="vg-prop">width</span>=180 <span class="vg-prop">height</span>=100 <span class="vg-prop">fill</span>=#ffd24d <span class="vg-prop">stroke</span>=#ffffff <span class="vg-prop">strokeWidth</span>=3
+        <div class="vg-scroll">
+          <div class="vg-help">
+            <div class="vg-help-block">
+              <h3>Command Examples</h3>
+              <pre><span class="vg-cmd">rect</span> <span class="vg-prop">x</span>=40 <span class="vg-prop">y</span>=40 <span class="vg-prop">width</span>=180 <span class="vg-prop">height</span>=100 <span class="vg-prop">fill</span>=#ffd24d <span class="vg-prop">stroke</span>=#ffffff <span class="vg-prop">strokeWidth</span>=3
 
 <span class="vg-cmd">circle</span> <span class="vg-prop">cx</span>=300 <span class="vg-prop">cy</span>=90 <span class="vg-prop">r</span>=42 <span class="vg-prop">fill</span>=#00c95c <span class="vg-prop">stroke</span>=#ffffff <span class="vg-prop">strokeWidth</span>=3
 
@@ -279,6 +298,7 @@
 <span class="vg-cmd">polyline</span> <span class="vg-prop">points</span>="250,280 290,250 330,275 370,240 410,265" <span class="vg-prop">fill</span>=none <span class="vg-prop">stroke</span>=#c8fff1 <span class="vg-prop">strokeWidth</span>=4
 
 <span class="vg-cmd">text</span> <span class="vg-prop">x</span>=240 <span class="vg-prop">y</span>=170 <span class="vg-prop">content</span>="Hello" <span class="vg-prop">fill</span>=#ffffff <span class="vg-prop">fontSize</span>=36 <span class="vg-prop">fontFamily</span>=Verdana <span class="vg-prop">textAnchor</span>=middle</pre>
+            </div>
           </div>
         </div>
       </section>
@@ -294,8 +314,10 @@
 
       <section class="card vg-card-objects">
         <div class="card-head"><span class="badge badge-r">Object List</span></div>
-        <p class="card-sub">Each line becomes one stored object with its own list of properties.</p>
-        <ul id="vg-object-list" class="vg-object-list"></ul>
+        <div class="vg-scroll">
+          <p class="card-sub vg-objects-intro">Each line becomes one stored object with its own list of properties.</p>
+          <ul id="vg-object-list" class="vg-object-list"></ul>
+        </div>
       </section>
     </div>
   </div>
