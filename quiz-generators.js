@@ -91,13 +91,27 @@
       4000000, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536,
       131072, 262144, 524288, 1048576];
     if (nice.includes(pixels)) return [pixels, null];
-    const wSizes = [10, 20, 100, 200, 400, 500, 800, 1000, 2000, 4000, 8000, 128, 256, 512, 1024, 2048, 4096];
+    const wSizes = [32, 64, 100, 128, 160, 200, 256, 320, 400, 500, 512, 640, 800, 1000, 1024, 1200, 1600, 2000, 2048, 3200, 4000, 4096];
+    const candidates = [];
     for (let i = 0; i < wSizes.length; i++) {
       const w = wSizes[i];
       if (pixels % w === 0) {
         const h = pixels / w;
-        if (h >= 10 && h <= 8000) return [w, h];
+        const shortSide = Math.min(w, h);
+        const longSide = Math.max(w, h);
+        const aspectRatio = longSide / shortSide;
+        if (h >= 32 && h <= 8000 && shortSide >= 32 && aspectRatio <= 16) {
+          candidates.push([w, h]);
+        }
       }
+    }
+    if (candidates.length) {
+      candidates.sort(function (a, b) {
+        const ratioA = Math.max(a[0], a[1]) / Math.min(a[0], a[1]);
+        const ratioB = Math.max(b[0], b[1]) / Math.min(b[0], b[1]);
+        return ratioA - ratioB;
+      });
+      return candidates[0];
     }
     return null;
   }
