@@ -300,6 +300,21 @@
     return "smallest negative";
   }
 
+  function bitsInBinaryString(text) {
+    return String(text || "").replace(/[^01]/g, "").length;
+  }
+
+  function binaryPointIndex(text) {
+    var raw = String(text || "");
+    var point = raw.indexOf(".");
+    return point === -1 ? null : point;
+  }
+
+  function firstBinaryToken(text) {
+    var m = String(text || "").match(/[01.]{6,}/);
+    return m ? m[0] : null;
+  }
+
   function mapQuestion(source) {
     var generators = window.EncodrQuizGenerators;
     if (!generators) {
@@ -308,40 +323,108 @@
 
     if (source.topicId === "unsigned") {
       var uq = generators.unsigned.generate(source.subtypeId);
+      var unsignedPrompt = plainText(uq.prompt);
       var unsignedAnswer = uq.answerKind === "range"
         ? formatNumber(uq.expectedMin) + " to " + formatNumber(uq.expectedMax)
         : String(uq.expectedText || uq.expectedValue);
+      var unsignedLayout = null;
+      var unsignedPromptBitBoxes = [];
+      if (uq.answerKind === "bin") {
+        unsignedLayout = {
+          kind: "binaryBoxes",
+          bits: bitsInBinaryString(uq.expectedText)
+        };
+      }
+      if (source.subtypeId === "1" || source.subtypeId === "5") {
+        var uqToken = firstBinaryToken(unsignedPrompt);
+        if (uqToken) {
+          if (source.subtypeId === "1") {
+            unsignedPrompt = "Convert the binary value shown below to denary.";
+          } else {
+            unsignedPrompt = "Convert the binary value shown below to hexadecimal.";
+          }
+          unsignedPromptBitBoxes.push({
+            label: "Binary value:",
+            bitText: uqToken,
+            bits: bitsInBinaryString(uqToken),
+            pointIndex: binaryPointIndex(uqToken)
+          });
+        }
+      }
       return {
         topic: source.topicLabel,
-        prompt: plainText(uq.prompt),
+        prompt: unsignedPrompt,
         instruction: instructionForAnswerKind(uq.answerKind),
-        answer: unsignedAnswer
+        answer: unsignedAnswer,
+        answerLayout: unsignedLayout,
+        promptBitBoxes: unsignedPromptBitBoxes
       };
     }
 
     if (source.topicId === "fixed") {
       var fq = generators.fixedPoint.generate(source.subtypeId);
+      var fixedPrompt = plainText(fq.prompt);
       var fixedAnswer = fq.answerKind === "range"
         ? formatNumber(fq.expectedMin) + " to " + formatNumber(fq.expectedMax)
         : (fq.answerKind === "bin" ? fq.expectedBits : formatNumber(fq.expectedValue));
+      var fixedLayout = null;
+      var fixedPromptBitBoxes = [];
+      if (source.subtypeId === "1" && fq.expectedBits) {
+        fixedPrompt = "Convert the fixed-point binary value shown below into denary.";
+        fixedPromptBitBoxes.push({
+          label: "Fixed-point value:",
+          bitText: fq.expectedBits,
+          bits: Number.isFinite(fq.totalBits) ? fq.totalBits : bitsInBinaryString(fq.expectedBits),
+          pointIndex: Number.isFinite(fq.leftBits) ? fq.leftBits : binaryPointIndex(fq.expectedBits)
+        });
+      }
+      if (fq.answerKind === "bin") {
+        fixedLayout = {
+          kind: "binaryBoxes",
+          bits: Number.isFinite(fq.totalBits) ? fq.totalBits : bitsInBinaryString(fq.expectedBits),
+          pointIndex: Number.isFinite(fq.leftBits) ? fq.leftBits : null
+        };
+      }
       return {
         topic: source.topicLabel,
-        prompt: plainText(fq.prompt),
+        prompt: fixedPrompt,
         instruction: instructionForAnswerKind(fq.answerKind),
-        answer: fixedAnswer
+        answer: fixedAnswer,
+        answerLayout: fixedLayout,
+        promptBitBoxes: fixedPromptBitBoxes
       };
     }
 
     if (source.topicId === "twos") {
       var tq = generators.twosComplement.generate(source.subtypeId);
+      var twosPrompt = plainText(tq.prompt);
       var twosAnswer = tq.answerKind === "range"
         ? formatNumber(tq.expectedMin) + " to " + formatNumber(tq.expectedMax)
         : (tq.answerKind === "bin" ? tq.expectedBits : formatNumber(tq.expectedValue));
+      var twosLayout = null;
+      var twosPromptBitBoxes = [];
+      if (source.subtypeId === "1" && tq.expectedBits) {
+        twosPrompt = "Convert the two's complement binary value shown below into denary.";
+        twosPromptBitBoxes.push({
+          label: "Two's complement value:",
+          bitText: tq.expectedBits,
+          bits: Number.isFinite(tq.bits) ? tq.bits : bitsInBinaryString(tq.expectedBits),
+          pointIndex: null
+        });
+      }
+      if (tq.answerKind === "bin") {
+        twosLayout = {
+          kind: "binaryBoxes",
+          bits: Number.isFinite(tq.bits) ? tq.bits : bitsInBinaryString(tq.expectedBits)
+        };
+      }
       return {
         topic: source.topicLabel,
-        prompt: plainText(tq.prompt),
+        prompt: twosPrompt,
         instruction: instructionForAnswerKind(tq.answerKind),
-        answer: twosAnswer
+        answer: twosAnswer,
+        answerLayout: twosLayout,
+        promptBitBoxes: twosPromptBitBoxes
       };
     }
 
@@ -352,26 +435,45 @@
         var eBits1 = f1.eBits.join("");
         return {
           topic: source.topicLabel,
-          prompt: "A floating-point number uses a " + f1.mLen + "-bit two's complement mantissa and a " + f1.eLen + "-bit two's complement exponent. Mantissa: " + mBits1 + ", Exponent: " + eBits1 + ". Convert this value to denary.",
+          prompt: "A floating-point number uses a " + f1.mLen + "-bit two's complement mantissa and a " + f1.eLen + "-bit two's complement exponent. The mantissa and exponent values are shown below. Convert this value to denary.",
           instruction: "Write your answer as a denary number.",
-          answer: formatNumber(f1.targetDenary)
+          answer: formatNumber(f1.targetDenary),
+          answerLayout: null,
+          promptBitBoxes: [
+            { label: "Mantissa:", bitText: mBits1, bits: f1.mLen, pointIndex: null },
+            { label: "Exponent:", bitText: eBits1, bits: f1.eLen, pointIndex: null }
+          ]
         };
       }
 
       if (source.subtypeId === "2") {
-        var tries = 0;
         var f2 = generators.floatingPoint.generate("2");
-        while (f2.isInexact && tries < 40) {
-          f2 = generators.floatingPoint.generate("2");
-          tries += 1;
-        }
         var mBits2 = f2.mBits.join("");
         var eBits2 = f2.eBits.join("");
+        var absErr = Math.abs(f2.targetDenary - f2.storedValue);
+        var relErr = f2.targetDenary === 0 ? 0 : (absErr / Math.abs(f2.targetDenary)) * 100;
+        var fpPrompt = "Using a " + f2.mLen + "-bit two's complement mantissa and a " + f2.eLen + "-bit two's complement exponent, represent denary " + formatNumber(f2.targetDenary) + " in floating-point form.";
+        var fpInstruction = "Write your answer as mantissa and exponent binary values.";
+        if (f2.isInexact) {
+          fpPrompt += " This value cannot be represented exactly. Use the closest representation, then calculate the absolute error and percentage relative error.";
+          fpInstruction = "Write mantissa and exponent binary values, then absolute and percentage relative errors.";
+        }
+        var fpAnswer = "Mantissa: " + mBits2 + ", Exponent: " + eBits2;
+        if (f2.isInexact) {
+          fpAnswer += ", Absolute error: " + formatNumber(absErr) + ", Relative error: " + formatNumber(relErr) + "%";
+        }
         return {
           topic: source.topicLabel,
-          prompt: "Using a " + f2.mLen + "-bit two's complement mantissa and a " + f2.eLen + "-bit two's complement exponent, represent denary " + formatNumber(f2.targetDenary) + " in floating-point form.",
-          instruction: "Write your answer as mantissa and exponent binary values.",
-          answer: "Mantissa: " + mBits2 + ", Exponent: " + eBits2
+          prompt: fpPrompt,
+          instruction: fpInstruction,
+          answer: fpAnswer,
+          answerLayout: {
+            kind: "mantissaExponent",
+            mantissaBits: f2.mLen,
+            exponentBits: f2.eLen,
+            includeErrors: !!f2.isInexact
+          },
+          promptBitBoxes: []
         };
       }
 
@@ -380,7 +482,9 @@
         topic: source.topicLabel,
         prompt: "What is the " + floatingExtremaLabel(fe.extremaType) + " denary value when a floating-point number is represented with a " + fe.mLen + "-bit two's complement mantissa and a " + fe.eLen + "-bit two's complement exponent?",
         instruction: "Write your answer as a denary number.",
-        answer: formatNumber(fe.targetDenary)
+        answer: formatNumber(fe.targetDenary),
+        answerLayout: null,
+        promptBitBoxes: []
       };
     }
 
@@ -396,7 +500,9 @@
         topic: source.topicLabel,
         prompt: plainText(bq.text),
         instruction: "Write your answer as a number in " + bq.unitLabel + ".",
-        answer: formatNumber(bq.answerNum) + " " + bq.unitLabel
+        answer: formatNumber(bq.answerNum) + " " + bq.unitLabel,
+        answerLayout: null,
+        promptBitBoxes: []
       };
     }
 
@@ -414,7 +520,9 @@
       topic: source.topicLabel,
       prompt: plainText(sq.text),
       instruction: "Write your answer as a number in " + sq.unitLabel + ".",
-      answer: formatNumber(sq.answerNum) + " " + sq.unitLabel
+      answer: formatNumber(sq.answerNum) + " " + sq.unitLabel,
+      answerLayout: null,
+      promptBitBoxes: []
     };
   }
 
@@ -457,19 +565,21 @@
         topic: q.topic,
         prompt: q.prompt,
         instruction: q.instruction,
-        answer: q.answer
+        answer: q.answer,
+        answerLayout: q.answerLayout || null,
+        promptBitBoxes: Array.isArray(q.promptBitBoxes) ? q.promptBitBoxes : []
       });
     });
     return items;
   }
 
-  async function buildPdf(items, title, layoutOptions) {
+  async function buildPdf(items, title, layoutMode) {
     var jsPDF = window.jspdf && window.jspdf.jsPDF;
     if (!jsPDF) {
       throw new Error("jsPDF did not load.");
     }
 
-    var compactMode = !!(layoutOptions && layoutOptions.compactMode);
+    var mode = ["normal", "compact", "both"].includes(layoutMode) ? layoutMode : "normal";
 
     var doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4", compress: true });
     var pageW = doc.internal.pageSize.getWidth();
@@ -530,25 +640,184 @@
       y += lineH + 4;
     }
 
-    drawPageDecorations();
-    writeCentred(normalizeTitle(title), 20, true);
-    y += lineH;
+    function drawSegmentedBinaryBoxes(x, yStart, bits, label, pointIndex, options) {
+      var opts = options || {};
+      var safeBits = Math.max(2, Math.min(32, Math.floor(bits || 0)));
+      var available = opts.maxWidth || (pageW - margin * 2);
+      var boxH = 16;
+      var labelGap = 4;
+      var rowGap = 8;
+      var cellW = Math.max(10, Math.min(18, Math.floor(available / safeBits)));
+      var totalW = cellW * safeBits;
+      var bitText = (opts.bitText || "").replace(/[^01]/g, "");
 
-    if (!compactMode) {
-      items.forEach(function (item) {
-        var l1 = wrappedLines("Q" + item.number, 12, true);
-        var l2 = wrappedLines(item.prompt, 11, false);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      doc.text(label || "Answer:", x, yStart);
+
+      var boxY = yStart + labelGap;
+      doc.setLineWidth(0.9);
+      doc.rect(x, boxY, totalW, boxH);
+      for (var i = 1; i < safeBits; i++) {
+        var xLine = x + i * cellW;
+        doc.line(xLine, boxY, xLine, boxY + boxH);
+      }
+
+      if (bitText) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(0);
+        for (var j = 0; j < Math.min(bitText.length, safeBits); j++) {
+          var cx = x + j * cellW + cellW / 2;
+          doc.text(bitText[j], cx, boxY + boxH / 2 + 3, { align: "center" });
+        }
+      }
+
+      if (Number.isFinite(pointIndex)) {
+        var p = Math.floor(pointIndex);
+        if (p > 0 && p < safeBits) {
+          var px = x + p * cellW;
+          var py = boxY + boxH / 2;
+          // Binary-point marker between cells for fixed-point answers.
+          doc.setFillColor(0);
+          doc.circle(px, py, 2.2, "F");
+        }
+      }
+
+      return lineH + rowGap + boxH;
+    }
+
+    function promptBitBoxesHeight(item, maxWidth) {
+      if (!item.promptBitBoxes || !item.promptBitBoxes.length) return 0;
+      var width = maxWidth || (pageW - margin * 2);
+      var total = 0;
+      item.promptBitBoxes.forEach(function (entry) {
+        var safeBits = Math.max(2, Math.min(32, Math.floor(entry.bits || bitsInBinaryString(entry.bitText))));
+        var cellW = Math.max(10, Math.min(18, Math.floor(width / safeBits)));
+        var boxH = 16;
+        var labelH = lineH;
+        total += labelH + 4 + boxH + 8;
+      });
+      return total;
+    }
+
+    function renderPromptBitBoxes(item, x, maxWidth) {
+      if (!item.promptBitBoxes || !item.promptBitBoxes.length) return;
+      item.promptBitBoxes.forEach(function (entry) {
+        y += drawSegmentedBinaryBoxes(
+          x,
+          y,
+          entry.bits || bitsInBinaryString(entry.bitText),
+          entry.label || "Binary value:",
+          Number.isFinite(entry.pointIndex) ? entry.pointIndex : binaryPointIndex(entry.bitText),
+          {
+            maxWidth: maxWidth,
+            bitText: entry.bitText
+          }
+        );
+      });
+    }
+
+    function drawMantissaExponentBoxes(x, yStart, layout) {
+      var used = 0;
+      used += drawSegmentedBinaryBoxes(x, yStart + used, layout.mantissaBits, "Mantissa:", null);
+      used += drawSegmentedBinaryBoxes(x, yStart + used, layout.exponentBits, "Exponent:", null);
+
+      if (layout.includeErrors) {
+        var totalWidth = pageW - margin * 2;
+        var halfGap = 12;
+        var leftWidth = Math.floor((totalWidth - halfGap) / 2);
+        var rightX = x + leftWidth + halfGap;
+        var absLabel = "Absolute error:";
+        var relLabel = "Relative error (%):";
+        var absLineStart = x + 86;
+        var relLineStart = rightX + 94;
+        var absLineWidth = Math.max(40, leftWidth - (absLineStart - x));
+        var relLineWidth = Math.max(40, totalWidth - leftWidth - halfGap - (relLineStart - rightX));
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(0);
+        doc.text(absLabel, x, yStart + used);
+        doc.line(absLineStart, yStart + used + 2, absLineStart + absLineWidth, yStart + used + 2);
+
+        doc.text(relLabel, rightX, yStart + used);
+        doc.line(relLineStart, yStart + used + 2, relLineStart + relLineWidth, yStart + used + 2);
+        used += lineH + 4;
+      }
+
+      return used;
+    }
+
+    function answerAreaHeight(item) {
+      var layout = item.answerLayout;
+      if (!layout) return 2 * lineH + 12;
+      if (layout.kind === "binaryBoxes") {
+        return lineH + 8 + 16;
+      }
+      if (layout.kind === "mantissaExponent") {
+        var base = 2 * (lineH + 8 + 16);
+        if (layout.includeErrors) base += 2 * lineH + 4;
+        return base;
+      }
+      return 2 * lineH + 12;
+    }
+
+    function renderAnswerArea(item) {
+      var layout = item.answerLayout;
+      if (!layout) {
         var l4 = wrappedLines("Answer: ________________________________________________", 11, false);
-        var blockHeight = (l1.length + l2.length) * lineH + l4.length * lineH + lineH + (3 * 4) + 8;
-
-        ensureSpace(blockHeight);
-        writeLines(l1, 12, true);
-        writeLines(l2, 11, false);
         y += lineH;
         writeLines(l4, 11, false);
         y += 8;
-      });
-    } else {
+        return;
+      }
+
+      if (layout.kind === "binaryBoxes") {
+        y += drawSegmentedBinaryBoxes(margin, y, layout.bits, "Answer:", layout.pointIndex);
+        y += 6;
+        return;
+      }
+
+      if (layout.kind === "mantissaExponent") {
+        y += drawMantissaExponentBoxes(margin, y, layout);
+        y += 6;
+        return;
+      }
+
+      y += lineH;
+      writeLines(wrappedLines("Answer: ________________________________________________", 11, false), 11, false);
+      y += 8;
+    }
+
+    function renderWorksheetSection(compactMode) {
+      y = margin;
+      drawPageDecorations();
+
+      var heading = normalizeTitle(title);
+      if (mode === "both") {
+        heading += compactMode ? " - Compact" : " - Normal";
+      }
+      writeCentred(heading, 20, true);
+      y += lineH;
+
+      if (!compactMode) {
+        items.forEach(function (item) {
+          var l1 = wrappedLines("Q" + item.number, 12, true);
+          var l2 = wrappedLines(item.prompt, 11, false);
+          var promptBoxH = promptBitBoxesHeight(item, pageW - margin * 2);
+          var blockHeight = (l1.length + l2.length) * lineH + promptBoxH + answerAreaHeight(item) + (2 * 4);
+
+          ensureSpace(blockHeight);
+          writeLines(l1, 12, true);
+          writeLines(l2, 11, false);
+          renderPromptBitBoxes(item, margin, pageW - margin * 2);
+          renderAnswerArea(item);
+        });
+        return;
+      }
+
       var columnGap = 22;
       var columnWidth = (pageW - margin * 2 - columnGap) / 2;
       var leftX = margin;
@@ -580,7 +849,8 @@
         var x = column === 0 ? leftX : rightX;
         var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
         var pLines = wrappedLines(item.prompt, compactPFont, false, columnWidth);
-        var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pLines.length * compactPLineH + compactGapAfterBlock;
+        var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
+        var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pLines.length * compactPLineH + promptBoxHCompact + compactGapAfterBlock;
 
         ensureCompactSpace(blockHeight);
         x = column === 0 ? leftX : rightX;
@@ -595,8 +865,18 @@
         doc.setFontSize(compactPFont);
         doc.setTextColor(0);
         doc.text(pLines, x, y);
-        y += pLines.length * compactPLineH + compactGapAfterBlock;
+        y += pLines.length * compactPLineH;
+        renderPromptBitBoxes(item, x, columnWidth);
+        y += compactGapAfterBlock;
       });
+    }
+
+    if (mode === "both") {
+      renderWorksheetSection(false);
+      doc.addPage("a4", "portrait");
+      renderWorksheetSection(true);
+    } else {
+      renderWorksheetSection(mode === "compact");
     }
 
     doc.addPage("a4", "portrait");
@@ -626,7 +906,11 @@
     var title = normalizeTitle(byId("ws-title") ? byId("ws-title").value : DEFAULT_TITLE);
     var countInput = byId("ws-count");
     var count = Math.round(safeNum(countInput ? countInput.value : 20, 20));
-    var compactMode = !!(byId("ws-compact-mode") && byId("ws-compact-mode").checked);
+    var layoutMode = "normal";
+    var selectedMode = document.querySelector('input[name="ws-layout-mode"]:checked');
+    if (selectedMode && selectedMode.value) {
+      layoutMode = selectedMode.value;
+    }
 
     if (count < 1 || count > 100) {
       setStatus("Choose a question count from 1 to 100.", "error");
@@ -651,7 +935,7 @@
     try {
       var items = buildWorksheetItems(count, selections);
       setStatus("Rendering PDF...", "");
-      var pdf = await buildPdf(items, title, { compactMode: compactMode });
+      var pdf = await buildPdf(items, title, layoutMode);
       var filename = slugify(title) + "-" + new Date().toISOString().slice(0, 10) + ".pdf";
       pdf.save(filename);
       setStatus("Downloaded " + filename, "success");

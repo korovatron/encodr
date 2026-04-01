@@ -171,10 +171,21 @@
         <input id="ws-count" class="ws-num" type="number" min="1" max="100" value="20" />
       </div>
       <div class="ws-row">
-        <label class="ws-cb" for="ws-compact-mode">
-          <input id="ws-compact-mode" type="checkbox" />
-          <span>Compact mode (two columns, no answer lines)</span>
-        </label>
+        <span class="ws-label">Worksheet layout</span>
+        <div class="ws-radio-group" role="radiogroup" aria-label="Worksheet layout mode">
+          <label class="ws-cb" for="ws-layout-normal">
+            <input id="ws-layout-normal" type="radio" name="ws-layout-mode" value="normal" checked />
+            <span>Normal (answer lines and boxes)</span>
+          </label>
+          <label class="ws-cb" for="ws-layout-compact">
+            <input id="ws-layout-compact" type="radio" name="ws-layout-mode" value="compact" />
+            <span>Compact (two columns, no answer lines)</span>
+          </label>
+          <label class="ws-cb" for="ws-layout-both">
+            <input id="ws-layout-both" type="radio" name="ws-layout-mode" value="both" />
+            <span>Both in one file (normal, then compact, then answers)</span>
+          </label>
+        </div>
       </div>
     </div>
   </section>
