@@ -906,8 +906,38 @@
     writeCentred(normalizeTitle(title) + " - Answers", 20, true);
     y += 8;
 
+    // Render answers in two columns.
+    var ansColGap = 22;
+    var ansColW = (pageW - margin * 2 - ansColGap) / 2;
+    var ansLineH = 14;
+    var ansFs = 10;
+    var ansColX = [margin, margin + ansColW + ansColGap];
+    var ansColY = [y, y];
+
+    // Fill column 0 top-to-bottom, then overflow into column 1, then new page.
+    var ansCol = 0;
     items.forEach(function (item) {
-      writeWrapped("Q" + item.number + ": " + item.answer, 11, false);
+      var text = "Q" + item.number + ": " + item.answer;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(ansFs);
+      var wrapped = doc.splitTextToSize(text, ansColW);
+      var blockH = wrapped.length * ansLineH + 4;
+      if (ansColY[ansCol] + blockH > contentBottom) {
+        if (ansCol === 0) {
+          // Move to column 1 at the same top baseline.
+          ansCol = 1;
+        } else {
+          // Both columns full — new page, back to column 0.
+          doc.addPage("a4", "portrait");
+          drawPageDecorations();
+          ansColY[0] = margin;
+          ansColY[1] = margin;
+          ansCol = 0;
+        }
+      }
+      doc.setTextColor(0);
+      doc.text(wrapped, ansColX[ansCol], ansColY[ansCol]);
+      ansColY[ansCol] += blockH;
     });
 
     return doc;
