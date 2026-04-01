@@ -857,7 +857,8 @@
         var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
         var pLines = wrappedLines(item.prompt, compactPFont, false, columnWidth);
         var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
-        var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pLines.length * compactPLineH + promptBoxHCompact + compactGapAfterBlock;
+        var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
+        var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pLines.length * compactPLineH + promptBoxHCompact + promptBoxTailGap + compactGapAfterBlock;
 
         ensureCompactSpace(blockHeight);
         x = column === 0 ? leftX : rightX;
@@ -874,6 +875,9 @@
         doc.text(pLines, x, y);
         y += pLines.length * compactPLineH;
         renderPromptBitBoxes(item, x, columnWidth);
+        if (item.promptBitBoxes && item.promptBitBoxes.length) {
+          y += 6;
+        }
         y += compactGapAfterBlock;
       });
     }
