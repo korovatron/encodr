@@ -607,7 +607,7 @@
 
         function genColourDepth() {
           const depth = pick([1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16, 24]);
-          const colours = pick([2 ** depth - 1, 2 ** depth]);
+          const colours = pick([2 ** depth - 1, 2 ** depth].filter(function (n) { return n >= 2; }));
           return {
             badge: 'Colour depth',
             text: 'A bitmap image uses ' + colours.toLocaleString() + ' different colours.\n\nCalculate the minimum number of bits per pixel (colour depth) needed to store this image.',
