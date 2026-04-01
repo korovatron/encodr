@@ -526,6 +526,11 @@
           <input type="range" id="sr-slider" min="0" max="30" step="1" value="18" />
           <div class="slider-val slider-val-sr" id="sr-val" style="font-size:17px;min-width:58px;text-align:right;">18 Hz</div>
         </div>
+        <div class="qtype-group" style="margin:8px 2px 0;align-items:center;">
+          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Reconstruction:</span>
+          <button class="qtype-btn active" data-recon-mode="step" title="Stepped (sample-and-hold): each sample value is held until the next sample.">Stepped</button>
+          <button class="qtype-btn" data-recon-mode="line" title="Joined (interpolated view): sample points are connected with straight lines.">Joined</button>
+        </div>
         <div class="nyquist-warn" id="nyquist-warn" style="margin:6px 0 0;">
           <strong>Below Nyquist threshold</strong> — the sample rate must be at least
           <strong>twice</strong> the highest frequency in the signal (<strong id="nyquist-min"></strong>).
@@ -699,6 +704,7 @@
 
   let sampleRate = SR_VALUES[18]; // 18 Hz default
   let sampleBits = 4;             // 4 bits default
+  let reconMode  = 'step';        // 'step' (DAC sample-and-hold) or 'line'
 
   function quantise(amplitude, bits) {
     const levels = Math.pow(2, bits);
@@ -849,14 +855,13 @@
       ctx.save();
       ctx.strokeStyle = '#ffff00';
       ctx.lineWidth   = 2;
-      const belowNyquist = sampleRate < getMaxFreq() * 2;
       ctx.beginPath();
       for (let i = 0; i < sampleTs.length; i++) {
         const x0 = tx(sampleTs[i]);
         const y0 = ay(sampleQs[i]);
         const x1 = i + 1 < sampleTs.length ? tx(sampleTs[i + 1]) : PAD_L + plotW;
         if (i === 0) ctx.moveTo(x0, y0);
-        if (belowNyquist) {
+        if (reconMode === 'line') {
           ctx.lineTo(x0, y0);
           if (i + 1 < sampleTs.length) {
             ctx.lineTo(tx(sampleTs[i + 1]), ay(sampleQs[i + 1]));
@@ -963,6 +968,16 @@
     updateFileSize();
   }
   resSlider.addEventListener('input', onResChange);
+
+  /* ── Reconstruction display mode ───────────────────────────────── */
+  document.querySelectorAll('[data-recon-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-recon-mode]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      reconMode = btn.dataset.reconMode;
+      drawWave();
+    });
+  });
 
   /* ═══════════════════════════════════════════════════════
      FILE SIZE CALCULATOR
