@@ -530,7 +530,7 @@
 
   function markInvalidInput(input) {
     if (!input) return;
-    input.style.borderColor = '#ff5555';
+    input.style.borderColor = '#ffff00';
     input.focus();
   }
 
