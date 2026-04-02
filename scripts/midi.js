@@ -8,7 +8,7 @@
   var SAMPLES = {
     scale: [
       'tempo bpm=120',
-      'instrument wave=triangle',
+      'instrument wave=sine',
       'chord pitches="C4,E4,G4" beats=1 velocity=102',
       'chord pitches="C4,E4,G4" beats=1 velocity=102',
       'chord pitches="G3,D4,G4" beats=1 velocity=104',
@@ -39,24 +39,37 @@
       'note pitch=G3 beats=1 velocity=90'
     ].join('\n'),
     classicRiff: [
-      'tempo bpm=148',
-      'instrument wave=square',
-      'chord pitches="E3,G3,B3" beats=0.5 velocity=112',
-      'chord pitches="G3,B3,D4" beats=0.5 velocity=108',
-      'chord pitches="A3,C4,E4" beats=0.5 velocity=110',
-      'chord pitches="G3,B3,D4" beats=0.5 velocity=108',
-      'chord pitches="E3,G3,B3" beats=0.5 velocity=112',
-      'rest beats=0.25',
-      'chord pitches="D3,F#3,A3" beats=0.25 velocity=104',
-      'chord pitches="E3,G3,B3" beats=0.5 velocity=110',
-      'chord pitches="G3,B3,D4" beats=0.5 velocity=108',
-      'chord pitches="B3,D4,F#4" beats=0.5 velocity=112',
-      'chord pitches="A3,C4,E4" beats=0.5 velocity=110',
-      'chord pitches="G3,B3,D4" beats=0.5 velocity=108',
-      'chord pitches="E3,G3,B3" beats=0.5 velocity=112',
-      'rest beats=0.25',
-      'chord pitches="D3,F#3,A3" beats=0.25 velocity=104',
-      'chord pitches="E3,G3,B3" beats=1 velocity=114'
+      'tempo bpm=90',
+      'instrument wave=sawtooth',
+      'chord pitches="B3,D4,F#4" beats=0.33 velocity=106',
+      'chord pitches="C#4,E4,G#4" beats=0.33 velocity=106',
+      'chord pitches="D4,F#4,A4" beats=0.33 velocity=108',
+      'chord pitches="E4,G4,B4" beats=0.33 velocity=108',
+      'chord pitches="F#4,A4,C#5" beats=0.33 velocity=110',
+      'chord pitches="D4,F#4,A4" beats=0.33 velocity=108',
+      'chord pitches="F#4,A4,C#5" beats=0.33 velocity=110',
+      'rest beats=0.3',
+      'chord pitches="F4,A4,C5" beats=0.33 velocity=110',
+      'chord pitches="C#4,E4,G#4" beats=0.33 velocity=108',
+      'chord pitches="F4,A4,C5" beats=0.33 velocity=110',
+      'rest beats=0.3',
+      'chord pitches="E4,G4,B4" beats=0.33 velocity=110',
+      'chord pitches="C4,E4,G4" beats=0.33 velocity=108',
+      'chord pitches="E4,G4,B4" beats=0.33 velocity=110',
+      'rest beats=0.3',
+      'chord pitches="B3,D4,F#4" beats=0.33 velocity=110',
+      'chord pitches="C#4,E4,G#4" beats=0.33 velocity=108',
+      'chord pitches="D4,F#4,A4" beats=0.33 velocity=110',
+      'chord pitches="E4,G4,B4" beats=0.33 velocity=110',
+      'chord pitches="F#4,A4,C#5" beats=0.33 velocity=108',
+      'chord pitches="D4,F#4,A4" beats=0.33 velocity=110',
+      'chord pitches="F#4,A4,C#5" beats=0.33 velocity=110',
+      'chord pitches="B4,D5,F#5" beats=0.33 velocity=108',
+      'chord pitches="A4,C#5,E5" beats=0.33 velocity=110',
+      'chord pitches="F#4,A4,C#5" beats=0.33 velocity=110',
+      'chord pitches="D4,F#4,A4" beats=0.33 velocity=108',
+      'chord pitches="F#4,A4,C#5" beats=0.33 velocity=110',
+      'chord pitches="A4,C#5,E5" beats=1 velocity=110'
     ].join('\n')
   };
 
@@ -506,6 +519,7 @@
 
   function loadSample(name) {
     if (!Object.prototype.hasOwnProperty.call(SAMPLES, name)) return;
+    stopPlayback();
     byId('midi-editor').value = SAMPLES[name];
     render(currentParse());
     setActiveSampleButton(name);
@@ -522,7 +536,7 @@
     var editor = byId('midi-editor');
     if (!editor) return;
 
-    loadSample('scale');
+    loadSample('classicRiff');
 
     editor.addEventListener('input', function () {
       render(currentParse());
