@@ -94,6 +94,20 @@
       align-items: center;
       margin-bottom: 20px;
     }
+
+    .worksheet-link {
+      color: var(--muted);
+      text-decoration: underline;
+      text-decoration-color: rgba(255,255,0,.45);
+      text-underline-offset: 3px;
+      font-weight: 700;
+    }
+
+    .worksheet-link:hover,
+    .worksheet-link:focus-visible {
+      color: var(--text);
+      text-decoration-color: var(--ml);
+    }
     .colour-swatch {
       width: 32px;
       height: 32px;
@@ -256,8 +270,11 @@
 
   <div id="explore-section">
   <p class="intro">
+    <strong>Bitmap</strong> images are stored as a grid of <strong>pixels</strong>. Image size in pixels is width x height, while <strong>resolution</strong> is measured in dots (pixels) per inch (dpi).
+    <strong>Colour depth</strong> is the number of bits used to store each pixel.<br><br>
     Try to recreate a gallery image by entering denary values (0-255) into each byte field. In 1-bit mode each byte controls 8 pixels, and in 2-bit mode each byte controls 4 double-width pixels.
-    Three bytes fill one row of 24 pixels.
+    Three bytes fill one row of 24 pixels. Or make your own image using <a class="worksheet-link" href="../worksheets/spritedesign.pdf" target="_blank" rel="noopener" download>this worksheet</a> to help you.<br>
+    
   </p>
 
   <div class="bitmap-layout">

@@ -1,4 +1,4 @@
-const CACHE_NAME = "encodr-v1.0.106";
+const CACHE_NAME = "encodr-v1.0.107";
 
 const LOCAL_ASSETS = [
   "./",
@@ -29,6 +29,7 @@ const LOCAL_ASSETS = [
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./fonts/C64_Pro_Mono-STYLE.woff2",
+  "./worksheets/spritedesign.pdf",
 ];
 
 function toScopeUrl(path) {
