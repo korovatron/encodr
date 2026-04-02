@@ -1,4 +1,6 @@
 (function () {
+  var MAX_INPUT_CHARS = 100;
+
   function byId(id) {
     return document.getElementById(id);
   }
@@ -226,7 +228,7 @@
       var circleFill = isLeaf ? '#3b2f00' : '#1a1536';
       nodes.push('<g>\n' +
         '<circle cx="' + p.x + '" cy="' + p.y + '" r="' + nodeRadius + '" fill="' + circleFill + '" stroke="rgba(255,255,255,.8)" />\n' +
-        '<text x="' + p.x + '" y="' + (p.y + 5) + '" text-anchor="middle" fill="#ffffff" font-size="13" font-family="Consolas, monospace">' + node.freq + '</text>\n' +
+        '<text x="' + p.x + '" y="' + (p.y + 6) + '" text-anchor="middle" fill="#ffffff" font-size="17" font-weight="700" font-family="Consolas, monospace">' + node.freq + '</text>\n' +
         (symbolText ? '<text x="' + p.x + '" y="' + (p.y + 38) + '" text-anchor="middle" fill="#fff36b" stroke="#0f0a24" stroke-width="3" paint-order="stroke fill" font-size="14" font-weight="700" font-family="Consolas, monospace">' + escapeHtml(symbolText) + '</text>' : '') +
         '\n</g>');
     }
@@ -257,6 +259,10 @@
     if (!input || !encodedEl) return;
 
     var text = input.value || '';
+    if (text.length > MAX_INPUT_CHARS) {
+      text = text.slice(0, MAX_INPUT_CHARS);
+      input.value = text;
+    }
     var freqMap = countFrequencies(text);
     var rows = sortedSymbols(freqMap);
 
