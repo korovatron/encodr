@@ -273,7 +273,7 @@
             <div class="res-eq" id="res-eq"></div>
           </div>
           <div class="denary-action-row">
-            <button class="denary-open-btn" id="denary-open-btn" type="button" title="Enter a denary value and convert it to the closest representable floating-point value for the current mantissa and exponent sizes." aria-label="Enter denary value and convert to floating point">Enter denary</button>
+            <button class="denary-open-btn" id="denary-open-btn" type="button" title="Edit the denary value and convert it to the closest representable floating-point value for the current mantissa and exponent sizes." aria-label="Edit denary value and convert to floating point">Edit denary</button>
           </div>
         </div>
       </div>
@@ -782,7 +782,7 @@
 
   function openDenaryModal() {
     denaryPending = null;
-    denaryModalInput.value = '';
+    denaryModalInput.value = document.getElementById('res-big').textContent.trim();
     denaryModalInput.disabled = false;
     denarySignBtn.disabled = false;
     denaryModalFeedback.innerHTML = '';
