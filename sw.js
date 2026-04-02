@@ -1,4 +1,4 @@
-const CACHE_NAME = "encodr-v1.0.100";
+const CACHE_NAME = "encodr-v1.0.101";
 
 const LOCAL_ASSETS = [
   "./",
@@ -12,12 +12,14 @@ const LOCAL_ASSETS = [
   "./pages/twos-complement.html",
   "./pages/floating-point.html",
   "./pages/sound.html",
+  "./pages/huffman.html",
   "./pages/worksheet-generator.html",
   "./style.css",
   "./scripts/app.js",
   "./scripts/quiz-generators.js",
   "./scripts/vector-graphics.js",
   "./scripts/midi.js",
+  "./scripts/huffman.js",
   "./scripts/worksheet-generator.js",
   "./vendor/jspdf.es.min.js",
   "./vendor/jspdf.umd.min.js",

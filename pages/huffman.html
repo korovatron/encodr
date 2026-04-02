@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <title>Encodr - Huffman Coding</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/huffman.js" defer></script>
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+  <style>
+    .hf-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .hf-layout .card {
+      min-width: 0;
+    }
+
+    .hf-card-input {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .hf-card-output {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .hf-card-tree {
+      grid-column: 1 / span 2;
+      grid-row: 2;
+    }
+
+    .hf-card-codes {
+      grid-column: 1 / span 2;
+      grid-row: 3;
+    }
+
+    .hf-editor {
+      width: 100%;
+      min-height: 72px;
+      resize: vertical;
+      line-height: 1.55;
+      tab-size: 2;
+      -webkit-user-select: text;
+      user-select: text;
+      background: #000;
+      color: var(--text);
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1.5px var(--border);
+      padding: 10px 12px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 20px;
+    }
+
+    .hf-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .hf-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .hf-kpi {
+      background: rgba(255,255,255,.05);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    }
+
+    .hf-kpi-lbl {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text);
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .hf-kpi-val {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--ml);
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .hf-kpi-note {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hf-code-output {
+      background: #000;
+      border-radius: 10px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+      padding: 10px;
+      color: var(--text);
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 19px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    .hf-table-wrap {
+      overflow: auto;
+      border-radius: 10px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+
+    .hf-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 300px;
+    }
+
+    .hf-table th,
+    .hf-table td {
+      text-align: left;
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      font-size: 16px;
+      line-height: 1.45;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .hf-table th {
+      color: var(--muted);
+      letter-spacing: .5px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .hf-table td {
+      color: var(--text);
+    }
+
+    .hf-tree-wrap {
+      background: linear-gradient(135deg, rgba(42, 33, 98, .98), rgba(16, 11, 36, .98));
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+      padding: 10px;
+      overflow: auto;
+      min-height: 320px;
+    }
+
+    .hf-tree {
+      display: block;
+      width: 100%;
+      min-height: 320px;
+      height: auto;
+    }
+
+    .hf-note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (min-width: 981px) {
+      .hf-card-input,
+      .hf-card-output {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .hf-card-output .hf-code-output {
+        flex: 1;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .hf-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .hf-card-input,
+      .hf-card-output,
+      .hf-card-tree,
+      .hf-card-codes {
+        grid-column: 1;
+      }
+
+      .hf-card-input { grid-row: 1; }
+      .hf-card-output { grid-row: 2; }
+      .hf-card-tree { grid-row: 3; }
+      .hf-card-codes { grid-row: 4; }
+
+      .hf-kpis {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
+  <span class="breadcrumb-sep">&rsaquo;</span>
+  <span class="hsub">Huffman Coding</span>
+  <a class="home-btn" href="../index.html">Home</a>
+</header>
+
+<main>
+  <h1>Huffman Coding</h1>
+  <div class="mode-tabs" role="tablist" aria-label="Huffman coding modes">
+    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
+    <button class="mode-tab" id="tab-quiz" role="tab">Test</button>
+  </div>
+
+  <div id="explore-section">
+    <p class="intro">Enter a message and build a Huffman tree to see frequency counts, variable-length codes, and how many bits are saved compared with 8-bit ASCII storage.</p>
+
+    <div class="hf-layout">
+      <section class="card hf-card-input">
+        <div class="card-head"><span class="badge badge-r">Input</span></div>
+        <div class="hf-row">
+          <button class="btn btn-sm btn-submit" type="button" data-hf-sample="banana">banana bandana</button>
+          <button class="btn btn-sm" type="button" data-hf-sample="science">gcse computer science</button>
+          <button class="btn btn-sm" type="button" data-hf-sample="clear" id="hf-clear">Clear</button>
+        </div>
+        <textarea id="hf-input" class="hf-editor" spellcheck="false" aria-label="Text to encode with Huffman coding"></textarea>
+        <div class="hf-kpis">
+          <div class="hf-kpi">
+            <div class="hf-kpi-lbl">ASCII Bits</div>
+            <div class="hf-kpi-val" id="hf-ascii-bits">0</div>
+            <div class="hf-kpi-note">characters x 8</div>
+          </div>
+          <div class="hf-kpi">
+            <div class="hf-kpi-lbl">Huffman Bits</div>
+            <div class="hf-kpi-val" id="hf-hf-bits">0</div>
+            <div class="hf-kpi-note">sum of frequency x code length</div>
+          </div>
+          <div class="hf-kpi">
+            <div class="hf-kpi-lbl">Bits Saved</div>
+            <div class="hf-kpi-val" id="hf-saved-bits">0</div>
+            <div class="hf-kpi-note" id="hf-ratio">0.0% reduction</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card hf-card-output">
+        <div class="card-head"><span class="badge badge-r">Encoded Output</span></div>
+        <div id="hf-encoded" class="hf-code-output" aria-live="polite"></div>
+      </section>
+
+      <section class="card hf-card-tree">
+        <div class="card-head"><span class="badge badge-r">Tree</span></div>
+        <div class="hf-tree-wrap">
+          <svg id="hf-tree" class="hf-tree" role="img" aria-label="Huffman tree"></svg>
+        </div>
+        <p class="hf-note">Branch label 0 means left, and 1 means right. Read from root to a leaf to get each character code.</p>
+      </section>
+
+      <section class="card hf-card-codes">
+        <div class="card-head"><span class="badge badge-r">Codes</span></div>
+        <div class="hf-table-wrap">
+          <table class="hf-table" aria-label="Huffman code table">
+            <thead>
+              <tr>
+                <th>Char</th>
+                <th>Frequency</th>
+                <th>Code</th>
+                <th>Bits</th>
+              </tr>
+            </thead>
+            <tbody id="hf-code-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="quiz-section" hidden>
+    <section class="card">
+      <div class="card-head"><span class="badge badge-r">Test</span></div>
+      <p class="intro" style="margin-bottom:0;">Test mode will be added next. This tab is in place so the page follows the same Explore/Test structure as other Encodr topics.</p>
+    </section>
+  </div>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
+</body>
+</html>
