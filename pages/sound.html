@@ -377,11 +377,20 @@
       font-weight: 700; margin-bottom: 16px;
     }
     .filesize-formula {
-      font-size: 15px;
+      font-size: 26px;
       font-family: 'Consolas', monospace;
       color: var(--muted);
       margin-bottom: 16px;
-      line-height: 1.8;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .filesize-formula strong {
+      font-size: 1.08em;
+    }
+
+    .fs-final-answer {
+      color: var(--muted);
     }
     .fs-var-rate { color: #44aaff; }
     .fs-var-res  { color: var(--ml); }
@@ -485,7 +494,10 @@
 
     <p class="intro">
       Sound is an <strong>analogue</strong> signal — a continuously varying wave of air pressure.
-      To store it digitally we must <strong>sample</strong> it: measure its amplitude at regular intervals.
+      An <strong>ADC (Analogue to Digital Converter)</strong> converts this wave into digital data by taking <strong>regular samples</strong> of its amplitude.
+      Each sample is then encoded using a fixed number of bits, set by the <strong>sample resolution</strong>.
+      <br>
+      <br>
       Adjust the sliders below to see how sampling rate and sample resolution affect the digital representation.
     </p>
 
@@ -547,7 +559,7 @@
         </div>
         <div class="wave-sr-row">
           <span class="wave-sr-lbl" style="color:#44aaff;">Sample Rate</span>
-          <input type="range" id="sr-slider" min="0" max="30" step="1" value="18" />
+          <input type="range" id="sr-slider" min="0" max="30" step="1" value="17" />
           <div class="slider-val slider-val-sr" id="sr-val" style="font-size:17px;min-width:58px;text-align:right;">18 Hz</div>
         </div>
         <div class="qtype-group" style="margin:8px 2px 0;align-items:center;">
@@ -727,7 +739,7 @@
     return sum / active.length;  // normalise by count to stay in [-1, 1]
   }
 
-  let sampleRate = SR_VALUES[18]; // 18 Hz default
+  let sampleRate = SR_VALUES[17]; // 18 Hz default
   let sampleBits = 4;             // 4 bits default
   let reconMode  = 'step';        // 'step' (DAC sample-and-hold) or 'line'
 
@@ -973,7 +985,7 @@
   const srSlider = document.getElementById('sr-slider');
   const srVal    = document.getElementById('sr-val');
   srSlider.max   = SR_VALUES.length - 1;
-  srSlider.value = 18;
+  srSlider.value = 17;
 
   function onSrChange() {
     sampleRate = SR_VALUES[+srSlider.value];
@@ -1034,7 +1046,7 @@
       `<span class="fs-var-rate">${rate}</span> × ` +
       `<span class="fs-var-res">${res}</span> × ` +
       `<span class="fs-var-secs">${secs}</span> = ` +
-      `<strong style="color:var(--ml)">${bits.toLocaleString()} bits</strong>`;
+      `<strong class="fs-final-answer">${bits.toLocaleString()} bits</strong>`;
 
     document.getElementById('fs-bits' ).textContent = bits.toLocaleString();
     document.getElementById('fs-bytes').textContent = bytes.toLocaleString();
