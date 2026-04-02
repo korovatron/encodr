@@ -607,21 +607,22 @@
 
     // Build source list: add exactly one Huffman question if selected,
     // then distribute remaining questions across other selected topics.
-    var sources = [];
+    var huffmanSource = null;
+    var otherSources = [];
     if (huffmanSelection) {
-      sources.push({
+      huffmanSource = {
         topicId: huffmanSelection.topicId,
         topicLabel: huffmanSelection.topicLabel,
         subtypeId: "mixed",
         options: huffmanSelection.options || {}
-      });
+      };
     }
 
     otherSelections.forEach(function (sel, i) {
       var n = base + (i < remainder ? 1 : 0);
       for (var j = 0; j < n; j++) {
         var subtypeId = sel.subtypeIds[Math.floor(Math.random() * sel.subtypeIds.length)];
-        sources.push({
+        otherSources.push({
           topicId: sel.topicId,
           topicLabel: sel.topicLabel,
           subtypeId: subtypeId,
@@ -630,11 +631,13 @@
       }
     });
 
-    // Fisher-Yates shuffle
-    for (var i = sources.length - 1; i > 0; i--) {
+    // Shuffle non-Huffman sources. If Huffman is selected, keep it fixed as Q1.
+    for (var i = otherSources.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
-      var tmp = sources[i]; sources[i] = sources[j]; sources[j] = tmp;
+      var tmp = otherSources[i]; otherSources[i] = otherSources[j]; otherSources[j] = tmp;
     }
+
+    var sources = huffmanSource ? [huffmanSource].concat(otherSources) : otherSources;
 
     // Generate questions
     var items = [];
@@ -1186,54 +1189,119 @@
       var compactPLineH = 12;
       var compactGapAfterQ = 2;
       var compactGapAfterBlock = 5;
+      var useBestFitCompact = false;
 
-      function ensureCompactSpace(heightNeeded) {
-        if (y + heightNeeded <= contentBottom) return;
-        if (column === 0) {
-          column = 1;
-          y = contentTop;
-          return;
+      if (useBestFitCompact) {
+        var compactColumnY = [contentTop, contentTop];
+
+        function openNextCompactPage() {
+          doc.addPage("a4", "portrait");
+          drawPageDecorations();
+          contentTop = margin;
+          compactColumnY[0] = contentTop;
+          compactColumnY[1] = contentTop;
         }
-        doc.addPage("a4", "portrait");
-        drawPageDecorations();
-        column = 0;
-        y = margin;
-        contentTop = margin;
+
+        function chooseCompactColumn(blockHeight) {
+          var fitsLeft = compactColumnY[0] + blockHeight <= contentBottom;
+          var fitsRight = compactColumnY[1] + blockHeight <= contentBottom;
+
+          if (!fitsLeft && !fitsRight) {
+            openNextCompactPage();
+            return 0;
+          }
+          if (fitsLeft && !fitsRight) return 0;
+          if (!fitsLeft && fitsRight) return 1;
+
+          var remainingLeft = contentBottom - (compactColumnY[0] + blockHeight);
+          var remainingRight = contentBottom - (compactColumnY[1] + blockHeight);
+          return remainingLeft <= remainingRight ? 0 : 1;
+        }
+
+        items.forEach(function (item) {
+          var x;
+          var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
+          var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
+          var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
+          var treeHCompact = promptTreeHeight(item, true);
+          var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
+          var treeTailGap = item.promptTree ? 6 : 0;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
+
+          var targetColumn = chooseCompactColumn(blockHeight);
+          x = targetColumn === 0 ? leftX : rightX;
+          y = compactColumnY[targetColumn];
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(compactQFont);
+          doc.setTextColor(0);
+          doc.text(qLines, x, y);
+          y += qLines.length * compactQLineH + compactGapAfterQ;
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(compactPFont);
+          doc.setTextColor(0);
+          renderPromptText(item, x, columnWidth, compactPFont, compactPLineH);
+          renderPromptBitBoxes(item, x, columnWidth);
+          if (item.promptBitBoxes && item.promptBitBoxes.length) {
+            y += 6;
+          }
+          drawPromptTree(item, x, columnWidth, true);
+          if (item.promptTree) {
+            y += 6;
+          }
+          y += compactGapAfterBlock;
+          compactColumnY[targetColumn] = y;
+        });
+      } else {
+        function ensureCompactSpace(heightNeeded) {
+          if (y + heightNeeded <= contentBottom) return;
+          if (column === 0) {
+            column = 1;
+            y = contentTop;
+            return;
+          }
+          doc.addPage("a4", "portrait");
+          drawPageDecorations();
+          column = 0;
+          y = margin;
+          contentTop = margin;
+        }
+
+        items.forEach(function (item) {
+          var x = column === 0 ? leftX : rightX;
+          var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
+          var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
+          var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
+          var treeHCompact = promptTreeHeight(item, true);
+          var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
+          var treeTailGap = item.promptTree ? 6 : 0;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
+
+          ensureCompactSpace(blockHeight);
+          x = column === 0 ? leftX : rightX;
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(compactQFont);
+          doc.setTextColor(0);
+          doc.text(qLines, x, y);
+          y += qLines.length * compactQLineH + compactGapAfterQ;
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(compactPFont);
+          doc.setTextColor(0);
+          renderPromptText(item, x, columnWidth, compactPFont, compactPLineH);
+          renderPromptBitBoxes(item, x, columnWidth);
+          if (item.promptBitBoxes && item.promptBitBoxes.length) {
+            y += 6;
+          }
+          drawPromptTree(item, x, columnWidth, true);
+          if (item.promptTree) {
+            y += 6;
+          }
+          y += compactGapAfterBlock;
+        });
       }
-
-      items.forEach(function (item) {
-        var x = column === 0 ? leftX : rightX;
-        var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
-        var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
-        var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
-        var treeHCompact = promptTreeHeight(item, true);
-        var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
-        var treeTailGap = item.promptTree ? 6 : 0;
-        var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
-
-        ensureCompactSpace(blockHeight);
-        x = column === 0 ? leftX : rightX;
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(compactQFont);
-        doc.setTextColor(0);
-        doc.text(qLines, x, y);
-        y += qLines.length * compactQLineH + compactGapAfterQ;
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(compactPFont);
-        doc.setTextColor(0);
-        renderPromptText(item, x, columnWidth, compactPFont, compactPLineH);
-        renderPromptBitBoxes(item, x, columnWidth);
-        if (item.promptBitBoxes && item.promptBitBoxes.length) {
-          y += 6;
-        }
-        drawPromptTree(item, x, columnWidth, true);
-        if (item.promptTree) {
-          y += 6;
-        }
-        y += compactGapAfterBlock;
-      });
     }
 
     if (mode === "both") {
