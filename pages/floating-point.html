@@ -111,8 +111,15 @@
       margin-bottom: 14px;
       line-height: 1.45;
     }
+    .denary-modal-input-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      margin-bottom: 12px;
+    }
     .denary-modal-input {
       width: 100%;
+      flex: 1 1 auto;
       font-size: 28px;
       font-family: 'Consolas', monospace;
       border: 1px solid var(--border);
@@ -120,11 +127,37 @@
       background: #000;
       color: #fff;
       padding: 10px 12px;
-      margin-bottom: 12px;
     }
     .denary-modal-input:focus {
       outline: none;
       border-color: var(--ml);
+    }
+    .denary-sign-btn {
+      flex: 0 0 auto;
+      min-width: 56px;
+      padding: 0 12px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: var(--r-sm);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      font-family: 'Consolas', monospace;
+      cursor: pointer;
+      transition: background .12s ease, border-color .12s ease;
+    }
+    .denary-sign-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.85);
+    }
+    .denary-sign-btn:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 2px;
+    }
+    .denary-sign-btn:disabled,
+    .denary-modal-input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     .denary-modal-feedback {
       min-height: 62px;
@@ -361,7 +394,10 @@
   <div class="modal">
     <div class="modal-feedback">
       <div id="denary-modal-title" class="denary-modal-note">Enter a denary number</div>
-      <input class="denary-modal-input" id="denary-modal-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="e.g. -0.75" />
+      <div class="denary-modal-input-row">
+        <input class="denary-modal-input" id="denary-modal-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="e.g. -0.75" />
+        <button class="denary-sign-btn" id="denary-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
+      </div>
       <div class="denary-modal-feedback" id="denary-modal-feedback"></div>
       <div class="denary-modal-actions">
         <button class="btn btn-sm" id="denary-cancel" type="button">Cancel</button>
@@ -725,15 +761,30 @@
 
   const denaryModal = document.getElementById('denary-modal');
   const denaryModalInput = document.getElementById('denary-modal-input');
+  const denarySignBtn = document.getElementById('denary-sign-btn');
   const denaryModalFeedback = document.getElementById('denary-modal-feedback');
   const denaryConfirmBtn = document.getElementById('denary-confirm');
   const denarySubmitBtn = document.getElementById('denary-submit');
   let denaryPending = null;
 
+  function toggleDenarySign() {
+    if (denaryModalInput.disabled) return;
+    const value = denaryModalInput.value.trim();
+    if (!value) {
+      denaryModalInput.value = '-';
+    } else if (value.startsWith('-')) {
+      denaryModalInput.value = value.slice(1);
+    } else {
+      denaryModalInput.value = '-' + value;
+    }
+    denaryModalInput.focus();
+  }
+
   function openDenaryModal() {
     denaryPending = null;
     denaryModalInput.value = '';
     denaryModalInput.disabled = false;
+    denarySignBtn.disabled = false;
     denaryModalFeedback.innerHTML = '';
     denaryConfirmBtn.hidden = true;
     denarySubmitBtn.hidden = false;
@@ -762,6 +813,7 @@
     if (parsed.empty || parsed.invalid) {
       denaryPending = null;
       denaryModalInput.disabled = false;
+      denarySignBtn.disabled = false;
       denaryConfirmBtn.hidden = true;
       denarySubmitBtn.hidden = false;
       denaryModalFeedback.innerHTML = '<span class="err">Please enter a valid denary number.</span>';
@@ -780,6 +832,7 @@
 
     denaryPending = enc;
     denaryModalInput.disabled = true;
+  denarySignBtn.disabled = true;
     denaryConfirmBtn.hidden = false;
     denarySubmitBtn.hidden = true;
     denaryModalFeedback.innerHTML =
@@ -794,6 +847,7 @@
   document.getElementById('denary-open-btn').addEventListener('click', openDenaryModal);
   document.getElementById('denary-cancel').addEventListener('click', closeDenaryModal);
   document.getElementById('denary-submit').addEventListener('click', handleDenarySubmit);
+  denarySignBtn.addEventListener('click', toggleDenarySign);
   document.getElementById('denary-confirm').addEventListener('click', () => {
     if (!denaryPending) return;
     applyEncodedValue(denaryPending);
