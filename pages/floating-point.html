@@ -50,6 +50,115 @@
       font-size: 15px;
       line-height: 1.6;
     }
+    .status-area {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .denary-action-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .denary-open-btn {
+      border: 1px solid rgba(255, 255, 255, 0.68);
+      background: rgba(0, 0, 0, 0.34);
+      color: #ffffff;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      text-transform: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.28);
+      transition: background .12s ease, border-color .12s ease, transform .08s ease;
+    }
+    .denary-open-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.95);
+      transform: translateY(-1px);
+    }
+    .denary-open-btn:active { transform: translateY(0); }
+    .denary-open-btn:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 2px;
+    }
+    #denary-modal {
+      border: none;
+      padding: 0;
+      background: transparent;
+      max-width: 100%;
+    }
+    #denary-modal[open] {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      padding: 24px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #denary-modal::backdrop { background: rgba(0,0,0,.72); }
+    .denary-modal-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.45;
+    }
+    .denary-modal-input {
+      width: 100%;
+      font-size: 28px;
+      font-family: 'Consolas', monospace;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: #000;
+      color: #fff;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    .denary-modal-input:focus {
+      outline: none;
+      border-color: var(--ml);
+    }
+    .denary-modal-feedback {
+      min-height: 62px;
+      font-size: 14px;
+      line-height: 1.6;
+      font-family: 'Consolas', monospace;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+    .denary-stats {
+      display: grid;
+      gap: 2px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+    .denary-stat-row {
+      display: grid;
+      grid-template-columns: 16ch 1ch auto;
+      column-gap: 8px;
+      align-items: baseline;
+      width: max-content;
+    }
+    .denary-stat-lbl { text-align: right; white-space: nowrap; }
+    .denary-stat-colon { text-align: center; }
+    .denary-stat-val { text-align: left; white-space: nowrap; }
+    .denary-modal-feedback .ok { color: #72ffa3; }
+    .denary-modal-feedback .warn { color: #ffd98f; }
+    .denary-modal-feedback .err { color: #ff8b8b; }
+    .denary-modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
   </style>
 </head>
 <body>
@@ -121,12 +230,17 @@
       <div class="labelled-grid-row">
         <div class="result-badge-row">
           <span class="badge badge-r row-badge">Denary value</span>
-          <div id="norm-area" class="norm-area"></div>
+          <div class="status-area">
+            <div id="norm-area" class="norm-area"></div>
+          </div>
         </div>
         <div class="row-main">
           <div class="res-big" id="res-big">0</div>
           <div class="res-eq-row">
             <div class="res-eq" id="res-eq"></div>
+          </div>
+          <div class="denary-action-row">
+            <button class="denary-open-btn" id="denary-open-btn" type="button" title="Enter a denary value and convert it to the closest representable floating-point value for the current mantissa and exponent sizes." aria-label="Enter denary value and convert to floating point">Enter denary</button>
           </div>
         </div>
       </div>
@@ -243,6 +357,21 @@
   </div>
 </dialog>
 
+<dialog id="denary-modal" aria-labelledby="denary-modal-title">
+  <div class="modal">
+    <div class="modal-feedback">
+      <div id="denary-modal-title" class="denary-modal-note">Enter a denary number</div>
+      <input class="denary-modal-input" id="denary-modal-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="e.g. -0.75" />
+      <div class="denary-modal-feedback" id="denary-modal-feedback"></div>
+      <div class="denary-modal-actions">
+        <button class="btn btn-sm" id="denary-cancel" type="button">Cancel</button>
+        <button class="btn btn-sm" id="denary-confirm" type="button" hidden>Use Closest</button>
+        <button class="btn btn-submit" id="denary-submit" type="button">Submit</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
 <script>
   /* ── State ─────────────────────────────────────────────────────── */
   const S = {
@@ -320,6 +449,167 @@
       if (bits[i]) parts.push(String(2 ** (n - 1 - i)));
     }
     return parts.length ? parts.join(' + ') : '(all bits are 0)';
+  }
+
+  function signedIntToBits(v, n) {
+    const max = 2 ** n;
+    const u = v < 0 ? max + v : v;
+    return u.toString(2).padStart(n, '0').split('').map(ch => Number(ch));
+  }
+
+  function parseDenaryInput(raw) {
+    const text = raw.trim().replace(/,/g, '').replace(/\u2212/g, '-');
+    if (!text) return { empty: true };
+    const n = Number(text);
+    if (Number.isNaN(n)) return { invalid: true };
+    return { value: n };
+  }
+
+  function isMantissaNormalised(bits) {
+    if (bits.every(b => b === 0)) return false;
+    return bits.length < 2 || bits[0] !== bits[1];
+  }
+
+  function formatPercent(n) {
+    if (!isFinite(n)) return 'N/A';
+    return fmtNum(n) + ' %';
+  }
+
+  function isNumericallyExact(target, represented) {
+    if (represented === 0) return target === 0;
+    const tol = Number.EPSILON * 16 * Math.max(1, Math.abs(represented));
+    return Math.abs(target - represented) <= tol;
+  }
+
+  function encodeDenaryToFloat(x, mBits, eBits) {
+    const mScale = 2 ** (mBits - 1);
+    const minMInt = -(2 ** (mBits - 1));
+    const maxMInt = 2 ** (mBits - 1) - 1;
+    const minE = -(2 ** (eBits - 1));
+    const maxE = 2 ** (eBits - 1) - 1;
+    const maxRepresentable = (maxMInt / mScale) * (2 ** maxE);
+    const minRepresentable = -1 * (2 ** maxE);
+    const smallestPositive = 2 ** minE;
+    const smallestNegative = -(2 ** minE);
+
+    if (x === 0) {
+      return {
+        mBits: Array(mBits).fill(0),
+        eBits: Array(eBits).fill(0),
+        represented: 0,
+        status: 'exact',
+      };
+    }
+
+    if (!isFinite(x)) {
+      const maxMant = x < 0 ? minMInt : maxMInt;
+      return {
+        mBits: signedIntToBits(maxMant, mBits),
+        eBits: signedIntToBits(maxE, eBits),
+        represented: (maxMant / mScale) * (2 ** maxE),
+        status: 'overflow',
+      };
+    }
+
+    if (x > maxRepresentable) {
+      return {
+        mBits: signedIntToBits(maxMInt, mBits),
+        eBits: signedIntToBits(maxE, eBits),
+        represented: maxRepresentable,
+        status: 'overflow',
+      };
+    }
+
+    if (x < minRepresentable) {
+      return {
+        mBits: signedIntToBits(minMInt, mBits),
+        eBits: signedIntToBits(maxE, eBits),
+        represented: minRepresentable,
+        status: 'overflow',
+      };
+    }
+
+    if (x > 0 && Math.abs(x) < smallestPositive / 2) {
+      return {
+        mBits: Array(mBits).fill(0),
+        eBits: Array(eBits).fill(0),
+        represented: 0,
+        status: 'underflow',
+      };
+    }
+
+    if (x < 0 && Math.abs(x) < Math.abs(smallestNegative) / 2) {
+      return {
+        mBits: Array(mBits).fill(0),
+        eBits: Array(eBits).fill(0),
+        represented: 0,
+        status: 'underflow',
+      };
+    }
+
+    let best = null;
+    for (let E = minE; E <= maxE; E++) {
+      const scale = 2 ** E;
+      if (!isFinite(scale) || scale === 0) continue;
+
+      const scaled = (x / scale) * mScale;
+      if (!isFinite(scaled)) continue;
+
+      const rawCandidates = [Math.floor(scaled), Math.ceil(scaled), Math.round(scaled)];
+      const candidates = [...new Set(rawCandidates.map(v => Math.max(minMInt, Math.min(maxMInt, v))))];
+
+      for (const I of candidates) {
+        const represented = (I / mScale) * scale;
+        if (!isFinite(represented)) continue;
+
+        const err = Math.abs(represented - x);
+        const mArr = signedIntToBits(I, mBits);
+        const normalised = isMantissaNormalised(mArr);
+
+        if (!best || err < best.err || (err === best.err && normalised && !best.normalised)) {
+          best = { I, E, represented, err, normalised };
+          if (isNumericallyExact(x, represented) && normalised) break;
+        }
+      }
+
+      if (best && isNumericallyExact(x, best.represented) && best.normalised) break;
+    }
+
+    if (!best) {
+      return {
+        mBits: Array(mBits).fill(0),
+        eBits: Array(eBits).fill(0),
+        represented: 0,
+        status: 'underflow',
+      };
+    }
+
+    let status = 'inexact';
+    if (isNumericallyExact(x, best.represented)) {
+      status = 'exact';
+    } else if (best.represented === 0) {
+      status = 'underflow';
+    } else if ((x > 0 && best.I === maxMInt && best.E === maxE && best.represented < x) ||
+               (x < 0 && best.I === minMInt && best.E === maxE && best.represented > x)) {
+      status = 'overflow';
+    }
+
+    return {
+      mBits: signedIntToBits(best.I, mBits),
+      eBits: signedIntToBits(best.E, eBits),
+      represented: best.represented,
+      status,
+    };
+  }
+
+  function applyEncodedValue(enc) {
+    S.m = enc.mBits;
+    S.e = enc.eBits;
+    document.getElementById('m-count').textContent = S.m.length;
+    document.getElementById('e-count').textContent = S.e.length;
+    renderGrid('m');
+    renderGrid('e');
+    updateResult();
   }
 
   /* ── Rendering ─────────────────────────────────────────────────── */
@@ -407,6 +697,7 @@
       cls = 'norm norm-n'; txt = 'Not Normalised';
     }
     normEl.innerHTML = `<span class="${cls}">${txt}</span>`;
+
   }
 
   /* ── Bit-count controls ────────────────────────────────────────── */
@@ -416,6 +707,7 @@
     if (next === cur) return;
     if (next > cur) S[type].push(0);
     else            S[type].pop();
+
     document.getElementById(type === 'm' ? 'm-count' : 'e-count').textContent = S[type].length;
     renderGrid(type);
     updateResult();
@@ -430,6 +722,93 @@
   renderGrid('m');
   renderGrid('e');
   updateResult();
+
+  const denaryModal = document.getElementById('denary-modal');
+  const denaryModalInput = document.getElementById('denary-modal-input');
+  const denaryModalFeedback = document.getElementById('denary-modal-feedback');
+  const denaryConfirmBtn = document.getElementById('denary-confirm');
+  const denarySubmitBtn = document.getElementById('denary-submit');
+  let denaryPending = null;
+
+  function openDenaryModal() {
+    denaryPending = null;
+    denaryModalInput.value = '';
+    denaryModalInput.disabled = false;
+    denaryModalFeedback.innerHTML = '';
+    denaryConfirmBtn.hidden = true;
+    denarySubmitBtn.hidden = false;
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+    denaryModal.showModal();
+    setTimeout(() => denaryModalInput.focus(), 0);
+  }
+
+  function closeDenaryModal() {
+    denaryModal.close();
+    if (!document.querySelector('dialog[open]')) {
+      document.documentElement.classList.remove('modal-open');
+      document.body.classList.remove('modal-open');
+    }
+  }
+
+  function describeStatus(status) {
+    if (status === 'underflow') return 'Underflow: this value is too small for this format and will be stored as 0.';
+    if (status === 'overflow') return 'Overflow: this value is beyond range for this format and will be clipped to the closest extreme value.';
+    return 'This value cannot be represented exactly in this format.';
+  }
+
+  function handleDenarySubmit() {
+    const parsed = parseDenaryInput(denaryModalInput.value);
+    if (parsed.empty || parsed.invalid) {
+      denaryPending = null;
+      denaryModalInput.disabled = false;
+      denaryConfirmBtn.hidden = true;
+      denarySubmitBtn.hidden = false;
+      denaryModalFeedback.innerHTML = '<span class="err">Please enter a valid denary number.</span>';
+      return;
+    }
+
+    const enc = encodeDenaryToFloat(parsed.value, S.m.length, S.e.length);
+    const absErr = Math.abs(parsed.value - enc.represented);
+    const relErr = parsed.value === 0 ? (absErr === 0 ? 0 : Infinity) : (absErr / Math.abs(parsed.value)) * 100;
+
+    if (enc.status === 'exact' || isNumericallyExact(parsed.value, enc.represented)) {
+      applyEncodedValue(enc);
+      closeDenaryModal();
+      return;
+    }
+
+    denaryPending = enc;
+    denaryModalInput.disabled = true;
+    denaryConfirmBtn.hidden = false;
+    denarySubmitBtn.hidden = true;
+    denaryModalFeedback.innerHTML =
+      `<div class="warn">${describeStatus(enc.status)}</div>` +
+      `<div class="denary-stats">` +
+      `<div class="denary-stat-row"><span class="denary-stat-lbl">Closest possible</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${fmtNum(enc.represented)}</span></div>` +
+      `<div class="denary-stat-row"><span class="denary-stat-lbl">Absolute error</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${fmtNum(absErr)}</span></div>` +
+      `<div class="denary-stat-row"><span class="denary-stat-lbl">Relative error</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${formatPercent(relErr)}</span></div>` +
+      `</div>`;
+  }
+
+  document.getElementById('denary-open-btn').addEventListener('click', openDenaryModal);
+  document.getElementById('denary-cancel').addEventListener('click', closeDenaryModal);
+  document.getElementById('denary-submit').addEventListener('click', handleDenarySubmit);
+  document.getElementById('denary-confirm').addEventListener('click', () => {
+    if (!denaryPending) return;
+    applyEncodedValue(denaryPending);
+    closeDenaryModal();
+  });
+  denaryModalInput.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      handleDenarySubmit();
+    }
+    if (ev.key === 'Escape') {
+      ev.preventDefault();
+      closeDenaryModal();
+    }
+  });
 
   let _rfTimer;
   window.addEventListener('resize', () => {
