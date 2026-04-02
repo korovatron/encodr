@@ -1,5 +1,68 @@
 (function () {
   var MAX_INPUT_CHARS = 100;
+  var HUFFMAN_PHRASE_POOL = [
+    'stone tones onset',
+    'tones onset stone',
+    'alert later artel',
+    'later artel alert',
+    'spare spear pears',
+    'pears spare spear',
+    'crate cater trace',
+    'trace crate cater',
+    'stale steal tales',
+    'tales stale steal',
+    'angle glean angel',
+    'angel angle glean',
+    'react caret crate',
+    'caret crate react',
+    'rescue secure recuse',
+    'recuse rescue secure',
+    'player replay parley',
+    'parley player replay',
+    'finder friend redfin',
+    'friend finder redfin',
+    'cinema iceman anemic',
+    'anemic cinema iceman',
+    'dusty study',
+    'study dusty',
+    'binary brainy',
+    'brainy binary',
+    'code decode coding',
+    'coding code decode',
+    'vector covert',
+    'covert vector',
+    'socket stock',
+    'stock socket',
+    'parser sparse',
+    'sparse parser',
+    'little title',
+    'title little',
+    'more memory memo',
+    'memory more memo',
+    'array radar',
+    'radar array',
+    'class glass',
+    'glass class',
+    'mango among',
+    'among mango',
+    'planet panel',
+    'panel planet',
+    'stream master tamers',
+    'master tamers stream',
+    'night thing',
+    'thing night'
+  ];
+
+  var Quiz = {
+    mode: 'mixed',
+    correct: 0,
+    wrong: 0,
+    total: 0,
+    questionNo: 0,
+    current: null,
+    initialized: false,
+    locked: false
+  };
 
   function byId(id) {
     return document.getElementById(id);
@@ -28,6 +91,24 @@
       map.set(ch, (map.get(ch) || 0) + 1);
     }
     return map;
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    return arr;
   }
 
   function makeLeaf(symbol, freq) {
@@ -160,27 +241,29 @@
     return { leaves: Math.max(leaves, 1), maxDepth: maxDepth };
   }
 
-  function drawTree(root) {
-    var svg = byId('hf-tree');
+  function drawTree(svgId, root, emptyText) {
+    var svg = byId(svgId);
     if (!svg) return;
 
     if (!root) {
-      svg.setAttribute('viewBox', '0 0 640 320');
-      svg.innerHTML = '<text x="20" y="36" fill="#c0d0ff" font-size="16" font-family="Consolas, monospace">Enter text to generate a Huffman tree.</text>';
+      svg.setAttribute('viewBox', '0 0 640 220');
+      svg.innerHTML = '<text x="20" y="36" fill="#c0d0ff" font-size="16" font-family="Consolas, monospace">' + escapeHtml(emptyText || 'No tree.') + '</text>';
       return;
     }
 
     var layout = prepareTreeLayout(root);
     var width = Math.max(640, layout.leaves * 120);
-    var height = Math.max(320, (layout.maxDepth + 1) * 110 + 40);
+    var stepY = 86;
+    var topPad = 28;
+    var bottomPad = 22;
+    var height = Math.max(220, topPad + layout.maxDepth * stepY + 40 + bottomPad);
     var paddingX = 40;
     var stepX = layout.leaves > 1 ? (width - paddingX * 2) / (layout.leaves - 1) : 0;
-    var stepY = 100;
 
     function pos(node, depth) {
       return {
         x: paddingX + node.xIndex * stepX,
-        y: 30 + depth * stepY
+        y: topPad + depth * stepY
       };
     }
 
@@ -243,6 +326,26 @@
     if (el) el.textContent = String(value);
   }
 
+  function huffmanDataForText(text) {
+    var freqMap = countFrequencies(text);
+    var rows = sortedSymbols(freqMap);
+    var tree = buildTree(freqMap);
+    var codes = {};
+    buildCodes(tree, '', codes);
+    var asciiBits = text.length * 8;
+    var huffmanBits = bitsForHuffman(freqMap, codes);
+    return {
+      text: text,
+      freqMap: freqMap,
+      rows: rows,
+      tree: tree,
+      codes: codes,
+      asciiBits: asciiBits,
+      huffmanBits: huffmanBits,
+      savedBits: asciiBits - huffmanBits
+    };
+  }
+
   function updateKpis(charCount, asciiBits, huffmanBits) {
     var saved = asciiBits - huffmanBits;
     var ratio = asciiBits > 0 ? (saved / asciiBits) * 100 : 0;
@@ -263,29 +366,21 @@
       text = text.slice(0, MAX_INPUT_CHARS);
       input.value = text;
     }
-    var freqMap = countFrequencies(text);
-    var rows = sortedSymbols(freqMap);
-
     if (!text.length) {
       updateKpis(0, 0, 0);
       encodedEl.textContent = 'Encoded bits will appear here.';
       renderCodeTable([], {});
-      drawTree(null);
+      drawTree('hf-tree', null, 'Enter text to generate a Huffman tree.');
       return;
     }
 
-    var tree = buildTree(freqMap);
-    var codes = {};
-    buildCodes(tree, '', codes);
-
-    var encoded = encode(text, codes);
-    var asciiBits = text.length * 8;
-    var huffmanBits = bitsForHuffman(freqMap, codes);
+    var data = huffmanDataForText(text);
+    var encoded = encode(text, data.codes);
 
     encodedEl.textContent = encoded;
-    updateKpis(text.length, asciiBits, huffmanBits);
-    renderCodeTable(rows, codes);
-    drawTree(tree);
+    updateKpis(text.length, data.asciiBits, data.huffmanBits);
+    renderCodeTable(data.rows, data.codes);
+    drawTree('hf-tree', data.tree, 'Enter text to generate a Huffman tree.');
   }
 
   function setMode(mode) {
@@ -328,12 +423,296 @@
     });
   }
 
+  function updateQuizScore() {
+    setText('hf-q-correct', Quiz.correct);
+    setText('hf-q-wrong', Quiz.wrong);
+    setText('hf-q-total', Quiz.total);
+  }
+
+  function clearQuizFeedback() {
+    var fb = byId('hf-q-modal-feedback');
+    if (!fb) return;
+    fb.className = 'modal-feedback';
+    fb.innerHTML = '';
+  }
+
+  function setQuizFeedback(correct, html) {
+    var fb = byId('hf-q-modal-feedback');
+    if (!fb) return;
+    fb.className = 'modal-feedback ' + (correct ? 'modal-feedback-correct' : 'modal-feedback-wrong');
+    fb.innerHTML = html;
+  }
+
+  function openQuizModal() {
+    var dlg = byId('hf-q-modal');
+    if (!dlg) return;
+    if (!dlg.open) dlg.showModal();
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeQuizModal() {
+    var dlg = byId('hf-q-modal');
+    if (dlg && dlg.open) dlg.close();
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+  }
+
+  function chooseQuestionType() {
+    if (Quiz.mode === 'type1' || Quiz.mode === 'type2') return Quiz.mode;
+    return Math.random() < 0.5 ? 'type1' : 'type2';
+  }
+
+  function symbolPoolForType1(codes) {
+    var symbols = Object.keys(codes);
+    var nonSpace = symbols.filter(function (s) { return s !== ' '; });
+    var count = randInt(3, 4);
+    var pool = nonSpace.length >= count ? nonSpace : symbols;
+    count = Math.min(count, pool.length);
+    return shuffle(pool.slice()).slice(0, count);
+  }
+
+  function formatSymbolList(symbols) {
+    var names = symbols.map(function (sym) {
+      return '<span class="hf-inline-symbol">' + escapeHtml(printableChar(sym)) + '</span>';
+    });
+
+    if (names.length <= 1) return names.join('');
+    if (names.length === 2) return names[0] + ' and ' + names[1];
+    return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+  }
+
+  function renderType1Inputs(symbols) {
+    var host = byId('hf-code-inputs');
+    if (!host) return;
+    host.innerHTML = symbols.map(function (sym, idx) {
+      var labelText = printableChar(sym);
+      return '<div class="hf-answer-item">' +
+        '<label for="hf-code-' + idx + '">' + escapeHtml(labelText) + ' code</label>' +
+        '<input id="hf-code-' + idx + '" data-hf-symbol="' + escapeHtml(sym) + '" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="e.g. 010" />' +
+        '</div>';
+    }).join('');
+  }
+
+  function setQuizModeButtons() {
+    document.querySelectorAll('[data-hf-qt]').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-hf-qt') === Quiz.mode);
+    });
+  }
+
+  function setQuestionTypeView(type) {
+    var type1 = byId('hf-type1-area');
+    var type2 = byId('hf-type2-area');
+    if (type1) type1.hidden = type !== 'type1';
+    if (type2) type2.hidden = type !== 'type2';
+    setText('hf-q-type-badge', type === 'type1' ? 'Read Codes' : 'Bit Counts');
+  }
+
+  function setQuizLocked(locked) {
+    Quiz.locked = locked;
+    var submitBtn = byId('hf-q-submit');
+    if (submitBtn) submitBtn.disabled = locked;
+
+    document.querySelectorAll('#hf-answer-card input').forEach(function (input) {
+      input.disabled = locked;
+    });
+  }
+
+  function generateQuestion() {
+    var phrase = pick(HUFFMAN_PHRASE_POOL);
+    var type = chooseQuestionType();
+    var data = huffmanDataForText(phrase);
+
+    Quiz.questionNo += 1;
+    Quiz.current = {
+      type: type,
+      phrase: phrase,
+      data: data
+    };
+
+    setText('hf-q-num', 'Question ' + Quiz.questionNo);
+    drawTree('hf-quiz-tree', data.tree, 'Question tree will appear here.');
+    clearQuizFeedback();
+    closeQuizModal();
+    setQuizLocked(false);
+    setQuestionTypeView(type);
+    clearAnswerInputErrors();
+
+    if (type === 'type1') {
+      var symbols = symbolPoolForType1(data.codes);
+      Quiz.current.symbols = symbols;
+      renderType1Inputs(symbols);
+      byId('hf-q-text').innerHTML = 'Phrase: <span class="hf-inline-symbol">' + escapeHtml(phrase) + '</span><br>Using the Huffman tree, enter the codes for ' + formatSymbolList(symbols) + '.';
+      setText('hf-q-format-hint', '');
+      var firstType1 = byId('hf-code-0');
+      if (firstType1) firstType1.focus();
+      return;
+    }
+
+    byId('hf-q-text').innerHTML = 'Phrase: <span class="hf-inline-symbol">' + escapeHtml(phrase) + '</span><br>Use the huffman tree below to calculate the total number of ASCII bits, Huffman encoded bits, and bits saved.';
+    setText('hf-q-format-hint', '');
+    var asciiInput = byId('hf-in-ascii');
+    var huffmanInput = byId('hf-in-huffman');
+    var savedInput = byId('hf-in-saved');
+    if (asciiInput) asciiInput.value = '';
+    if (huffmanInput) huffmanInput.value = '';
+    if (savedInput) savedInput.value = '';
+    if (asciiInput) asciiInput.focus();
+  }
+
+  function readType1Answers() {
+    var result = {};
+    document.querySelectorAll('#hf-code-inputs input').forEach(function (input) {
+      var sym = input.getAttribute('data-hf-symbol');
+      result[sym] = (input.value || '').replace(/\s+/g, '');
+    });
+    return result;
+  }
+
+  function parseWholeNumber(raw) {
+    var s = String(raw || '').trim();
+    if (!/^[-]?\d+$/.test(s)) return null;
+    return Number(s);
+  }
+
+  function clearAnswerInputErrors() {
+    document.querySelectorAll('#hf-answer-card input').forEach(function (input) {
+      input.style.borderColor = 'rgba(255,255,255,.20)';
+    });
+  }
+
+  function markInvalidInput(input) {
+    if (!input) return;
+    input.style.borderColor = '#ff5555';
+    input.focus();
+  }
+
+  function checkCurrentAnswer() {
+    if (!Quiz.current || Quiz.locked) return;
+
+    clearAnswerInputErrors();
+
+    var correct = false;
+    var feedback = '';
+    var data = Quiz.current.data;
+
+    if (Quiz.current.type === 'type1') {
+      var answers = readType1Answers();
+      var details = [];
+      var allOk = true;
+
+      for (var i = 0; i < Quiz.current.symbols.length; i++) {
+        var requiredInput = byId('hf-code-' + i);
+        var requiredValue = requiredInput ? String(requiredInput.value || '').replace(/\s+/g, '') : '';
+        if (!requiredValue.length) {
+          markInvalidInput(requiredInput);
+          return;
+        }
+      }
+
+      Quiz.current.symbols.forEach(function (sym) {
+        var expected = data.codes[sym] || '';
+        var got = answers[sym] || '';
+        var ok = got === expected;
+        if (!ok) allOk = false;
+        details.push(escapeHtml(printableChar(sym)) + ': your answer <strong>' + escapeHtml(got || '(blank)') + '</strong>, correct <strong>' + escapeHtml(expected) + '</strong>');
+      });
+
+      correct = allOk;
+      feedback = (correct ? 'Correct. ' : '<span class="fb-wrong">Not quite.</span> ') + details.join('<br>');
+    } else {
+      var asciiEl = byId('hf-in-ascii');
+      var huffmanEl = byId('hf-in-huffman');
+      var savedEl = byId('hf-in-saved');
+
+      var inAscii = parseWholeNumber(asciiEl ? asciiEl.value : '');
+      var inHuffman = parseWholeNumber(huffmanEl ? huffmanEl.value : '');
+      var inSaved = parseWholeNumber(savedEl ? savedEl.value : '');
+
+      if (inAscii === null) {
+        markInvalidInput(asciiEl);
+        return;
+      }
+      if (inHuffman === null) {
+        markInvalidInput(huffmanEl);
+        return;
+      }
+      if (inSaved === null) {
+        markInvalidInput(savedEl);
+        return;
+      }
+
+      var asciiOk = inAscii === data.asciiBits;
+      var huffmanOk = inHuffman === data.huffmanBits;
+      var savedOk = inSaved === data.savedBits;
+      correct = asciiOk && huffmanOk && savedOk;
+
+      feedback = (correct ? 'Correct.' : '<span class="fb-wrong">Not quite.</span>') +
+        '<br>ASCII bits: <strong>' + data.asciiBits + '</strong>' +
+        '<br>Huffman bits: <strong>' + data.huffmanBits + '</strong>' +
+        '<br>Bits saved: <strong>' + data.savedBits + '</strong>';
+    }
+
+    Quiz.total += 1;
+    if (correct) Quiz.correct += 1;
+    else Quiz.wrong += 1;
+    updateQuizScore();
+    setQuizFeedback(correct, feedback);
+    setQuizLocked(true);
+    openQuizModal();
+  }
+
+  function initQuiz() {
+    if (Quiz.initialized) return;
+
+    document.querySelectorAll('[data-hf-qt]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        Quiz.mode = btn.getAttribute('data-hf-qt') || 'mixed';
+        setQuizModeButtons();
+        generateQuestion();
+      });
+    });
+
+    var submitBtn = byId('hf-q-submit');
+    var nextBtn = byId('hf-q-next');
+    var resetBtn = byId('hf-q-reset-score');
+
+    if (submitBtn) submitBtn.addEventListener('click', checkCurrentAnswer);
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () {
+        closeQuizModal();
+        generateQuestion();
+      });
+    }
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        Quiz.correct = 0;
+        Quiz.wrong = 0;
+        Quiz.total = 0;
+        updateQuizScore();
+        closeQuizModal();
+        generateQuestion();
+      });
+    }
+
+    updateQuizScore();
+    setQuizModeButtons();
+    generateQuestion();
+    Quiz.initialized = true;
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var input = byId('hf-input');
     if (!input) return;
 
-    byId('tab-explore').addEventListener('click', function () { setMode('explore'); });
-    byId('tab-quiz').addEventListener('click', function () { setMode('quiz'); });
+    byId('tab-explore').addEventListener('click', function () {
+      closeQuizModal();
+      setMode('explore');
+    });
+    byId('tab-quiz').addEventListener('click', function () {
+      setMode('quiz');
+      initQuiz();
+    });
 
     input.value = 'banana bandana';
     input.addEventListener('input', renderAll);

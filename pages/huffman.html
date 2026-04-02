@@ -164,13 +164,13 @@
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
       padding: 10px;
       overflow: auto;
-      min-height: 320px;
+      min-height: 220px;
     }
 
     .hf-tree {
       display: block;
       width: 100%;
-      min-height: 320px;
+      min-height: 220px;
       height: auto;
     }
 
@@ -178,6 +178,124 @@
       font-size: 13px;
       color: var(--muted);
       line-height: 1.6;
+    }
+
+    .hf-quiz-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .hf-quiz-layout .card {
+      min-width: 0;
+    }
+
+    .hf-quiz-card-tree {
+      grid-column: 1 / span 2;
+      grid-row: 1;
+    }
+
+    .hf-quiz-card-answer {
+      grid-column: 1 / span 2;
+      grid-row: 2;
+    }
+
+    .hf-quiz-tree-wrap {
+      background: linear-gradient(135deg, rgba(42, 33, 98, .98), rgba(16, 11, 36, .98));
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+      padding: 10px;
+      overflow: auto;
+      min-height: 220px;
+    }
+
+    .hf-quiz-tree {
+      display: block;
+      width: 100%;
+      min-height: 220px;
+      height: auto;
+    }
+
+    .hf-answer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .hf-answer-item {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .hf-answer-item label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .hf-answer-item input {
+      width: 100%;
+      background: #000;
+      border: 2px solid rgba(255,255,255,.20);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 700;
+      font-family: 'Consolas', monospace;
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    .hf-answer-item input:focus {
+      border-color: var(--ml);
+    }
+
+    .hf-answer-note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .hf-inline-symbol {
+      display: inline-block;
+      background: #000;
+      color: var(--ml);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-weight: 700;
+      letter-spacing: .3px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.35);
+    }
+
+    #hf-q-modal {
+      border: none;
+      padding: 0;
+      background: transparent;
+      max-width: 100%;
+    }
+
+    #hf-q-modal[open] {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      padding: 24px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #hf-q-modal::backdrop {
+      background: rgba(0,0,0,.72);
     }
 
     @media (min-width: 981px) {
@@ -214,6 +332,22 @@
       .hf-kpis {
         grid-template-columns: minmax(0, 1fr);
       }
+
+      .hf-quiz-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .hf-answer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hf-quiz-card-tree,
+      .hf-quiz-card-answer {
+        grid-column: 1;
+      }
+
+      .hf-quiz-card-tree { grid-row: 1; }
+      .hf-quiz-card-answer { grid-row: 2; }
     }
   </style>
 </head>
@@ -296,13 +430,80 @@
   </div>
 
   <div id="quiz-section" hidden>
-    <section class="card">
-      <div class="card-head"><span class="badge badge-r">Test</span></div>
-      <p class="intro" style="margin-bottom:0;">Test mode will be added next. This tab is in place so the page follows the same Explore/Test structure as other Encodr topics.</p>
-    </section>
+    <div class="quiz-topbar">
+      <div class="qtype-group">
+        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
+        <button class="qtype-btn active" data-hf-qt="mixed">Mixed</button>
+        <button class="qtype-btn" data-hf-qt="type1">Read Codes</button>
+        <button class="qtype-btn" data-hf-qt="type2">Bit Counts</button>
+      </div>
+      <div class="quiz-score-area">
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="hf-q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="hf-q-wrong">0</span>&ensp;(<span id="hf-q-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="hf-q-reset-score" type="button">Reset score</button>
+      </div>
+    </div>
+
+    <div class="card quiz-q-card">
+      <div class="res-block">
+        <div class="quiz-q-header">
+          <span class="quiz-q-num" id="hf-q-num">Question 1</span>
+          <span class="badge badge-r" id="hf-q-type-badge">Read Codes</span>
+        </div>
+        <div class="quiz-q-text" id="hf-q-text"></div>
+        <p class="quiz-format-hint" id="hf-q-format-hint"></p>
+      </div>
+    </div>
+
+    <div class="hf-quiz-layout">
+      <section class="card hf-quiz-card-tree">
+        <div class="card-head"><span class="badge badge-r">Question Tree</span></div>
+        <div class="hf-quiz-tree-wrap">
+          <svg id="hf-quiz-tree" class="hf-quiz-tree" role="img" aria-label="Huffman tree for test question"></svg>
+        </div>
+      </section>
+
+      <section class="card hf-quiz-card-answer" id="hf-answer-card">
+        <div class="card-head"><span class="badge badge-r">Your Answers</span></div>
+
+        <div id="hf-type1-area">
+          <div id="hf-code-inputs" class="hf-answer-grid"></div>
+          <p class="hf-answer-note">Enter each letter's Huffman code using only 0 and 1.</p>
+        </div>
+
+        <div id="hf-type2-area" hidden>
+          <div class="hf-answer-grid">
+            <div class="hf-answer-item">
+              <label for="hf-in-ascii">ASCII Bits</label>
+              <input id="hf-in-ascii" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="e.g. 104" />
+            </div>
+            <div class="hf-answer-item">
+              <label for="hf-in-huffman">Huffman Bits</label>
+              <input id="hf-in-huffman" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="e.g. 59" />
+            </div>
+            <div class="hf-answer-item">
+              <label for="hf-in-saved">Bits Saved</label>
+              <input id="hf-in-saved" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="e.g. 45" />
+            </div>
+          </div>
+        </div>
+
+        <div class="quiz-actions">
+          <button class="btn btn-submit" id="hf-q-submit" type="button">Check Answer</button>
+        </div>
+      </section>
+    </div>
   </div>
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
+
+<dialog id="hf-q-modal" aria-labelledby="hf-q-modal-feedback">
+  <div class="modal">
+    <div class="modal-feedback" id="hf-q-modal-feedback"></div>
+    <div class="modal-footer">
+      <button class="btn btn-next" id="hf-q-next" type="button">Next Question &rarr;</button>
+    </div>
+  </div>
+</dialog>
 </body>
 </html>
