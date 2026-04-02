@@ -56,6 +56,46 @@
       margin-bottom: 12px;
     }
 
+    .intro-disclosure {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: rgba(255, 255, 255, 0.05);
+      overflow: clip;
+    }
+
+    .intro-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+
+    .intro-disclosure summary::after {
+      content: '+';
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ml);
+    }
+
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+
+    .intro-disclosure .intro {
+      margin: 0;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
     .vg-input,
     .vg-editor {
       background: #000;
@@ -259,7 +299,10 @@
   <div class="mode-tabs" role="tablist" aria-label="Vector graphics modes">
     <button class="mode-tab active" id="tab-explore" role="tab" aria-selected="true">Explore</button>
   </div>
-  <p class="intro">Type simple drawing commands and see an <strong>SVG</strong> (Scalable Vector Graphic) image rendered instantly.<br>A vector image is stored as a <strong>list of geometric objects</strong>, each with <strong>properties</strong> such as position, size, colour, stroke, and text.</p>
+  <details class="intro-disclosure">
+    <summary>More info</summary>
+    <p class="intro">Type simple drawing commands and see an <strong>SVG</strong> (Scalable Vector Graphic) image rendered instantly.<br>A vector image is stored as a <strong>list of geometric objects</strong>, each with <strong>properties</strong> such as position, size, colour, stroke, and text.</p>
+  </details>
 
   <div class="vg-layout">
     <div class="vg-stack">

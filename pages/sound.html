@@ -23,6 +23,41 @@
       gap: 18px;
     }
 
+    .intro-disclosure {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: rgba(255, 255, 255, 0.05);
+      overflow: clip;
+    }
+    .intro-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+    .intro-disclosure summary::after {
+      content: '+';
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ml);
+    }
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+    .intro-disclosure .intro {
+      margin: 0;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
     /* ── Canvas card ─────────────────────────── */
     .wave-card {
       background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
@@ -492,14 +527,17 @@
   <!-- ── Explore section ──────────────────────────────────────────── -->
   <div id="explore-section">
 
-    <p class="intro">
-      Sound is an <strong>analogue</strong> signal — a continuously varying wave of air pressure.
-      An <strong>ADC (Analogue to Digital Converter)</strong> converts this wave into digital data by taking <strong>regular samples</strong> of its amplitude.
-      Each sample is then encoded using a fixed number of bits, set by the <strong>sample resolution</strong>.
-      <br>
-      <br>
-      Adjust the sliders below to see how sampling rate and sample resolution affect the digital representation.
-    </p>
+    <details class="intro-disclosure">
+      <summary>More info</summary>
+      <p class="intro">
+        Sound is an <strong>analogue</strong> signal - a continuously varying wave of air pressure.
+        An <strong>ADC (Analogue to Digital Converter)</strong> converts this wave into digital data by taking <strong>regular samples</strong> of its amplitude.
+        Each sample is then encoded using a fixed number of bits, set by the <strong>sample resolution</strong>.
+        <br>
+        <br>
+        Adjust the sliders below to see how sampling rate and sample resolution affect the digital representation.
+      </p>
+    </details>
 
     <div class="sound-layout">
 

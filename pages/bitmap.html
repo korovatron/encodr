@@ -108,6 +108,41 @@
       color: var(--text);
       text-decoration-color: var(--ml);
     }
+
+    .intro-disclosure {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: rgba(255, 255, 255, 0.05);
+      overflow: clip;
+    }
+    .intro-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+    .intro-disclosure summary::after {
+      content: '+';
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ml);
+    }
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+    .intro-disclosure .intro {
+      margin: 0;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
     .colour-swatch {
       width: 32px;
       height: 32px;
@@ -269,13 +304,15 @@
   </div>
 
   <div id="explore-section">
-  <p class="intro">
-    <strong>Bitmap</strong> images are stored as a grid of <strong>pixels</strong>. Image size in pixels is width x height, while <strong>resolution</strong> is measured in dots (pixels) per inch (dpi).
-    <strong>Colour depth</strong> is the number of bits used to store each pixel.<br><br>
-    Try to recreate a gallery image by entering denary values (0-255) into each byte field. In 1-bit mode each byte controls 8 pixels, and in 2-bit mode each byte controls 4 double-width pixels.
-    Three bytes fill one row of 24 pixels. Or make your own image using <a class="worksheet-link" href="../worksheets/spritedesign.pdf" target="_blank" rel="noopener" download>this worksheet</a> to help you.<br>
-    
-  </p>
+  <details class="intro-disclosure">
+    <summary>More info</summary>
+    <p class="intro">
+      <strong>Bitmap</strong> images are stored as a grid of <strong>pixels</strong>. Image size in pixels is width x height, while <strong>resolution</strong> is measured in dots (pixels) per inch (dpi).
+      <strong>Colour depth</strong> is the number of bits used to store each pixel.<br><br>
+      Try to recreate a gallery image by entering denary values (0-255) into each byte field. In 1-bit mode each byte controls 8 pixels, and in 2-bit mode each byte controls 4 double-width pixels.
+      Three bytes fill one row of 24 pixels. Or make your own image using <a class="worksheet-link" href="../worksheets/spritedesign.pdf" target="_blank" rel="noopener" download>this worksheet</a> to help you.
+    </p>
+  </details>
 
   <div class="bitmap-layout">
 
