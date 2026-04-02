@@ -91,7 +91,6 @@
     {
       id: "huffman",
       label: "Huffman Coding",
-      enabledByDefault: false,
       subtypes: [
         { id: "mixed", label: "Random Huffman question type" }
       ]

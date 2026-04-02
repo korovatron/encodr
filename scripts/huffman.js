@@ -144,7 +144,12 @@
 
     body.innerHTML = rows.map(function (row) {
       var code = codes[row.symbol] || '';
-      return '<tr><td>' + escapeHtml(printableChar(row.symbol)) + '</td><td>' + row.freq + '</td><td>' + escapeHtml(code) + '</td><td>' + (row.freq * code.length) + '</td></tr>';
+      return '<tr>' +
+        '<td><span class="hf-inline-symbol">' + escapeHtml(printableChar(row.symbol)) + '</span></td>' +
+        '<td>' + row.freq + '</td>' +
+        '<td><span class="hf-inline-symbol">' + escapeHtml(code) + '</span></td>' +
+        '<td>' + (row.freq * code.length) + '</td>' +
+        '</tr>';
     }).join('');
   }
 
@@ -239,10 +244,20 @@
       var isLeaf = !node.left && !node.right;
       var symbolText = isLeaf ? printableChar(node.symbol) : '';
       var circleFill = isLeaf ? '#3b2f00' : '#1a1536';
+      var symbolTag = '';
+      if (symbolText) {
+        var tagWidth = Math.max(28, symbolText.length * 8 + 14);
+        var tagHeight = 22;
+        var tagX = p.x - tagWidth / 2;
+        var tagY = p.y + 24;
+        symbolTag =
+          '<rect x="' + tagX + '" y="' + tagY + '" width="' + tagWidth + '" height="' + tagHeight + '" rx="6" fill="#000000" stroke="rgba(255,255,255,.35)" />' +
+          '<text x="' + p.x + '" y="' + (tagY + 15) + '" text-anchor="middle" fill="#ffff00" font-size="14" font-weight="700" font-family="Consolas, Courier New, monospace">' + escapeHtml(symbolText) + '</text>';
+      }
       nodes.push('<g>\n' +
         '<circle cx="' + p.x + '" cy="' + p.y + '" r="' + nodeRadius + '" fill="' + circleFill + '" stroke="rgba(255,255,255,.8)" />\n' +
         '<text x="' + p.x + '" y="' + (p.y + 6) + '" text-anchor="middle" fill="#ffffff" font-size="17" font-weight="700" font-family="Consolas, monospace">' + node.freq + '</text>\n' +
-        (symbolText ? '<text x="' + p.x + '" y="' + (p.y + 38) + '" text-anchor="middle" fill="#fff36b" stroke="#0f0a24" stroke-width="3" paint-order="stroke fill" font-size="14" font-weight="700" font-family="Consolas, monospace">' + escapeHtml(symbolText) + '</text>' : '') +
+        symbolTag +
         '\n</g>');
     }
 
@@ -329,16 +344,25 @@
   function wireSamples() {
     var input = byId('hf-input');
     if (!input) return;
+    var sampleButtons = Array.from(document.querySelectorAll('[data-hf-sample]'));
 
     var samples = {
-      banana: 'banana bandana',
-      science: 'gcse computer science'
+      binary: 'Binary Brain Drain',
+      paranoid: 'Paranoid android'
     };
 
-    document.querySelectorAll('[data-hf-sample]').forEach(function (button) {
+    function setActiveSampleButton(activeKey) {
+      sampleButtons.forEach(function (btn) {
+        var key = btn.getAttribute('data-hf-sample');
+        btn.classList.toggle('btn-submit', key === activeKey);
+      });
+    }
+
+    sampleButtons.forEach(function (button) {
       button.addEventListener('click', function () {
         var key = button.getAttribute('data-hf-sample');
         if (key === 'clear') {
+          setActiveSampleButton(null);
           input.value = '';
           renderAll();
           input.focus();
@@ -346,6 +370,7 @@
         }
 
         if (Object.prototype.hasOwnProperty.call(samples, key)) {
+          setActiveSampleButton(key);
           input.value = samples[key];
           renderAll();
         }
@@ -404,7 +429,7 @@
     host.innerHTML = symbols.map(function (sym, idx) {
       var labelText = printableChar(sym);
       return '<div class="hf-answer-item">' +
-        '<label for="hf-code-' + idx + '">' + escapeHtml(labelText) + ' code</label>' +
+        '<label for="hf-code-' + idx + '" aria-label="Code for ' + escapeHtml(labelText) + '"><span class="hf-inline-symbol">' + escapeHtml(labelText) + '</span></label>' +
         '<input id="hf-code-' + idx + '" data-hf-symbol="' + escapeHtml(sym) + '" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="e.g. 010" />' +
         '</div>';
     }).join('');
@@ -541,7 +566,9 @@
       });
 
       correct = allOk;
-      feedback = (correct ? 'Correct. ' : '<span class="fb-wrong">Not quite.</span> ') + details.join('<br>');
+      feedback = correct
+        ? 'Correct.'
+        : '<span class="fb-wrong">Not quite.</span><br>' + details.join('<br>');
     } else {
       var asciiEl = byId('hf-in-ascii');
       var huffmanEl = byId('hf-in-huffman');
@@ -636,7 +663,7 @@
       initQuiz();
     });
 
-    input.value = 'banana bandana';
+    input.value = 'Binary Brain Drain';
     input.addEventListener('input', renderAll);
 
     wireSamples();
