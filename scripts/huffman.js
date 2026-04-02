@@ -1,57 +1,5 @@
 (function () {
   var MAX_INPUT_CHARS = 100;
-  var HUFFMAN_PHRASE_POOL = [
-    'stone tones onset',
-    'tones onset stone',
-    'alert later artel',
-    'later artel alert',
-    'spare spear pears',
-    'pears spare spear',
-    'crate cater trace',
-    'trace crate cater',
-    'stale steal tales',
-    'tales stale steal',
-    'angle glean angel',
-    'angel angle glean',
-    'react caret crate',
-    'caret crate react',
-    'rescue secure recuse',
-    'recuse rescue secure',
-    'player replay parley',
-    'parley player replay',
-    'finder friend redfin',
-    'friend finder redfin',
-    'cinema iceman anemic',
-    'anemic cinema iceman',
-    'dusty study',
-    'study dusty',
-    'binary brainy',
-    'brainy binary',
-    'code decode coding',
-    'coding code decode',
-    'vector covert',
-    'covert vector',
-    'socket stock',
-    'stock socket',
-    'parser sparse',
-    'sparse parser',
-    'little title',
-    'title little',
-    'more memory memo',
-    'memory more memo',
-    'array radar',
-    'radar array',
-    'class glass',
-    'glass class',
-    'mango among',
-    'among mango',
-    'planet panel',
-    'panel planet',
-    'stream master tamers',
-    'master tamers stream',
-    'night thing',
-    'thing night'
-  ];
 
   var Quiz = {
     mode: 'mixed',
@@ -91,24 +39,6 @@
       map.set(ch, (map.get(ch) || 0) + 1);
     }
     return map;
-  }
-
-  function pick(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
-  function randInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  function shuffle(arr) {
-    for (var i = arr.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = arr[i];
-      arr[i] = arr[j];
-      arr[j] = t;
-    }
-    return arr;
   }
 
   function makeLeaf(symbol, freq) {
@@ -458,20 +388,6 @@
     document.body.classList.remove('modal-open');
   }
 
-  function chooseQuestionType() {
-    if (Quiz.mode === 'type1' || Quiz.mode === 'type2') return Quiz.mode;
-    return Math.random() < 0.5 ? 'type1' : 'type2';
-  }
-
-  function symbolPoolForType1(codes) {
-    var symbols = Object.keys(codes);
-    var nonSpace = symbols.filter(function (s) { return s !== ' '; });
-    var count = randInt(3, 4);
-    var pool = nonSpace.length >= count ? nonSpace : symbols;
-    count = Math.min(count, pool.length);
-    return shuffle(pool.slice()).slice(0, count);
-  }
-
   function formatSymbolList(symbols) {
     var names = symbols.map(function (sym) {
       return '<span class="hf-inline-symbol">' + escapeHtml(printableChar(sym)) + '</span>';
@@ -519,15 +435,23 @@
   }
 
   function generateQuestion() {
-    var phrase = pick(HUFFMAN_PHRASE_POOL);
-    var type = chooseQuestionType();
-    var data = huffmanDataForText(phrase);
+    var generators = window.EncodrQuizGenerators;
+    if (!generators || !generators.huffman || typeof generators.huffman.generate !== 'function') {
+      throw new Error('Huffman generator is unavailable. Ensure quiz-generators.js is loaded before huffman.js.');
+    }
+
+    var generated = generators.huffman.generate(Quiz.mode);
+    var phrase = generated.phrase;
+    var type = generated.currentType;
+    var data = generated.data;
+    var symbols = Array.isArray(generated.symbols) ? generated.symbols : [];
 
     Quiz.questionNo += 1;
     Quiz.current = {
       type: type,
       phrase: phrase,
-      data: data
+      data: data,
+      symbols: symbols
     };
 
     setText('hf-q-num', 'Question ' + Quiz.questionNo);
@@ -539,8 +463,6 @@
     clearAnswerInputErrors();
 
     if (type === 'type1') {
-      var symbols = symbolPoolForType1(data.codes);
-      Quiz.current.symbols = symbols;
       renderType1Inputs(symbols);
       byId('hf-q-text').innerHTML = 'Phrase: <span class="hf-inline-symbol">' + escapeHtml(phrase) + '</span><br>Using the Huffman tree, enter the codes for ' + formatSymbolList(symbols) + '.';
       setText('hf-q-format-hint', '');

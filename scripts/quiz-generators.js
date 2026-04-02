@@ -170,6 +170,188 @@
     return s + ' second' + (s === 1 ? '' : 's');
   }
 
+  const HUFFMAN_PHRASE_POOL = [
+    'stone tones onset',
+    'tones onset stone',
+    'alert later artel',
+    'later artel alert',
+    'spare spear pears',
+    'pears spare spear',
+    'crate cater trace',
+    'trace crate cater',
+    'stale steal tales',
+    'tales stale steal',
+    'angle glean angel',
+    'angel angle glean',
+    'react caret crate',
+    'caret crate react',
+    'rescue secure recuse',
+    'recuse rescue secure',
+    'player replay parley',
+    'parley player replay',
+    'finder friend redfin',
+    'friend finder redfin',
+    'cinema iceman anemic',
+    'anemic cinema iceman',
+    'dusty study',
+    'study dusty',
+    'binary brainy',
+    'brainy binary',
+    'code decode coding',
+    'coding code decode',
+    'vector covert',
+    'covert vector',
+    'socket stock',
+    'stock socket',
+    'parser sparse',
+    'sparse parser',
+    'little title',
+    'title little',
+    'more memory memo',
+    'memory more memo',
+    'array radar',
+    'radar array',
+    'class glass',
+    'glass class',
+    'mango among',
+    'among mango',
+    'planet panel',
+    'panel planet',
+    'stream master tamers',
+    'master tamers stream',
+    'night thing',
+    'thing night'
+  ];
+
+  function huffmanCountFrequencies(text) {
+    const map = new Map();
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      map.set(ch, (map.get(ch) || 0) + 1);
+    }
+    return map;
+  }
+
+  function huffmanMakeLeaf(symbol, freq) {
+    return {
+      symbol: symbol,
+      freq: freq,
+      left: null,
+      right: null,
+      minSymbol: symbol
+    };
+  }
+
+  function huffmanMakeNode(left, right) {
+    return {
+      symbol: null,
+      freq: left.freq + right.freq,
+      left: left,
+      right: right,
+      minSymbol: left.minSymbol < right.minSymbol ? left.minSymbol : right.minSymbol
+    };
+  }
+
+  function huffmanCompareNodes(a, b) {
+    if (a.freq !== b.freq) return a.freq - b.freq;
+    return a.minSymbol.localeCompare(b.minSymbol);
+  }
+
+  function huffmanBuildTree(freqMap) {
+    const queue = [];
+    freqMap.forEach(function (freq, symbol) {
+      queue.push(huffmanMakeLeaf(symbol, freq));
+    });
+
+    if (!queue.length) return null;
+    queue.sort(huffmanCompareNodes);
+
+    if (queue.length === 1) {
+      const only = queue[0];
+      const dummy = huffmanMakeLeaf('', 0);
+      return huffmanMakeNode(only, dummy);
+    }
+
+    while (queue.length > 1) {
+      queue.sort(huffmanCompareNodes);
+      const left = queue.shift();
+      const right = queue.shift();
+      queue.push(huffmanMakeNode(left, right));
+    }
+
+    return queue[0];
+  }
+
+  function huffmanBuildCodes(node, prefix, codes) {
+    if (!node) return;
+    if (!node.left && !node.right) {
+      if (node.symbol !== '') {
+        codes[node.symbol] = prefix || '0';
+      }
+      return;
+    }
+    huffmanBuildCodes(node.left, prefix + '0', codes);
+    huffmanBuildCodes(node.right, prefix + '1', codes);
+  }
+
+  function huffmanBitsForEncoded(freqMap, codes) {
+    let total = 0;
+    freqMap.forEach(function (freq, symbol) {
+      total += freq * (codes[symbol] ? codes[symbol].length : 0);
+    });
+    return total;
+  }
+
+  function huffmanSortedSymbols(freqMap) {
+    const rows = [];
+    freqMap.forEach(function (freq, symbol) {
+      rows.push({ symbol: symbol, freq: freq });
+    });
+    rows.sort(function (a, b) {
+      if (b.freq !== a.freq) return b.freq - a.freq;
+      return a.symbol.localeCompare(b.symbol);
+    });
+    return rows;
+  }
+
+  function huffmanDataForText(text) {
+    const freqMap = huffmanCountFrequencies(text);
+    const tree = huffmanBuildTree(freqMap);
+    const codes = {};
+    huffmanBuildCodes(tree, '', codes);
+    const asciiBits = text.length * 8;
+    const huffmanBits = huffmanBitsForEncoded(freqMap, codes);
+    return {
+      text: text,
+      freqMap: freqMap,
+      rows: huffmanSortedSymbols(freqMap),
+      tree: tree,
+      codes: codes,
+      asciiBits: asciiBits,
+      huffmanBits: huffmanBits,
+      savedBits: asciiBits - huffmanBits
+    };
+  }
+
+  function huffmanShuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    return arr;
+  }
+
+  function huffmanSymbolPoolForType1(codes) {
+    const symbols = Object.keys(codes);
+    const nonSpace = symbols.filter(function (s) { return s !== ' '; });
+    let count = randInt(3, 4);
+    const pool = nonSpace.length >= count ? nonSpace : symbols;
+    count = Math.min(count, pool.length);
+    return huffmanShuffle(pool.slice()).slice(0, count);
+  }
+
   window.EncodrQuizGenerators = {
     unsigned: {
       generate: function (questionType) {
@@ -930,6 +1112,27 @@
           : [genFileSizeBits, genFileSizeBytes, genFileSizeUnit, genSolveResolution, genHalvingEffect, genDuration];
         const pool = active.length ? active : fallback;
         return pick(pool)();
+      }
+    },
+
+    huffman: {
+      generate: function (questionType) {
+        const mode = (questionType === 'type1' || questionType === 'type2')
+          ? questionType
+          : 'mixed';
+        const currentType = mode === 'mixed' ? pick(['type1', 'type2']) : mode;
+        const phrase = pick(HUFFMAN_PHRASE_POOL);
+        const data = huffmanDataForText(phrase);
+        const symbols = currentType === 'type1'
+          ? huffmanSymbolPoolForType1(data.codes)
+          : [];
+
+        return {
+          currentType: currentType,
+          phrase: phrase,
+          data: data,
+          symbols: symbols
+        };
       }
     }
   };

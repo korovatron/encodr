@@ -87,6 +87,14 @@
           defaultValue: "mix"
         }
       ]
+    },
+    {
+      id: "huffman",
+      label: "Huffman Coding",
+      enabledByDefault: false,
+      subtypes: [
+        { id: "mixed", label: "Random Huffman question type" }
+      ]
     }
   ];
 
@@ -184,7 +192,7 @@
 
       return '<section class="ws-topic" data-topic="' + topic.id + '">' +
         '<label class="ws-topic-head">' +
-        '<input type="checkbox" class="ws-topic-enable" id="topic-' + topic.id + '" checked />' +
+        '<input type="checkbox" class="ws-topic-enable" id="topic-' + topic.id + '"' + (topic.enabledByDefault === false ? '' : ' checked') + ' />' +
         '<span>' + topic.label + '</span>' +
         '</label>' +
         (hasMultipleSubtypes
@@ -302,6 +310,23 @@
 
   function bitsInBinaryString(text) {
     return String(text || "").replace(/[^01]/g, "").length;
+  }
+
+  function huffmanPrintableSymbol(ch) {
+    if (ch === " ") return "[space]";
+    if (ch === "\n") return "[newline]";
+    if (ch === "\t") return "[tab]";
+    return ch;
+  }
+
+  function formatHuffmanSymbolList(symbols) {
+    var names = symbols.map(function (sym) {
+      return huffmanPrintableSymbol(sym);
+    });
+
+    if (names.length <= 1) return names.join("");
+    if (names.length === 2) return names[0] + " and " + names[1];
+    return names.slice(0, -1).join(", ") + ", and " + names[names.length - 1];
   }
 
   function binaryPointIndex(text) {
@@ -509,6 +534,44 @@
       };
     }
 
+    if (source.topicId === "huffman") {
+      var hq = generators.huffman.generate(source.subtypeId || "mixed");
+      if (hq.currentType === "type1") {
+        var symbols = Array.isArray(hq.symbols) ? hq.symbols : [];
+        var codePairs = symbols.map(function (sym) {
+          return huffmanPrintableSymbol(sym) + ": " + (hq.data.codes[sym] || "");
+        }).join(", ");
+        var hfSuffix1 = "is encoded into the Huffman tree below. Write down the codes for the letters";
+        return {
+          topic: source.topicLabel,
+          prompt: "The phrase '" + hq.phrase + "' " + hfSuffix1 + " " + formatHuffmanSymbolList(symbols) + ".",
+          promptPrefix: "The phrase",
+          promptInlineBoxText: hq.phrase,
+          promptSuffix: hfSuffix1,
+          promptInlineSymbols: symbols,
+          instruction: "Write each code in binary.",
+          answer: codePairs,
+          answerLayout: null,
+          promptBitBoxes: [],
+          promptTree: hq.data.tree || null
+        };
+      }
+
+      var hfSuffix2 = "is encoded into the Huffman tree below. Calculate the number of ASCII bits, the number of Huffman bits, and the number of bits saved.";
+      return {
+        topic: source.topicLabel,
+        prompt: "The phrase '" + hq.phrase + "' " + hfSuffix2,
+        promptPrefix: "The phrase",
+        promptInlineBoxText: hq.phrase,
+        promptSuffix: hfSuffix2,
+        instruction: "Write all three values as denary numbers.",
+        answer: "ASCII bits: " + hq.data.asciiBits + ", Huffman bits: " + hq.data.huffmanBits + ", Bits saved: " + hq.data.savedBits,
+        answerLayout: null,
+        promptBitBoxes: [],
+        promptTree: hq.data.tree || null
+      };
+    }
+
     var includeNyquist = source.options.includeNyquist !== false;
     var soundTypes = ["fileSizeBits", "fileSizeBytes", "fileSizeUnit", "solveResolution", "halvingEffect", "duration"];
     if (includeNyquist) soundTypes.push("nyquist");
@@ -525,7 +588,8 @@
       instruction: "Write your answer as a number in " + sq.unitLabel + ".",
       answer: formatNumber(sq.answerNum) + " " + sq.unitLabel,
       answerLayout: null,
-      promptBitBoxes: []
+      promptBitBoxes: [],
+      promptTree: null
     };
   }
 
@@ -533,14 +597,28 @@
     soundFileSizeLastKind = null;
     soundFileSizeStreak = 0;
 
-    // Distribute count evenly across selected topics
-    var numTopics = selections.length;
-    var base = Math.floor(count / numTopics);
-    var remainder = count % numTopics;
+    var huffmanSelection = selections.find(function (sel) { return sel.topicId === "huffman"; }) || null;
+    var otherSelections = selections.filter(function (sel) { return sel.topicId !== "huffman"; });
 
-    // Build source list: for each topic, pick randomly from its subtypes
+    // Distribute count evenly across selected topics
+    var nonHuffmanCount = huffmanSelection ? Math.max(0, count - 1) : count;
+    var numTopics = otherSelections.length;
+    var base = numTopics ? Math.floor(nonHuffmanCount / numTopics) : 0;
+    var remainder = numTopics ? (nonHuffmanCount % numTopics) : 0;
+
+    // Build source list: add exactly one Huffman question if selected,
+    // then distribute remaining questions across other selected topics.
     var sources = [];
-    selections.forEach(function (sel, i) {
+    if (huffmanSelection) {
+      sources.push({
+        topicId: huffmanSelection.topicId,
+        topicLabel: huffmanSelection.topicLabel,
+        subtypeId: "mixed",
+        options: huffmanSelection.options || {}
+      });
+    }
+
+    otherSelections.forEach(function (sel, i) {
       var n = base + (i < remainder ? 1 : 0);
       for (var j = 0; j < n; j++) {
         var subtypeId = sel.subtypeIds[Math.floor(Math.random() * sel.subtypeIds.length)];
@@ -567,10 +645,15 @@
         number: idx + 1,
         topic: q.topic,
         prompt: q.prompt,
+        promptPrefix: q.promptPrefix || "",
+        promptInlineBoxText: q.promptInlineBoxText || "",
+        promptSuffix: q.promptSuffix || "",
+        promptInlineSymbols: Array.isArray(q.promptInlineSymbols) ? q.promptInlineSymbols : [],
         instruction: q.instruction,
         answer: q.answer,
         answerLayout: q.answerLayout || null,
-        promptBitBoxes: Array.isArray(q.promptBitBoxes) ? q.promptBitBoxes : []
+        promptBitBoxes: Array.isArray(q.promptBitBoxes) ? q.promptBitBoxes : [],
+        promptTree: q.promptTree || null
       });
     });
     return items;
@@ -633,6 +716,131 @@
       var lines = wrappedLines(text, fontSize, isBold);
       ensureSpace(lines.length * lineH + 4);
       writeLines(lines, fontSize, isBold);
+    }
+
+    function hasPromptInlineBox(item) {
+      return !!(item && item.promptInlineBoxText && item.promptSuffix);
+    }
+
+    function promptTextHeight(item, fontSize, promptLineH, maxWidth) {
+      if (!hasPromptInlineBox(item)) {
+        return wrappedLines(item.prompt, fontSize, false, maxWidth).length * promptLineH;
+      }
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(fontSize);
+      var prefix = item.promptPrefix || "The phrase";
+      var suffix = item.promptSuffix || "";
+      var boxText = String(item.promptInlineBoxText || "");
+
+      var prefixW = doc.getTextWidth(prefix) + 8;
+      doc.setFont("helvetica", "bold");
+      var boxW = doc.getTextWidth(boxText) + 12;
+
+      var firstLineHeight = promptLineH;
+      var suffixLines;
+      if (prefixW + boxW + 10 <= maxWidth) {
+        doc.setFont("helvetica", "normal");
+        suffixLines = doc.splitTextToSize(suffix, maxWidth);
+      } else {
+        doc.setFont("helvetica", "normal");
+        suffixLines = doc.splitTextToSize(prefix + " " + suffix, maxWidth);
+        firstLineHeight = promptLineH;
+      }
+      return firstLineHeight + (suffixLines.length * promptLineH);
+    }
+
+    function renderPromptText(item, x, maxWidth, fontSize, promptLineH) {
+      if (!hasPromptInlineBox(item)) {
+        var lines = wrappedLines(item.prompt, fontSize, false, maxWidth);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(fontSize);
+        doc.setTextColor(0);
+        doc.text(lines, x, y);
+        y += lines.length * promptLineH;
+        return;
+      }
+
+      function renderInlineSymbolTokens() {
+        var symbols = Array.isArray(item.promptInlineSymbols) ? item.promptInlineSymbols : [];
+        if (!symbols.length) return;
+
+        var isCompactText = fontSize <= 9.5;
+        var xCur = x;
+        var yCur = y;
+
+        doc.setFontSize(fontSize);
+        symbols.forEach(function (sym, idx) {
+          var tokenText = huffmanPrintableSymbol(sym);
+          doc.setFont("helvetica", "bold");
+          var bw = doc.getTextWidth(tokenText) + 10;
+          if (xCur > x && xCur + bw > x + maxWidth) {
+            xCur = x;
+            yCur += promptLineH;
+          }
+
+          var by = yCur - fontSize + (isCompactText ? -1.6 : -0.5);
+          var bh = fontSize + 5;
+          doc.setFillColor(246, 246, 246);
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.8);
+          doc.roundedRect(xCur, by, bw, bh, 3, 3, "FD");
+          doc.setTextColor(0);
+          doc.text(tokenText, xCur + bw / 2, yCur + (isCompactText ? -1.2 : -0.6), { align: "center" });
+          xCur += bw;
+          if (idx < symbols.length - 1) {
+            xCur += 8;
+          }
+        });
+
+        y = yCur + promptLineH;
+      }
+
+      var prefix = item.promptPrefix || "The phrase";
+      var suffix = item.promptSuffix || "";
+      var boxText = String(item.promptInlineBoxText || "");
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(fontSize);
+      doc.setTextColor(0);
+
+      var prefixW = doc.getTextWidth(prefix) + 8;
+      doc.setFont("helvetica", "bold");
+      var boxW = doc.getTextWidth(boxText) + 12;
+      var inlineFits = (prefixW + boxW + 10 <= maxWidth);
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0);
+      doc.text(prefix, x, y);
+
+      if (inlineFits) {
+        var isCompactText = fontSize <= 9.5;
+        var bx = x + prefixW;
+        var by = y - fontSize + (isCompactText ? -1.6 : -0.5);
+        var bh = fontSize + 5;
+        doc.setFillColor(246, 246, 246);
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.8);
+        doc.roundedRect(bx, by, boxW, bh, 3, 3, "FD");
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0);
+        doc.text(boxText, bx + boxW / 2, y + (isCompactText ? -1.2 : -0.6), { align: "center" });
+        y += promptLineH;
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(0);
+        var suffixLines = doc.splitTextToSize(suffix, maxWidth);
+        doc.text(suffixLines, x, y);
+        y += suffixLines.length * promptLineH;
+        renderInlineSymbolTokens();
+        return;
+      }
+
+      y += promptLineH;
+      var fallbackLines = doc.splitTextToSize(prefix + " " + suffix, maxWidth);
+      doc.text(fallbackLines, x, y);
+      y += fallbackLines.length * promptLineH;
+      renderInlineSymbolTokens();
     }
 
     function writeCentred(text, fontSize, isBold) {
@@ -724,6 +932,136 @@
           }
         );
       });
+    }
+
+    function promptTreeLayout(root) {
+      var leaves = 0;
+      var maxDepth = 0;
+
+      function walk(node, depth) {
+        if (!node) return;
+        if (depth > maxDepth) maxDepth = depth;
+        if (!node.left && !node.right) {
+          node._xIndex = leaves;
+          leaves += 1;
+          return;
+        }
+        walk(node.left, depth + 1);
+        walk(node.right, depth + 1);
+        var leftX = node.left ? node.left._xIndex : 0;
+        var rightX = node.right ? node.right._xIndex : leftX;
+        node._xIndex = (leftX + rightX) / 2;
+      }
+
+      walk(root, 0);
+      return { leaves: Math.max(leaves, 1), maxDepth: maxDepth };
+    }
+
+    function promptTreeHeight(item, compactMode) {
+      if (!item.promptTree) return 0;
+      var layout = promptTreeLayout(item.promptTree);
+      var stepY = compactMode ? 38 : 52;
+      var topPad = compactMode ? 10 : 14;
+      var bottomPad = compactMode ? 14 : 18;
+      var leafPad = compactMode ? 12 : 16;
+      return topPad + (layout.maxDepth * stepY) + bottomPad + leafPad;
+    }
+
+    function drawPromptTree(item, x, maxWidth, compactMode) {
+      if (!item.promptTree) return;
+
+      var root = item.promptTree;
+      var layout = promptTreeLayout(root);
+      var nodeRadius = compactMode ? 10 : 13;
+      var stepY = compactMode ? 38 : 52;
+      var topPad = compactMode ? 10 : 14;
+      var bottomPad = compactMode ? 14 : 18;
+      var leafLabelGap = compactMode ? 16 : 20;
+      var width = Math.max(120, maxWidth);
+      var startX = x + nodeRadius;
+      var stepX = layout.leaves > 1 ? (width - nodeRadius * 2) / (layout.leaves - 1) : 0;
+
+      function pos(node, depth) {
+        return {
+          x: startX + node._xIndex * stepX,
+          y: y + topPad + depth * stepY
+        };
+      }
+
+      function edgePoint(from, to, radius) {
+        var dx = to.x - from.x;
+        var dy = to.y - from.y;
+        var len = Math.sqrt(dx * dx + dy * dy) || 1;
+        return {
+          x: from.x + (dx / len) * radius,
+          y: from.y + (dy / len) * radius
+        };
+      }
+
+      function drawNode(node, depth) {
+        if (!node) return;
+        var p = pos(node, depth);
+
+        if (node.left) {
+          var lp = pos(node.left, depth + 1);
+          var ls = edgePoint(p, lp, nodeRadius);
+          var le = edgePoint(lp, p, nodeRadius);
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.8);
+          doc.line(ls.x, ls.y, le.x, le.y);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(compactMode ? 7 : 8);
+          doc.setTextColor(0);
+          doc.text("0", (p.x + lp.x) / 2 - 5, (p.y + lp.y) / 2 - 4);
+          drawNode(node.left, depth + 1);
+        }
+
+        if (node.right) {
+          var rp = pos(node.right, depth + 1);
+          var rs = edgePoint(p, rp, nodeRadius);
+          var re = edgePoint(rp, p, nodeRadius);
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.8);
+          doc.line(rs.x, rs.y, re.x, re.y);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(compactMode ? 7 : 8);
+          doc.setTextColor(0);
+          doc.text("1", (p.x + rp.x) / 2 + 3, (p.y + rp.y) / 2 - 4);
+          drawNode(node.right, depth + 1);
+        }
+
+        doc.setDrawColor(0);
+        doc.setFillColor(255, 255, 255);
+        doc.setLineWidth(0.9);
+        doc.circle(p.x, p.y, nodeRadius, "FD");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(compactMode ? 7 : 9);
+        doc.setTextColor(0);
+        doc.text(String(node.freq), p.x, p.y + 2.5, { align: "center" });
+
+        if (!node.left && !node.right) {
+          var leafText = huffmanPrintableSymbol(node.symbol);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(compactMode ? 7 : 8);
+          var leafW = doc.getTextWidth(leafText) + 10;
+          var leafH = (compactMode ? 7 : 8) + 5;
+          var leafX = p.x - leafW / 2;
+          var leafY = p.y + leafLabelGap - (compactMode ? 7 : 8) + (compactMode ? 3.2 : 3.8);
+          doc.setFillColor(246, 246, 246);
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.8);
+          doc.roundedRect(leafX, leafY, leafW, leafH, 3, 3, "FD");
+          doc.setFont("helvetica", "normal");
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(compactMode ? 7 : 8);
+          doc.setTextColor(0);
+          doc.text(leafText, p.x, p.y + leafLabelGap + (compactMode ? 4.0 : 4.6), { align: "center" });
+        }
+      }
+
+      drawNode(root, 0);
+      y += topPad + (layout.maxDepth * stepY) + bottomPad + leafLabelGap;
     }
 
     function drawMantissaExponentBoxes(x, yStart, layout) {
@@ -822,14 +1160,16 @@
       if (!compactMode) {
         items.forEach(function (item) {
           var l1 = wrappedLines("Q" + item.number, 12, true);
-          var l2 = wrappedLines(item.prompt, 11, false);
+          var promptTextH = promptTextHeight(item, 11, lineH, pageW - margin * 2);
           var promptBoxH = promptBitBoxesHeight(item, pageW - margin * 2);
-          var blockHeight = (l1.length + l2.length) * lineH + promptBoxH + answerAreaHeight(item) + (2 * 4);
+          var treeH = promptTreeHeight(item, false);
+          var blockHeight = (l1.length * lineH) + promptTextH + promptBoxH + treeH + answerAreaHeight(item) + (2 * 4);
 
           ensureSpace(blockHeight);
           writeLines(l1, 12, true);
-          writeLines(l2, 11, false);
+          renderPromptText(item, margin, pageW - margin * 2, 11, lineH);
           renderPromptBitBoxes(item, margin, pageW - margin * 2);
+          drawPromptTree(item, margin, pageW - margin * 2, false);
           renderAnswerArea(item);
         });
         return;
@@ -865,10 +1205,12 @@
       items.forEach(function (item) {
         var x = column === 0 ? leftX : rightX;
         var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
-        var pLines = wrappedLines(item.prompt, compactPFont, false, columnWidth);
+        var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
         var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
+        var treeHCompact = promptTreeHeight(item, true);
         var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
-        var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pLines.length * compactPLineH + promptBoxHCompact + promptBoxTailGap + compactGapAfterBlock;
+        var treeTailGap = item.promptTree ? 6 : 0;
+        var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
 
         ensureCompactSpace(blockHeight);
         x = column === 0 ? leftX : rightX;
@@ -882,10 +1224,13 @@
         doc.setFont("helvetica", "normal");
         doc.setFontSize(compactPFont);
         doc.setTextColor(0);
-        doc.text(pLines, x, y);
-        y += pLines.length * compactPLineH;
+        renderPromptText(item, x, columnWidth, compactPFont, compactPLineH);
         renderPromptBitBoxes(item, x, columnWidth);
         if (item.promptBitBoxes && item.promptBitBoxes.length) {
+          y += 6;
+        }
+        drawPromptTree(item, x, columnWidth, true);
+        if (item.promptTree) {
           y += 6;
         }
         y += compactGapAfterBlock;
@@ -974,6 +1319,10 @@
       return;
     }
 
+    var includesHuffman = selections.some(function (sel) {
+      return sel.topicId === "huffman";
+    });
+
     var pool = buildSourcePool(selections);
     if (!pool.length) {
       setStatus("Select at least one subtype.", "error");
@@ -981,7 +1330,9 @@
     }
 
     btn.disabled = true;
-    setStatus("Generating worksheet questions...", "");
+    setStatus(includesHuffman
+      ? "Huffman selected: including exactly 1 random Huffman question."
+      : "Generating worksheet questions...", "");
 
     try {
       var items = buildWorksheetItems(count, selections);
