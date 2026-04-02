@@ -496,7 +496,7 @@
       return;
     }
 
-    byId('hf-q-text').innerHTML = 'Phrase: <span class="hf-inline-symbol">' + escapeHtml(phrase) + '</span><br>Use the huffman tree below to calculate the total number of ASCII bits, Huffman encoded bits, and bits saved.';
+    byId('hf-q-text').innerHTML = 'Phrase: <span class="hf-inline-symbol">' + escapeHtml(phrase) + '</span><br>Use the Huffman tree below to calculate the total number of ASCII bits, Huffman encoded bits, and bits saved.';
     setText('hf-q-format-hint', '');
     var asciiInput = byId('hf-in-ascii');
     var huffmanInput = byId('hf-in-huffman');
