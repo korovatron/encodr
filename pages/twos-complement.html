@@ -15,6 +15,42 @@
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
   <!-- End Cloudflare Web Analytics -->
+  <style>
+    .intro-disclosure {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: rgba(255, 255, 255, 0.05);
+      overflow: clip;
+    }
+    .intro-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+    .intro-disclosure summary::after {
+      content: '+';
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ml);
+    }
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+    .intro-disclosure .intro {
+      margin: 0;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+  </style>
 </head>
 <body>
 
@@ -33,7 +69,10 @@
   </div>
 
   <div id="explore-section">
-    <p class="intro">Toggle bits to build a two's complement value. The final bit is the negative weight bit.</p>
+    <details class="intro-disclosure">
+      <summary>More info</summary>
+      <p class="intro">Toggle bits to build a two's complement value. The final bit is the negative weight bit.</p>
+    </details>
 
     <div class="controls">
       <div class="chip chip-m">
