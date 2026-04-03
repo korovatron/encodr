@@ -348,8 +348,11 @@
     <div class="card" id="q-t1-area" hidden>
       <div class="res-block">
         <div class="q-answer-lbl" id="q-answer-lbl">Your answer (denary)</div>
-        <input class="q-denary-input" type="text" id="q-denary-input"
-               placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+        <div class="denary-modal-input-row">
+          <input class="q-denary-input" type="text" id="q-denary-input" inputmode="decimal"
+                 placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+          <button class="denary-sign-btn" id="q-denary-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
+        </div>
       </div>
     </div>
 
@@ -359,12 +362,12 @@
         <div class="err-grid">
           <div>
             <div class="q-err-lbl">Absolute error</div>
-            <input class="q-denary-input q-err-input" type="text" id="q-abs-err"
+            <input class="q-denary-input q-err-input" type="text" id="q-abs-err" inputmode="decimal"
                    placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
           </div>
           <div>
             <div class="q-err-lbl">Relative Error (%)</div>
-            <input class="q-denary-input q-err-input" type="text" id="q-rel-err"
+            <input class="q-denary-input q-err-input" type="text" id="q-rel-err" inputmode="decimal"
                    placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
           </div>
         </div>
@@ -396,7 +399,7 @@
     <div class="modal-feedback">
       <div id="denary-modal-title" class="denary-modal-note">Enter a denary number</div>
       <div class="denary-modal-input-row">
-        <input class="denary-modal-input" id="denary-modal-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="e.g. -0.75" />
+        <input class="denary-modal-input" id="denary-modal-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" />
         <button class="denary-sign-btn" id="denary-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
       </div>
       <div class="denary-modal-feedback" id="denary-modal-feedback"></div>
@@ -781,6 +784,20 @@
     denaryModalInput.focus();
   }
 
+  function toggleQuizDenarySign() {
+    const quizInput = document.getElementById('q-denary-input');
+    if (!quizInput || quizInput.disabled) return;
+    const value = quizInput.value.trim();
+    if (!value) {
+      quizInput.value = '-';
+    } else if (value.startsWith('-')) {
+      quizInput.value = value.slice(1);
+    } else {
+      quizInput.value = '-' + value;
+    }
+    quizInput.focus();
+  }
+
   function openDenaryModal() {
     denaryPending = null;
     denaryModalInput.value = document.getElementById('res-big').textContent.trim();
@@ -849,6 +866,7 @@
   document.getElementById('denary-cancel').addEventListener('click', closeDenaryModal);
   document.getElementById('denary-submit').addEventListener('click', handleDenarySubmit);
   denarySignBtn.addEventListener('click', toggleDenarySign);
+  document.getElementById('q-denary-sign-btn').addEventListener('click', toggleQuizDenarySign);
   document.getElementById('denary-confirm').addEventListener('click', () => {
     if (!denaryPending) return;
     applyEncodedValue(denaryPending);
@@ -964,6 +982,9 @@
       document.getElementById('q-answer-lbl').textContent = 'Your answer (denary)';
       const inp = document.getElementById('q-denary-input');
       inp.value = ''; inp.disabled = false;
+      inp.inputMode = 'decimal';
+      document.getElementById('q-denary-sign-btn').disabled = false;
+      document.getElementById('q-denary-sign-btn').hidden = false;
     } else if (t === '2') {
       badge.className = 'badge badge-e';
       badge.textContent = 'Denary \u2192 Binary';
@@ -1016,6 +1037,9 @@
       document.getElementById('q-answer-lbl').textContent = 'Your answer';
       const inp = document.getElementById('q-denary-input');
       inp.value = ''; inp.disabled = false;
+      inp.inputMode = 'decimal';
+      document.getElementById('q-denary-sign-btn').disabled = false;
+      document.getElementById('q-denary-sign-btn').hidden = false;
     }
 
     if (['1', '2'].includes(t)) {
@@ -1140,6 +1164,7 @@
           ` = <strong>${fmtNum(target)}</strong>`;
       }
       document.getElementById('q-denary-input').disabled = true;
+      document.getElementById('q-denary-sign-btn').disabled = true;
 
     } else if (!QS.isInexact) {
       // ── Type 2 exact: Denary → Binary ────────────────────────────

@@ -50,6 +50,30 @@
       font-size: 15px;
       line-height: 1.6;
     }
+
+    .q-input-with-sign {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .q-sign-btn {
+      min-width: 52px;
+      height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #161616;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .q-sign-btn:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
   </style>
 </head>
 <body>
@@ -154,8 +178,11 @@
     <div class="card" id="q-answer-card">
       <div class="res-block">
         <div class="q-answer-lbl" id="q-answer-lbl">Your Answer</div>
-        <input class="q-denary-input" type="text" id="q-input"
-               placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+        <div class="q-input-with-sign">
+          <input class="q-denary-input" type="text" id="q-input"
+                 placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
+          <button class="q-sign-btn" id="q-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
+        </div>
       </div>
     </div>
 
@@ -165,13 +192,19 @@
         <div class="err-grid">
           <div>
             <div class="q-err-lbl">Smallest value</div>
-            <input class="q-denary-input q-err-input" type="text" id="q-min-input"
-                   placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+            <div class="q-input-with-sign">
+              <input class="q-denary-input q-err-input" type="text" id="q-min-input"
+                     placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
+              <button class="q-sign-btn" id="q-min-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
+            </div>
           </div>
           <div>
             <div class="q-err-lbl">Largest value</div>
-            <input class="q-denary-input q-err-input" type="text" id="q-max-input"
-                   placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+            <div class="q-input-with-sign">
+              <input class="q-denary-input q-err-input" type="text" id="q-max-input"
+                     placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
+              <button class="q-sign-btn" id="q-max-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
+            </div>
           </div>
         </div>
       </div>
@@ -476,6 +509,16 @@
     document.body.classList.remove('modal-open');
   }
 
+  function toggleInputSign(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input || input.disabled) return;
+    const value = (input.value || '').trim();
+    if (!value) input.value = '-';
+    else if (value.startsWith('-')) input.value = value.slice(1);
+    else input.value = '-' + value;
+    input.focus();
+  }
+
   function generateQuizQuestion() {
     Object.assign(QS, window.EncodrQuizGenerators.twosComplement.generate(QS.questionType));
     QS.answered = false;
@@ -505,11 +548,16 @@
     inp.value = '';
     inp.disabled = false;
     inp.placeholder = 'Enter your answer';
+    inp.inputMode = 'numeric';
+    document.getElementById('q-sign-btn').disabled = false;
+    document.getElementById('q-sign-btn').hidden = QS.answerKind !== 'den';
 
     document.getElementById('q-min-input').value = '';
     document.getElementById('q-max-input').value = '';
     document.getElementById('q-min-input').disabled = false;
     document.getElementById('q-max-input').disabled = false;
+    document.getElementById('q-min-sign-btn').disabled = false;
+    document.getElementById('q-max-sign-btn').disabled = false;
 
     closeModal();
     document.getElementById('q-modal-feedback').innerHTML = '';
@@ -539,6 +587,8 @@
 
       document.getElementById('q-min-input').disabled = true;
       document.getElementById('q-max-input').disabled = true;
+      document.getElementById('q-min-sign-btn').disabled = true;
+      document.getElementById('q-max-sign-btn').disabled = true;
     } else if (QS.answerKind === 'den') {
       const raw = (document.getElementById('q-input').value || '').trim();
       if (!/^-?\d+$/.test(raw)) { document.getElementById('q-input').focus(); return; }
@@ -550,6 +600,7 @@
         : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${student}</strong>, answer: <strong>${QS.expectedValue}</strong>.</span>`;
 
       document.getElementById('q-input').disabled = true;
+      document.getElementById('q-sign-btn').disabled = true;
     } else {
       const raw = (document.getElementById('q-input').value || '').trim();
       const parsed = normalizeBinary(raw);
@@ -564,6 +615,7 @@
         : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${parsed}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
 
       document.getElementById('q-input').disabled = true;
+      document.getElementById('q-sign-btn').disabled = true;
     }
 
     QS.answered = true;
@@ -613,6 +665,9 @@
   });
 
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
+  document.getElementById('q-sign-btn').addEventListener('click', () => toggleInputSign('q-input'));
+  document.getElementById('q-min-sign-btn').addEventListener('click', () => toggleInputSign('q-min-input'));
+  document.getElementById('q-max-sign-btn').addEventListener('click', () => toggleInputSign('q-max-input'));
   document.getElementById('q-input').addEventListener('keydown', ev => {
     if (ev.key === 'Enter' && !QS.answered && QS.answerKind !== 'range') checkQuizAnswer();
   });

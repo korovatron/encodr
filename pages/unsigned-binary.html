@@ -168,7 +168,7 @@
       <div class="res-block">
         <div class="q-answer-lbl" id="q-answer-lbl">Your Answer</div>
         <input class="q-denary-input" type="text" id="q-input"
-               placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+               placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
       </div>
     </div>
 
@@ -179,12 +179,12 @@
           <div>
             <div class="q-err-lbl">Smallest value</div>
             <input class="q-denary-input q-err-input" type="text" id="q-min-input"
-                   placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+                   placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
           </div>
           <div>
             <div class="q-err-lbl">Largest value</div>
             <input class="q-denary-input q-err-input" type="text" id="q-max-input"
-                   placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+                   placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
           </div>
         </div>
       </div>
@@ -560,6 +560,7 @@
     inp.value = '';
     inp.disabled = false;
     inp.placeholder = 'Enter your answer';
+    inp.inputMode = QS.answerKind === 'hex' ? 'text' : 'numeric';
 
     document.getElementById('q-min-input').value = '';
     document.getElementById('q-max-input').value = '';
