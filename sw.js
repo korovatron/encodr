@@ -1,4 +1,4 @@
-const CACHE_NAME = "encodr-v1.0.113";
+const CACHE_NAME = "encodr-v1.0.114";
 
 const LOCAL_ASSETS = [
   "./",
