@@ -430,7 +430,7 @@
       var labelText = printableChar(sym);
       return '<div class="hf-answer-item">' +
         '<label for="hf-code-' + idx + '" aria-label="Code for ' + escapeHtml(labelText) + '"><span class="hf-inline-symbol">' + escapeHtml(labelText) + '</span></label>' +
-        '<input id="hf-code-' + idx + '" data-hf-symbol="' + escapeHtml(sym) + '" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="e.g. 010" />' +
+        '<input id="hf-code-' + idx + '" data-hf-symbol="' + escapeHtml(sym) + '" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Enter your answer" />' +
         '</div>';
     }).join('');
   }
