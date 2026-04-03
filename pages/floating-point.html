@@ -213,7 +213,8 @@
   <div id="explore-section">
   <details class="intro-disclosure">
     <summary>More info</summary>
-    <p class="intro">Click any bit to toggle it between&nbsp;0 and&nbsp;1. <br><strong>Normalisation</strong> (storing only one digit before the point) ensures each value has a <strong>unique representation</strong>, maximises <strong>precision</strong> by using all mantissa bits, and makes comparing numbers straightforward. A normalised number's mantissa starts with <strong>01</strong> or <strong>10</strong>.</p>
+    <p class="intro">Click any bit to toggle it between&nbsp;0 and&nbsp;1. <br><br><strong>Normalisation</strong> (storing only one digit before the point) ensures each value has a <strong>unique representation</strong>, maximises <strong>precision</strong> by using all mantissa bits, and makes comparing numbers straightforward. A normalised number's mantissa starts with <strong>01</strong> or <strong>10</strong>.</p>
+    <p class="intro"><strong>Format used here:</strong> both the mantissa and exponent use <strong>two's complement</strong>, which is the format required by AQA. The value of the number is <em>mantissa &times; 2<sup>exponent</sup></em>, where the mantissa is treated as a two's complement binary fraction (bit&nbsp;0 has weight &minus;1, bit&nbsp;1 has weight 2<sup>&minus;1</sup>, and so on).<br><strong>Zero</strong> is a special case: it is stored as all mantissa and exponent bits set to&nbsp;0. This is the one value that cannot be normalised &mdash; and that is accepted convention rather than an error.</p>
   </details>
 
   <div class="controls">
