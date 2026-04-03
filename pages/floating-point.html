@@ -804,7 +804,7 @@
 
   function describeStatus(status) {
     if (status === 'underflow') return 'Underflow: this value is too small for this format and will be stored as 0.';
-    if (status === 'overflow') return 'Overflow: this value is beyond range for this format and will be clipped to the closest extreme value.';
+    if (status === 'overflow') return 'Overflow: this value is outside the range for this format and will be set to the nearest valid limit.';
     return 'This value cannot be represented exactly in this format.';
   }
 

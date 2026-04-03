@@ -676,10 +676,9 @@
 
         if (currentType === '3') {
           const eMin = -(2 ** (eLen - 1));
-          const eBits = (eMin + 2 ** (eLen - 1)).toString(2).split('').map(function (ch) { return ch === '1' ? 1 : 0; });
-          while (eBits.length < eLen) eBits.unshift(0);
+          const eBits = twosBitsFor(eMin, eLen).split('').map(function (ch) { return ch === '1' ? 1 : 0; });
           const minPos = 0.5 * 2 ** eMin;
-          result.mBits = [0].concat(Array(mLen - 1).fill(0));
+          result.mBits = [0, 1].concat(Array(mLen - 2).fill(0));
           result.eBits = eBits;
           result.storedValue = minPos;
           result.targetDenary = minPos;
@@ -689,8 +688,7 @@
 
         if (currentType === '4') {
           const eMax = 2 ** (eLen - 1) - 1;
-          const eBits = (eMax + 2 ** (eLen - 1)).toString(2).split('').map(function (ch) { return ch === '1' ? 1 : 0; });
-          while (eBits.length < eLen) eBits.unshift(0);
+          const eBits = twosBitsFor(eMax, eLen).split('').map(function (ch) { return ch === '1' ? 1 : 0; });
           const maxPos = (1 - 2 ** (-(mLen - 1))) * 2 ** eMax;
           result.mBits = [0].concat(Array(mLen - 1).fill(1));
           result.eBits = eBits;
@@ -702,10 +700,9 @@
 
         if (currentType === '5') {
           const eMin = -(2 ** (eLen - 1));
-          const eBits = (eMin + 2 ** (eLen - 1)).toString(2).split('').map(function (ch) { return ch === '1' ? 1 : 0; });
-          while (eBits.length < eLen) eBits.unshift(0);
-          const maxNeg = -0.5 * 2 ** eMin;
-          result.mBits = [1].concat(Array(mLen - 1).fill(0));
+          const eBits = twosBitsFor(eMin, eLen).split('').map(function (ch) { return ch === '1' ? 1 : 0; });
+          const maxNeg = -(0.5 + 2 ** (-(mLen - 1))) * 2 ** eMin;
+          result.mBits = [1, 0].concat(Array(mLen - 2).fill(1));
           result.eBits = eBits;
           result.storedValue = maxNeg;
           result.targetDenary = maxNeg;
@@ -714,10 +711,9 @@
         }
 
         const eMax = 2 ** (eLen - 1) - 1;
-        const eBits = (eMax + 2 ** (eLen - 1)).toString(2).split('').map(function (ch) { return ch === '1' ? 1 : 0; });
-        while (eBits.length < eLen) eBits.unshift(0);
-        const minNeg = -(1 - 2 ** (-(mLen - 1))) * 2 ** eMax;
-        result.mBits = [1].concat(Array(mLen - 1).fill(1));
+        const eBits = twosBitsFor(eMax, eLen).split('').map(function (ch) { return ch === '1' ? 1 : 0; });
+        const minNeg = -(2 ** eMax);
+        result.mBits = [1].concat(Array(mLen - 1).fill(0));
         result.eBits = eBits;
         result.storedValue = minNeg;
         result.targetDenary = minNeg;
