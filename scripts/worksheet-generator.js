@@ -1621,6 +1621,18 @@
     }
 
     function renderWorksheetSection(compactMode) {
+      function isRleType2CompactSpacingCase(item) {
+        return !!(
+          item &&
+          item.topic === "Run Length Encoding (RLE)" &&
+          item.instruction === "Write the full original string." &&
+          Array.isArray(item.promptBlocks) &&
+          item.promptBlocks.length === 2 &&
+          item.promptBlocks[0] && item.promptBlocks[0].type === "parts" &&
+          item.promptBlocks[1] && item.promptBlocks[1].type === "text"
+        );
+      }
+
       y = margin;
       drawPageDecorations();
 
@@ -1694,6 +1706,7 @@
 
         items.forEach(function (item) {
           var x;
+          var compactRleType2TailGap = isRleType2CompactSpacingCase(item) ? 4 : 0;
           var compactBitmapAnswerH = item.answerLayout && item.answerLayout.kind === "bitmapGrid"
             ? bitmapGridHeight(item.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
             : 0;
@@ -1705,7 +1718,7 @@
           var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
           var promptBitmapTailGap = item.promptBitmap ? 4 : 0;
           var treeTailGap = item.promptTree ? 6 : 0;
-          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactGapAfterBlock;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactRleType2TailGap + compactGapAfterBlock;
 
           var targetColumn = chooseCompactColumn(blockHeight);
           x = targetColumn === 0 ? leftX : rightX;
@@ -1734,6 +1747,7 @@
             y += drawBitmapGrid(x, y, item.answerLayout, columnWidth, true, false);
             y += PROMPT_BITMAP_GAP_COMPACT;
           }
+          y += compactRleType2TailGap;
           y += compactGapAfterBlock;
           compactColumnY[targetColumn] = y;
         });
@@ -1754,6 +1768,7 @@
 
         items.forEach(function (item) {
           var x = column === 0 ? leftX : rightX;
+          var compactRleType2TailGap = isRleType2CompactSpacingCase(item) ? 4 : 0;
           var compactBitmapAnswerH = item.answerLayout && item.answerLayout.kind === "bitmapGrid"
             ? bitmapGridHeight(item.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
             : 0;
@@ -1765,7 +1780,7 @@
           var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
           var promptBitmapTailGap = item.promptBitmap ? 4 : 0;
           var treeTailGap = item.promptTree ? 6 : 0;
-          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactGapAfterBlock;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactRleType2TailGap + compactGapAfterBlock;
 
           ensureCompactSpace(blockHeight);
           x = column === 0 ? leftX : rightX;
@@ -1793,6 +1808,7 @@
             y += drawBitmapGrid(x, y, item.answerLayout, columnWidth, true, false);
             y += PROMPT_BITMAP_GAP_COMPACT;
           }
+          y += compactRleType2TailGap;
           y += compactGapAfterBlock;
         });
       }
