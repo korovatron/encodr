@@ -67,11 +67,6 @@
       transition: box-shadow .15s;
     }
 
-    .hf-editor:focus {
-      outline: none;
-      box-shadow: 0 0 0 1.5px var(--ml);
-    }
-
     .hf-row {
       display: flex;
       flex-wrap: wrap;
@@ -302,10 +297,12 @@
       font-family: 'Consolas', monospace;
       padding: 10px 12px;
       outline: none;
+      transition: border-color .15s, box-shadow .15s;
     }
 
     .hf-answer-item input:focus {
-      border-color: var(--ml);
+      border-color: rgba(255,255,255,.20);
+      box-shadow: 0 0 0 1.5px var(--ml);
     }
 
     .hf-answer-note {

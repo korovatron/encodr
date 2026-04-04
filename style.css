@@ -46,6 +46,18 @@ body {
 }
 input, textarea { -webkit-user-select: text; user-select: text; }
 
+/* Shared focus ring for all lesson editor textareas */
+textarea[id$="-editor"],
+textarea[id$="-input"] {
+  transition: box-shadow .15s;
+}
+
+textarea[id$="-editor"]:focus,
+textarea[id$="-input"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 1.5px var(--ml);
+}
+
 /* Prevent iOS double-tap zoom on all interactive elements */
 button, input, a, [role="button"] { touch-action: manipulation; }
 
@@ -557,9 +569,12 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   font-family: 'Consolas', monospace;
   padding: 12px 16px;
   outline: none;
-  transition: border-color .15s;
+  transition: border-color .15s, box-shadow .15s;
 }
-.q-denary-input:focus { border-color: var(--ml); }
+.q-denary-input:focus {
+  border-color: rgba(255,255,255,.20);
+  box-shadow: 0 0 0 1.5px var(--ml);
+}
 .q-denary-input:disabled { opacity: .55; }
 .bit-box.static { cursor: default; pointer-events: none; }
 .bit-box.static:hover { transform: none; }

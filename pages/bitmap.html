@@ -77,13 +77,17 @@
       padding: 2px 4px;
       -webkit-user-select: text;
       user-select: text;
-      transition: border-color .15s;
+      transition: border-color .15s, box-shadow .15s;
       appearance: textfield;
       -moz-appearance: textfield;
     }
     .byte-inp::-webkit-outer-spin-button,
     .byte-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
-    .byte-inp:focus { outline: none; border-color: var(--ml); }
+    .byte-inp:focus {
+      outline: none;
+      border-color: rgba(255,255,255,.25);
+      box-shadow: 0 0 0 1.5px var(--ml);
+    }
     .byte-inp.err  { border-color: #ff5555; color: #ff5555; }
 
     /* ── Controls bar ────────────────────────────── */
