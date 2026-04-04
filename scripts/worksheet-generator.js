@@ -146,6 +146,42 @@
     return "Write your answer as a denary number.";
   }
 
+  function syncTopicEnabledState(root, topicId, enabled) {
+    var subWrap = byId("subs-" + topicId);
+    var topicSection = root.querySelector('[data-topic="' + topicId + '"]');
+    if (!topicSection) return;
+
+    if (subWrap) {
+      var subChecks = subWrap.querySelectorAll("input[type='checkbox']");
+      subChecks.forEach(function (cb) {
+        cb.disabled = !enabled;
+      });
+      subWrap.classList.toggle("is-disabled", !enabled);
+      subWrap.setAttribute("aria-disabled", enabled ? "false" : "true");
+    }
+
+    var optionWraps = topicSection.querySelectorAll(".ws-options, .ws-radio-group");
+    optionWraps.forEach(function (wrap) {
+      wrap.classList.toggle("is-disabled", !enabled);
+      wrap.setAttribute("aria-disabled", enabled ? "false" : "true");
+    });
+
+    var selects = topicSection.querySelectorAll("select");
+    selects.forEach(function (sel) {
+      sel.disabled = !enabled;
+    });
+
+    var optionChecks = topicSection.querySelectorAll(".ws-options input[type='checkbox']");
+    optionChecks.forEach(function (cb) {
+      cb.disabled = !enabled;
+    });
+
+    var optionRadios = topicSection.querySelectorAll(".ws-options input[type='radio']");
+    optionRadios.forEach(function (rb) {
+      rb.disabled = !enabled;
+    });
+  }
+
   function renderTopicControls() {
     var root = byId("ws-topics");
     if (!root) return;
@@ -211,33 +247,11 @@
 
     var topicToggles = root.querySelectorAll(".ws-topic-enable");
     topicToggles.forEach(function (toggle) {
+      var topicId = toggle.id.replace("topic-", "");
+      syncTopicEnabledState(root, topicId, toggle.checked);
+
       toggle.addEventListener("change", function () {
-        var topicId = toggle.id.replace("topic-", "");
-        var subWrap = byId("subs-" + topicId);
-        var topicSection = root.querySelector('[data-topic="' + topicId + '"]');
-        if (!topicSection) return;
-
-        if (subWrap) {
-          var subChecks = subWrap.querySelectorAll("input[type='checkbox']");
-          subChecks.forEach(function (cb) {
-            cb.disabled = !toggle.checked;
-          });
-        }
-
-        var selects = topicSection.querySelectorAll("select");
-        selects.forEach(function (sel) {
-          sel.disabled = !toggle.checked;
-        });
-
-        var optionChecks = topicSection.querySelectorAll(".ws-options input[type='checkbox']");
-        optionChecks.forEach(function (cb) {
-          cb.disabled = !toggle.checked;
-        });
-
-        var optionRadios = topicSection.querySelectorAll(".ws-options input[type='radio']");
-        optionRadios.forEach(function (rb) {
-          rb.disabled = !toggle.checked;
-        });
+        syncTopicEnabledState(root, topicId, toggle.checked);
       });
     });
   }
