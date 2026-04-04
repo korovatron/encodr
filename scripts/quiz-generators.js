@@ -352,6 +352,192 @@
     return huffmanShuffle(pool.slice()).slice(0, count);
   }
 
+  function rleEncodeCompact(text) {
+    if (!text.length) return '';
+    let out = '';
+    let i = 0;
+    while (i < text.length) {
+      const ch = text[i];
+      let count = 1;
+      while (i + count < text.length && text[i + count] === ch) count++;
+      out += ch + count;
+      i += count;
+    }
+    return out;
+  }
+
+  function rleEncodePairs(text) {
+    if (!text.length) return '';
+    const parts = [];
+    let i = 0;
+    while (i < text.length) {
+      const ch = text[i];
+      let count = 1;
+      while (i + count < text.length && text[i + count] === ch) count++;
+      parts.push('(' + ch + ', ' + count + ')');
+      i += count;
+    }
+    return parts.join(', ');
+  }
+
+  function rleGenerateType1Data() {
+    const symbolPool = ['A', 'B', 'C', 'G', 'H', 'R', 'T', 'X', 'Y', 'Z'];
+
+    for (let tries = 0; tries < 200; tries++) {
+      const runCount = randInt(4, 7);
+      const runs = [];
+      let prev = '';
+      let text = '';
+
+      for (let i = 0; i < runCount; i++) {
+        let symbol = pick(symbolPool);
+        while (symbol === prev) symbol = pick(symbolPool);
+        const count = randInt(1, 9);
+        runs.push({ symbol: symbol, count: count });
+        text += symbol.repeat(count);
+        prev = symbol;
+      }
+
+      const encoded = runs.map(function (run) {
+        return run.symbol + run.count;
+      }).join('');
+      const inputLength = text.length;
+      const encodedLength = encoded.length;
+      if (inputLength === encodedLength) continue;
+
+      return {
+        text: text,
+        runs: runs,
+        encoded: encoded,
+        inputLength: inputLength,
+        encodedLength: encodedLength,
+        effect: encodedLength < inputLength ? 'compressed' : 'expanded',
+        netChange: inputLength - encodedLength
+      };
+    }
+
+    const fallbackText = 'XXXXXYYZZZHHHH';
+    return {
+      text: fallbackText,
+      runs: [
+        { symbol: 'X', count: 5 },
+        { symbol: 'Y', count: 2 },
+        { symbol: 'Z', count: 3 },
+        { symbol: 'H', count: 4 }
+      ],
+      encoded: rleEncodeCompact(fallbackText),
+      inputLength: fallbackText.length,
+      encodedLength: rleEncodeCompact(fallbackText).length,
+      effect: 'compressed',
+      netChange: fallbackText.length - rleEncodeCompact(fallbackText).length
+    };
+  }
+
+  function rleGenerateType2Data() {
+    const symbolPool = ['A', 'B', 'C', 'D', 'G', 'H', 'J', 'O', 'P', 'R', 'T', 'X', 'Y', 'Z'];
+
+    for (let tries = 0; tries < 200; tries++) {
+      const runCount = randInt(4, 7);
+      const runs = [];
+      let prev = '';
+      let text = '';
+
+      for (let i = 0; i < runCount; i++) {
+        let symbol = pick(symbolPool);
+        while (symbol === prev) symbol = pick(symbolPool);
+        const count = randInt(1, 9);
+        runs.push({ symbol: symbol, count: count });
+        text += symbol.repeat(count);
+        prev = symbol;
+      }
+
+      if (text.length >= 8 && text.length <= 32) {
+        return {
+          text: text,
+          runs: runs,
+          encoded: rleEncodePairs(text)
+        };
+      }
+    }
+
+    return {
+      text: 'JJJOOPP',
+      runs: [
+        { symbol: 'J', count: 3 },
+        { symbol: 'O', count: 2 },
+        { symbol: 'P', count: 2 }
+      ],
+      encoded: '(J, 3), (O, 2), (P, 2)'
+    };
+  }
+
+  function rleGenerateType3Data() {
+    var colOptions = [6, 7, 8];
+    var rowOptions = [4, 5, 6];
+
+    for (var tries = 0; tries < 200; tries++) {
+      var cols = pick(colOptions);
+      var rows = pick(rowOptions);
+      var total = cols * rows;
+      var runCount = randInt(2, 5);
+      var min = 2;
+      var extra = total - runCount * min;
+      if (extra < 0) continue;
+
+      var cuts = [];
+      for (var ci = 0; ci < runCount - 1; ci++) cuts.push(randInt(0, extra));
+      cuts.sort(function (a, b) { return a - b; });
+
+      var runLengths = [];
+      var prev = 0;
+      for (var ri = 0; ri < runCount - 1; ri++) {
+        runLengths.push(min + (cuts[ri] - prev));
+        prev = cuts[ri];
+      }
+      runLengths.push(min + (extra - prev));
+
+      var startWith = pick(['B', 'W']);
+      var runs = [];
+      for (var ki = 0; ki < runCount; ki++) {
+        runs.push({
+          color: ki % 2 === 0 ? startWith : (startWith === 'B' ? 'W' : 'B'),
+          count: runLengths[ki]
+        });
+      }
+
+      var grid = [];
+      for (var gi = 0; gi < runs.length; gi++) {
+        for (var pi = 0; pi < runs[gi].count; pi++) grid.push(runs[gi].color);
+      }
+
+      var encoded = runs.map(function (r) { return r.color + r.count; }).join('');
+      return { cols: cols, rows: rows, grid: grid, runs: runs, encoded: encoded };
+    }
+
+    // Fallback: 4×6 grid W9B7W8
+    var fallbackGrid = [];
+    for (var fi = 0; fi < 9; fi++) fallbackGrid.push('W');
+    for (var fi = 0; fi < 7; fi++) fallbackGrid.push('B');
+    for (var fi = 0; fi < 8; fi++) fallbackGrid.push('W');
+    return {
+      cols: 6, rows: 4,
+      grid: fallbackGrid,
+      runs: [{ color: 'W', count: 9 }, { color: 'B', count: 7 }, { color: 'W', count: 8 }],
+      encoded: 'W9B7W8'
+    };
+  }
+
+  function rleGenerateType4Data() {
+    var data = rleGenerateType3Data();
+    return {
+      cols: data.cols,
+      rows: data.rows,
+      grid: data.grid,
+      runs: data.runs,
+      encoded: data.encoded
+    };
+  }
+
   window.EncodrQuizGenerators = {
     unsigned: {
       generate: function (questionType) {
@@ -1128,6 +1314,32 @@
           phrase: phrase,
           data: data,
           symbols: symbols
+        };
+      }
+    },
+
+    rle: {
+      generate: function (questionType) {
+        var validTypes = ['type1', 'type2', 'type3', 'type4'];
+        var mode = validTypes.indexOf(questionType) !== -1 ? questionType : 'mixed';
+        var currentType = mode === 'mixed' ? pick(['type1', 'type2', 'type3', 'type4']) : mode;
+        var example = currentType === 'type2'
+          ? { text: 'JJJOOPP', encoded: '(J, 3), (O, 2), (P, 2)' }
+          : currentType === 'type3' || currentType === 'type4'
+          ? null
+          : { text: 'AAAAGGGTT', encoded: 'A4G3T2', inputLength: 9, encodedLength: 6, saved: 3 };
+        var data = currentType === 'type2'
+          ? rleGenerateType2Data()
+          : currentType === 'type3'
+          ? rleGenerateType3Data()
+          : currentType === 'type4'
+          ? rleGenerateType4Data()
+          : rleGenerateType1Data();
+
+        return {
+          currentType: currentType,
+          example: example,
+          data: data
         };
       }
     }

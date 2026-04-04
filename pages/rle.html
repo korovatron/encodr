@@ -11,6 +11,7 @@
   <link rel="manifest" href="../site.webmanifest" />
   <link rel="stylesheet" href="../style.css" />
   <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/quiz-generators.js" defer></script>
   <script src="../scripts/rle.js" defer></script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
@@ -47,6 +48,12 @@
       font-family: 'Consolas', 'Courier New', monospace;
       font-size: 22px;
       letter-spacing: 3px;
+      transition: box-shadow .15s;
+    }
+
+    .rle-editor:focus {
+      outline: none;
+      box-shadow: 0 0 0 1.5px var(--ml);
     }
 
     .rle-row {
@@ -216,6 +223,159 @@
       font-size: 15px;
     }
 
+    .rle-inline-code {
+      display: inline-block;
+      background: #000;
+      color: var(--ml);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-weight: 700;
+      letter-spacing: .3px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.35);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .rle-quiz-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .rle-answer-item {
+      min-width: 0;
+    }
+
+    .rle-answer-item-full {
+      grid-column: 1 / span 2;
+    }
+
+    .rle-answer-item label {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #fff;
+      font-weight: 700;
+      background: #000;
+      padding: 3px 10px;
+      border-radius: 100px;
+      box-shadow: 0 0 0 2px #fff;
+    }
+
+    .rle-answer-input {
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+
+    .rle-answer-input-code {
+      text-transform: uppercase;
+    }
+
+    .rle-effect-toggle {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .rle-toggle-btn {
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 2px solid rgba(255,255,255,.20);
+      border-radius: 10px;
+      background: #000;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color .15s, background .15s, color .15s, box-shadow .15s;
+      min-width: 150px;
+    }
+
+    .rle-toggle-btn:hover {
+      border-color: rgba(255,255,255,.45);
+    }
+
+    .rle-toggle-btn.active {
+      border-color: rgba(232,232,0,.60);
+      background: rgba(232,232,0,.13);
+      color: var(--ml);
+      box-shadow: 0 0 8px rgba(255,255,0,.30);
+    }
+
+    .rle-quiz-note {
+      margin: 14px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .fb-correct {
+      color: #00ff00;
+    }
+
+    /* ---- Type 3: bitmap grid ---- */
+    .rle-bmp-example {
+      display: grid;
+      gap: 2px;
+      margin: 10px auto 4px;
+      width: max-content;
+    }
+
+    .rle-bmp-ex-cell {
+      aspect-ratio: 1;
+      border-radius: 2px;
+    }
+
+    .rle-bmp-ex-cell.b {
+      background: #111;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
+    }
+
+    .rle-bmp-ex-cell.w {
+      background: #f0f0f0;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+    }
+
+    #rle-bitmap-grid-container {
+      width: min(100%, 400px);
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .rle-bitmap-grid {
+      display: grid;
+      gap: 4px;
+    }
+
+    .rle-pixel {
+      aspect-ratio: 1;
+      min-width: 0;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .rle-pixel.b {
+      background: #111;
+      box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.18);
+    }
+
+    .rle-pixel.w {
+      background: #f0f0f0;
+      box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.3);
+    }
+
+    .rle-pixel:disabled {
+      opacity: 1;
+      cursor: default;
+    }
+
     @media (min-width: 981px) {
       .rle-card-input,
       .rle-card-output {
@@ -243,6 +403,14 @@
       .rle-kpis {
         grid-template-columns: minmax(0, 1fr);
       }
+
+      .rle-quiz-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .rle-answer-item-full {
+        grid-column: 1;
+      }
     }
   </style>
 </head>
@@ -258,6 +426,7 @@
   <h1>Run Length Encoding</h1>
   <div class="mode-tabs" role="tablist" aria-label="Run length encoding modes">
     <button class="mode-tab active" id="tab-explore" role="tab" aria-selected="true">Explore</button>
+    <button class="mode-tab" id="tab-quiz" role="tab" aria-selected="false">Test</button>
   </div>
 
   <div id="explore-section">
@@ -309,11 +478,91 @@
   </div>
 
   <div id="quiz-section" hidden>
-    <div class="card">
-      <div class="card-head"><span class="badge badge-r">Test</span></div>
-      <p class="rle-placeholder">RLE test questions are coming soon.</p>
+    <div class="quiz-topbar">
+      <div class="qtype-group">
+        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
+        <button class="qtype-btn active" data-rle-qt="mixed" type="button">Mixed</button>
+        <button class="qtype-btn" data-rle-qt="type1" type="button">Compact Notation</button>
+        <button class="qtype-btn" data-rle-qt="type2" type="button">Decode Pairs</button>
+        <button class="qtype-btn" data-rle-qt="type3" type="button">Decode Bitmap</button>
+        <button class="qtype-btn" data-rle-qt="type4" type="button">Encode Bitmap</button>
+      </div>
+      <div class="quiz-score-area">
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="rle-q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="rle-q-wrong">0</span>&ensp;(<span id="rle-q-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="rle-q-reset-score" type="button">Reset score</button>
+      </div>
+    </div>
+
+    <div class="card quiz-q-card">
+      <div class="res-block">
+        <div class="quiz-q-header">
+          <span class="quiz-q-num" id="rle-q-num">Question 1</span>
+          <span class="badge badge-r" id="rle-q-type-badge">Compact Notation</span>
+        </div>
+        <div class="quiz-q-text" id="rle-q-text"></div>
+      </div>
+    </div>
+
+    <section class="card" id="rle-answer-card">
+      <div class="card-head"><span class="badge badge-r">Your Answers</span></div>
+      <div class="rle-quiz-grid" id="rle-type1-area">
+        <div class="rle-answer-item rle-answer-item-full">
+          <label for="rle-q-encoded">Compressed String</label>
+          <input class="q-denary-input rle-answer-input rle-answer-input-code" id="rle-q-encoded" type="text" autocomplete="off" spellcheck="false" placeholder="Enter your answer" />
+        </div>
+        <div class="rle-answer-item">
+          <label for="rle-q-input-length">Initial Char Count</label>
+          <input class="q-denary-input rle-answer-input" id="rle-q-input-length" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Enter your answer" />
+        </div>
+        <div class="rle-answer-item">
+          <label for="rle-q-compressed-length">Compressed Char Count</label>
+          <input class="q-denary-input rle-answer-input" id="rle-q-compressed-length" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Enter your answer" />
+        </div>
+        <div class="rle-answer-item rle-answer-item-full">
+          <label>Result</label>
+          <div class="rle-effect-toggle" id="rle-effect-toggle" aria-label="Choose whether the RLE output compresses or expands the string">
+            <button class="rle-toggle-btn" type="button" data-rle-effect="compressed" aria-pressed="false">Compressed</button>
+            <button class="rle-toggle-btn" type="button" data-rle-effect="expanded" aria-pressed="false">Expanded</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="rle-type2-area" hidden>
+        <div class="rle-answer-item rle-answer-item-full">
+          <label for="rle-q-decoded">Uncompressed String</label>
+          <input class="q-denary-input rle-answer-input rle-answer-input-code" id="rle-q-decoded" type="text" autocomplete="off" spellcheck="false" placeholder="Enter your answer" />
+        </div>
+      </div>
+
+      <div id="rle-type3-area" hidden>
+        <div id="rle-bitmap-grid-container"></div>
+        <button class="btn btn-sm" id="rle-q3-clear" type="button" style="margin-top:12px;">Clear Grid</button>
+      </div>
+
+      <div id="rle-type4-area" hidden>
+        <div class="rle-answer-item rle-answer-item-full">
+          <label for="rle-q-encoded-bitmap">RLE Encoded String</label>
+          <input class="q-denary-input rle-answer-input rle-answer-input-code" id="rle-q-encoded-bitmap" type="text" autocomplete="off" spellcheck="false" placeholder="Enter your answer (e.g. W10B23W20B3)" />
+        </div>
+      </div>
+    </section>
+
+    <div class="quiz-actions">
+      <button class="btn btn-submit" id="rle-q-submit" type="button">Check Answer</button>
     </div>
   </div>
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
+
+<dialog id="rle-q-modal" aria-labelledby="rle-q-modal-feedback">
+  <div class="modal">
+    <div class="modal-feedback" id="rle-q-modal-feedback"></div>
+    <div class="modal-footer">
+      <button class="btn btn-next" id="rle-q-next" type="button">Next Question &rarr;</button>
+    </div>
+  </div>
+</dialog>
+
+</body>
+</html>

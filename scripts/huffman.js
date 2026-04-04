@@ -524,7 +524,7 @@
 
   function clearAnswerInputErrors() {
     document.querySelectorAll('#hf-answer-card input').forEach(function (input) {
-      input.style.borderColor = 'rgba(255,255,255,.20)';
+      input.style.borderColor = '';
     });
   }
 

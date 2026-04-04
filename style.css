@@ -612,11 +612,13 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 html.modal-open, body.modal-open,
 html:has(#q-modal[open]),
 html:has(#bq-modal[open]),
+html:has(#rle-q-modal[open]),
 html:has(#save-dialog[open]),
 body:has(#q-modal[open]),
 body:has(#bq-modal[open]),
+body:has(#rle-q-modal[open]),
 body:has(#save-dialog[open]) { overflow: hidden; }
-#q-modal, #bq-modal, #save-dialog {
+#q-modal, #bq-modal, #rle-q-modal, #save-dialog {
   border: none;
   padding: 0;
   background: transparent;
@@ -624,7 +626,7 @@ body:has(#save-dialog[open]) { overflow: hidden; }
 }
 /* Only style layout when open — display:flex here would override the
    browser's display:none for the closed state */
-#q-modal[open], #bq-modal[open], #save-dialog[open] {
+#q-modal[open], #bq-modal[open], #rle-q-modal[open], #save-dialog[open] {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -636,7 +638,7 @@ body:has(#save-dialog[open]) { overflow: hidden; }
   align-items: center;
   justify-content: center;
 }
-#q-modal::backdrop, #bq-modal::backdrop, #save-dialog::backdrop {
+#q-modal::backdrop, #bq-modal::backdrop, #rle-q-modal::backdrop, #save-dialog::backdrop {
   background: rgba(0,0,0,.72);
 }
 .modal {

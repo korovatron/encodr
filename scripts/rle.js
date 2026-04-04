@@ -1,5 +1,17 @@
 (function () {
   var MAX_INPUT_CHARS = 200;
+  var Quiz = {
+    mode: 'mixed',
+    current: null,
+    questionNo: 0,
+    correct: 0,
+    wrong: 0,
+    total: 0,
+    locked: false,
+    initialized: false,
+    selectedEffect: '',
+    gridState: []
+  };
 
   var RUN_COLOURS = [
     '#ff6b6b', '#ffd166', '#06d6a0', '#118ab2',
@@ -19,6 +31,64 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
+
+  function buildExampleGridHtml(cols, grid) {
+    var html = '<div class="rle-bmp-example" style="grid-template-columns:repeat(' + cols + ',20px)">';
+    for (var i = 0; i < grid.length; i++) {
+      html += '<span class="rle-bmp-ex-cell ' + grid[i].toLowerCase() + '"></span>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function buildBitmapGrid(cols, rows) {
+    var container = byId('rle-bitmap-grid-container');
+    if (!container) return;
+    Quiz.gridState = [];
+    for (var i = 0; i < rows * cols; i++) Quiz.gridState.push('W');
+    var grid = document.createElement('div');
+    grid.className = 'rle-bitmap-grid';
+    grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+    grid.setAttribute('role', 'group');
+    grid.setAttribute('aria-label', 'Bitmap grid, ' + cols + ' columns by ' + rows + ' rows');
+    for (var i = 0; i < rows * cols; i++) {
+      var cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'rle-pixel w';
+      cell.setAttribute('data-idx', String(i));
+      cell.setAttribute('aria-pressed', 'false');
+      cell.setAttribute('aria-label', 'Row ' + (Math.floor(i / cols) + 1) + ' col ' + (i % cols + 1));
+      cell.addEventListener('click', function () {
+        if (Quiz.locked) return;
+        var idx = parseInt(this.getAttribute('data-idx'), 10);
+        var newColor = Quiz.gridState[idx] === 'B' ? 'W' : 'B';
+        Quiz.gridState[idx] = newColor;
+        this.className = 'rle-pixel ' + newColor.toLowerCase();
+        this.setAttribute('aria-pressed', newColor === 'B' ? 'true' : 'false');
+      });
+      grid.appendChild(cell);
+    }
+    container.innerHTML = '';
+    container.appendChild(grid);
+  }
+
+  function parseWholeNumber(raw) {
+    var s = String(raw || '').trim();
+    if (!/^-?\d+$/.test(s)) return null;
+    return Number(s);
+  }
+
+  function normaliseCompactRle(raw) {
+    return String(raw || '')
+      .toUpperCase()
+      .replace(/[\s,;:()\[\]{}]+/g, '');
+  }
+
+  function normaliseDecodedText(raw) {
+    return String(raw || '')
+      .toUpperCase()
+      .replace(/\s+/g, '');
   }
 
   function symbolLabel(ch) {
@@ -78,6 +148,21 @@
     host.innerHTML = html;
   }
 
+  function setMode(mode) {
+    var tabExplore = byId('tab-explore');
+    var tabQuiz = byId('tab-quiz');
+    var exploreSection = byId('explore-section');
+    var quizSection = byId('quiz-section');
+    var isExplore = mode === 'explore';
+
+    if (tabExplore) tabExplore.classList.toggle('active', isExplore);
+    if (tabQuiz) tabQuiz.classList.toggle('active', !isExplore);
+    if (tabExplore) tabExplore.setAttribute('aria-selected', isExplore ? 'true' : 'false');
+    if (tabQuiz) tabQuiz.setAttribute('aria-selected', isExplore ? 'false' : 'true');
+    if (exploreSection) exploreSection.hidden = !isExplore;
+    if (quizSection) quizSection.hidden = isExplore;
+  }
+
   // ---------- Main render ----------
   function renderAll() {
     var inputEl  = byId('rle-input');
@@ -126,7 +211,6 @@
     renderVisual(runs);
   }
 
-  // ---------- Tab switching ----------
   // ---------- Sample presets ----------
   var SAMPLES = {
     colors: 'BBGGGRRRRW',
@@ -165,15 +249,418 @@
     });
   }
 
+  function updateQuizScore() {
+    setText('rle-q-correct', Quiz.correct);
+    setText('rle-q-wrong', Quiz.wrong);
+    setText('rle-q-total', Quiz.total);
+  }
+
+  function clearQuizFeedback() {
+    var el = byId('rle-q-modal-feedback');
+    if (!el) return;
+    el.className = 'modal-feedback';
+    el.innerHTML = '';
+  }
+
+  function setQuizFeedback(correct, html) {
+    var el = byId('rle-q-modal-feedback');
+    if (!el) return;
+    el.className = 'modal-feedback' + (correct ? '' : ' modal-feedback-wrong');
+    el.innerHTML = html;
+  }
+
+  function openQuizModal() {
+    var modal = byId('rle-q-modal');
+    if (modal && typeof modal.showModal === 'function' && !modal.open) modal.showModal();
+  }
+
+  function closeQuizModal() {
+    var modal = byId('rle-q-modal');
+    if (modal && modal.open) modal.close();
+  }
+
+  function setQuizModeButtons() {
+    document.querySelectorAll('[data-rle-qt]').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-rle-qt') === Quiz.mode);
+    });
+  }
+
+  function setQuestionTypeView(type) {
+    var type1 = byId('rle-type1-area');
+    var type2 = byId('rle-type2-area');
+    var type3 = byId('rle-type3-area');
+    var type4 = byId('rle-type4-area');
+    var type1Controls = document.querySelectorAll('#rle-type1-area input, #rle-type1-area button');
+    var type2Controls = document.querySelectorAll('#rle-type2-area input, #rle-type2-area button');
+    var type3Controls = document.querySelectorAll('#rle-type3-area button');
+    var type4Controls = document.querySelectorAll('#rle-type4-area input, #rle-type4-area button');
+
+    var showType1 = type === 'type1';
+    var showType2 = type === 'type2';
+    var showType3 = type === 'type3';
+    var showType4 = type === 'type4';
+
+    if (type1) {
+      type1.hidden = !showType1;
+      type1.style.display = showType1 ? '' : 'none';
+    }
+    if (type2) {
+      type2.hidden = !showType2;
+      type2.style.display = showType2 ? '' : 'none';
+    }
+    if (type3) {
+      type3.hidden = !showType3;
+      type3.style.display = showType3 ? '' : 'none';
+    }
+    if (type4) {
+      type4.hidden = !showType4;
+      type4.style.display = showType4 ? '' : 'none';
+    }
+
+    type1Controls.forEach(function (control) {
+      control.disabled = !showType1 || Quiz.locked;
+    });
+    type2Controls.forEach(function (control) {
+      control.disabled = !showType2 || Quiz.locked;
+    });
+    type3Controls.forEach(function (control) {
+      control.disabled = !showType3 || Quiz.locked;
+    });
+    type4Controls.forEach(function (control) {
+      control.disabled = !showType4 || Quiz.locked;
+    });
+
+    if (type === 'type2') {
+      setText('rle-q-type-badge', 'Decode Pairs');
+      return;
+    }
+    if (type === 'type3') {
+      setText('rle-q-type-badge', 'Decode Bitmap');
+      return;
+    }
+    if (type === 'type4') {
+      setText('rle-q-type-badge', 'Encode Bitmap');
+      return;
+    }
+    setText('rle-q-type-badge', 'Compact Notation');
+  }
+
+  function setEffectSelection(effect) {
+    Quiz.selectedEffect = effect || '';
+    document.querySelectorAll('[data-rle-effect]').forEach(function (btn) {
+      var active = btn.getAttribute('data-rle-effect') === Quiz.selectedEffect;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      btn.style.borderColor = active ? '' : 'rgba(255,255,255,.20)';
+    });
+  }
+
+  function clearAnswerInputErrors() {
+    document.querySelectorAll('#rle-answer-card input').forEach(function (input) {
+      input.style.borderColor = '';
+    });
+    document.querySelectorAll('[data-rle-effect]').forEach(function (btn) {
+      btn.style.borderColor = btn.classList.contains('active') ? '' : 'rgba(255,255,255,.20)';
+    });
+  }
+
+  function markInvalidInput(input) {
+    if (!input) return;
+    input.style.borderColor = '#ffff00';
+    if (typeof input.focus === 'function') input.focus();
+  }
+
+  function markEffectInvalid() {
+    document.querySelectorAll('[data-rle-effect]').forEach(function (btn) {
+      btn.style.borderColor = '#ffff00';
+    });
+  }
+
+  function clearQuizAnswers() {
+    var encodedInput = byId('rle-q-encoded');
+    var encodedBitmapInput = byId('rle-q-encoded-bitmap');
+    var decodedInput = byId('rle-q-decoded');
+    var inputLen = byId('rle-q-input-length');
+    var compressedLen = byId('rle-q-compressed-length');
+    if (encodedInput) encodedInput.value = '';
+    if (encodedBitmapInput) encodedBitmapInput.value = '';
+    if (decodedInput) decodedInput.value = '';
+    if (inputLen) inputLen.value = '';
+    if (compressedLen) compressedLen.value = '';
+    setEffectSelection('');
+  }
+
+  function generateQuestion() {
+    var generators = window.EncodrQuizGenerators;
+    if (!generators || !generators.rle || typeof generators.rle.generate !== 'function') {
+      throw new Error('RLE generator is unavailable. Ensure quiz-generators.js is loaded before rle.js.');
+    }
+
+    var generated = generators.rle.generate(Quiz.mode);
+    var data = generated.data;
+    var example = generated.example;
+
+    Quiz.questionNo += 1;
+    Quiz.current = {
+      type: generated.currentType,
+      data: data,
+      example: example
+    };
+
+    setText('rle-q-num', 'Question ' + Quiz.questionNo);
+    setQuestionTypeView(generated.currentType);
+
+    if (generated.currentType === 'type2') {
+      byId('rle-q-text').innerHTML =
+        'The string <span class="rle-inline-code">' + escapeHtml(example.text) + '</span> can be compressed with RLE into <span class="rle-inline-code">' + escapeHtml(example.encoded) + '</span>.' +
+        '<br><br>Using this notation, expand <span class="rle-inline-code">' + escapeHtml(data.encoded) + '</span> back into the original string.';
+    } else if (generated.currentType === 'type3') {
+      var exGrid = [];
+      for (var exI = 0; exI < 15; exI++) exGrid.push('B');
+      for (var exI = 0; exI < 9; exI++) exGrid.push('W');
+      byId('rle-q-text').innerHTML =
+        'Reading left-to-right, top-to-bottom, this 3\u2009\u00d7\u20098 grid can be encoded using RLE as <span class="rle-inline-code">B15W9</span>:' +
+        '<div style="margin:10px 0 14px;">' + buildExampleGridHtml(8, exGrid) + '</div>' +
+        'Decode <span class="rle-inline-code">' + escapeHtml(data.encoded) + '</span> by clicking the grid below. ' +
+        'The grid is ' + data.rows + '\u2009\u00d7\u2009' + data.cols + '.';
+      buildBitmapGrid(data.cols, data.rows);
+    } else if (generated.currentType === 'type4') {
+      var exGrid2 = [];
+      for (var exJ = 0; exJ < 15; exJ++) exGrid2.push('B');
+      for (var exJ = 0; exJ < 9; exJ++) exGrid2.push('W');
+      byId('rle-q-text').innerHTML =
+        'Reading left-to-right, top-to-bottom, this 3\u2009\u00d7\u20098 grid can be encoded using RLE as <span class="rle-inline-code">B15W9</span>:' +
+        '<div style="margin:10px 0 14px;">' + buildExampleGridHtml(8, exGrid2) + '</div>' +
+        'Using the same notation, encode this ' + data.rows + '\u2009\u00d7\u2009' + data.cols + ' grid:' +
+        '<div style="margin:10px 0 14px;">' + buildExampleGridHtml(data.cols, data.grid) + '</div>';
+    } else {
+      byId('rle-q-text').innerHTML =
+        'The text <span class="rle-inline-code">' + escapeHtml(example.text) + '</span> (' + example.inputLength + ' chars) can be compressed with RLE into <span class="rle-inline-code">' + escapeHtml(example.encoded) + '</span> (' + example.encodedLength + ' chars), saving ' + example.saved + ' chars.' +
+        '<br><br>Using this notation, compress the string <span class="rle-inline-code">' + escapeHtml(data.text) + '</span>';
+    }
+
+    clearQuizFeedback();
+    closeQuizModal();
+    clearQuizAnswers();
+    clearAnswerInputErrors();
+    setQuizLocked(false);
+
+    var firstInput = generated.currentType === 'type2'
+      ? byId('rle-q-decoded')
+      : generated.currentType === 'type4'
+      ? byId('rle-q-encoded-bitmap')
+      : byId('rle-q-encoded');
+    if (firstInput) firstInput.focus();
+  }
+
+  function setQuizLocked(locked) {
+    Quiz.locked = locked;
+    var submitBtn = byId('rle-q-submit');
+    if (submitBtn) submitBtn.disabled = locked;
+
+    setQuestionTypeView(Quiz.current ? Quiz.current.type : 'type1');
+  }
+
+  function checkCurrentAnswer() {
+    if (!Quiz.current || Quiz.locked) return;
+
+    clearAnswerInputErrors();
+
+    var data = Quiz.current.data;
+
+    if (Quiz.current.type === 'type2') {
+      var decodedInput = byId('rle-q-decoded');
+      var decodedValue = normaliseDecodedText(decodedInput ? decodedInput.value : '');
+      if (!decodedValue.length) {
+        markInvalidInput(decodedInput);
+        return;
+      }
+
+      var type2Correct = decodedValue === normaliseDecodedText(data.text);
+      var type2Feedback = (type2Correct ? '<span class="fb-correct">Correct.</span>' : '<span class="fb-wrong">Not quite.</span>') +
+        '<br>Compressed pairs: <strong>' + escapeHtml(data.encoded) + '</strong>' +
+        '<br>Original string: <strong>' + escapeHtml(data.text) + '</strong>';
+
+      Quiz.total += 1;
+      if (type2Correct) Quiz.correct += 1;
+      else Quiz.wrong += 1;
+      updateQuizScore();
+      setQuizFeedback(type2Correct, type2Feedback);
+      setQuizLocked(true);
+      openQuizModal();
+      return;
+    }
+
+    if (Quiz.current.type === 'type3') {
+      var t3Correct = true;
+      var correctGrid = data.grid;
+      if (Quiz.gridState.length !== correctGrid.length) {
+        t3Correct = false;
+      } else {
+        for (var gi = 0; gi < correctGrid.length; gi++) {
+          if (Quiz.gridState[gi] !== correctGrid[gi]) { t3Correct = false; break; }
+        }
+      }
+      var t3Feedback = (t3Correct ? '<span class="fb-correct">Correct.</span>' : '<span class="fb-wrong">Not quite.</span>') +
+        '<br>Encoded string: <strong>' + escapeHtml(data.encoded) + '</strong>' +
+        '<br>Correct grid:<div>' + buildExampleGridHtml(data.cols, data.grid) + '</div>';
+      Quiz.total += 1;
+      if (t3Correct) Quiz.correct += 1;
+      else Quiz.wrong += 1;
+      updateQuizScore();
+      setQuizFeedback(t3Correct, t3Feedback);
+      setQuizLocked(true);
+      openQuizModal();
+      return;
+    }
+
+    if (Quiz.current.type === 'type4') {
+      var encodedBitmapInput = byId('rle-q-encoded-bitmap');
+      var encodedBitmapValue = normaliseCompactRle(encodedBitmapInput ? encodedBitmapInput.value : '');
+      if (!encodedBitmapValue.length) {
+        markInvalidInput(encodedBitmapInput);
+        return;
+      }
+
+      var t4Correct = encodedBitmapValue === data.encoded;
+      var t4Feedback = (t4Correct ? '<span class="fb-correct">Correct.</span>' : '<span class="fb-wrong">Not quite.</span>') +
+        '<br>Correct RLE: <strong>' + escapeHtml(data.encoded) + '</strong>' +
+        '<br>Grid:<div>' + buildExampleGridHtml(data.cols, data.grid) + '</div>';
+      Quiz.total += 1;
+      if (t4Correct) Quiz.correct += 1;
+      else Quiz.wrong += 1;
+      updateQuizScore();
+      setQuizFeedback(t4Correct, t4Feedback);
+      setQuizLocked(true);
+      openQuizModal();
+      return;
+    }
+
+    var encodedInput = byId('rle-q-encoded');
+    var inputLenInput = byId('rle-q-input-length');
+    var compressedLenInput = byId('rle-q-compressed-length');
+
+    var encodedValue = normaliseCompactRle(encodedInput ? encodedInput.value : '');
+    var inputLength = parseWholeNumber(inputLenInput ? inputLenInput.value : '');
+    var compressedLength = parseWholeNumber(compressedLenInput ? compressedLenInput.value : '');
+    var effect = Quiz.selectedEffect;
+
+    if (!encodedValue.length) {
+      markInvalidInput(encodedInput);
+      return;
+    }
+    if (inputLength === null) {
+      markInvalidInput(inputLenInput);
+      return;
+    }
+    if (compressedLength === null) {
+      markInvalidInput(compressedLenInput);
+      return;
+    }
+    if (!effect) {
+      markEffectInvalid();
+      return;
+    }
+
+    var correct = encodedValue === data.encoded && inputLength === data.inputLength && compressedLength === data.encodedLength && effect === data.effect;
+    var feedback = (correct ? '<span class="fb-correct">Correct.</span>' : '<span class="fb-wrong">Not quite.</span>') +
+      '<br>Compressed string: <strong>' + escapeHtml(data.encoded) + '</strong>' +
+      '<br>Initial char count: <strong>' + data.inputLength + '</strong>' +
+      '<br>Compressed char count: <strong>' + data.encodedLength + '</strong>' +
+      '<br>Result: <strong>' + data.effect + '</strong>';
+
+    Quiz.total += 1;
+    if (correct) Quiz.correct += 1;
+    else Quiz.wrong += 1;
+    updateQuizScore();
+    setQuizFeedback(correct, feedback);
+    setQuizLocked(true);
+    openQuizModal();
+  }
+
+  function initQuiz() {
+    if (Quiz.initialized) return;
+
+    document.querySelectorAll('[data-rle-qt]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        Quiz.mode = btn.getAttribute('data-rle-qt') || 'mixed';
+        setQuizModeButtons();
+        generateQuestion();
+      });
+    });
+
+    document.querySelectorAll('[data-rle-effect]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (Quiz.locked) return;
+        setEffectSelection(btn.getAttribute('data-rle-effect'));
+      });
+    });
+
+    var submitBtn = byId('rle-q-submit');
+    var nextBtn = byId('rle-q-next');
+    var resetBtn = byId('rle-q-reset-score');
+    var clearGridBtn = byId('rle-q3-clear');
+
+    if (submitBtn) submitBtn.addEventListener('click', checkCurrentAnswer);
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function () {
+        closeQuizModal();
+        generateQuestion();
+      });
+    }
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        Quiz.correct = 0;
+        Quiz.wrong = 0;
+        Quiz.total = 0;
+        updateQuizScore();
+        closeQuizModal();
+        generateQuestion();
+      });
+    }
+    if (clearGridBtn) {
+      clearGridBtn.addEventListener('click', function () {
+        if (Quiz.locked) return;
+        Quiz.gridState = Quiz.gridState.map(function () { return 'W'; });
+        document.querySelectorAll('#rle-bitmap-grid-container .rle-pixel').forEach(function (cell) {
+          cell.className = 'rle-pixel w';
+          cell.setAttribute('aria-pressed', 'false');
+        });
+      });
+    }
+
+    updateQuizScore();
+    setQuizModeButtons();
+    generateQuestion();
+    Quiz.initialized = true;
+  }
+
   // ---------- Init ----------
   document.addEventListener('DOMContentLoaded', function () {
-    var inputEl  = byId('rle-input');
+    var inputEl = byId('rle-input');
     if (!inputEl) return;
+
+    var tabExplore = byId('tab-explore');
+    var tabQuiz = byId('tab-quiz');
+
+    if (tabExplore) {
+      tabExplore.addEventListener('click', function () {
+        closeQuizModal();
+        setMode('explore');
+      });
+    }
+    if (tabQuiz) {
+      tabQuiz.addEventListener('click', function () {
+        setMode('quiz');
+        initQuiz();
+      });
+    }
 
     inputEl.value = SAMPLES.colors;
     inputEl.addEventListener('input', renderAll);
 
     wireSamples();
+    setMode('explore');
     renderAll();
   });
 })();
