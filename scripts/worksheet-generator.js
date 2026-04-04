@@ -352,7 +352,10 @@
   var PROMPT_BOX_GAP = 4;
   var PROMPT_PARTS_LINE_GAP = 8;
   var PROMPT_PARTS_LINE_GAP_COMPACT = 14;
+  var PROMPT_PARTS_TO_PARTS_GAP_COMPACT = 4;
+  var PROMPT_PARTS_TO_TEXT_GAP_COMPACT = 6;
   var PROMPT_PARTS_TO_BITMAP_GAP_COMPACT = 0;
+  var PROMPT_PARTS_TO_ANSWER_BITMAP_GAP_COMPACT = 2;
   var PROMPT_BITMAP_GAP_COMPACT = 16;
   var PROMPT_BITMAP_GAP_NORMAL = 20;
   var PROMPT_BOX_LINE_LEAD_COMPACT = 6;
@@ -1045,8 +1048,23 @@
             total += wrappedLines(block.text || "", fontSize, false, maxWidth).length * promptLineH;
           } else if (block.type === "parts") {
             total += measurePromptParts(Array.isArray(block.parts) ? block.parts : [], fontSize, promptLineH, maxWidth);
-            if (fontSize <= 9.5 && nextBlock && nextBlock.type === "bitmap") {
-              total += PROMPT_PARTS_TO_BITMAP_GAP_COMPACT;
+            if (fontSize <= 9.5 && nextBlock) {
+              if (nextBlock.type === "bitmap") {
+                total += PROMPT_PARTS_TO_BITMAP_GAP_COMPACT;
+              } else if (nextBlock.type === "parts") {
+                total += PROMPT_PARTS_TO_PARTS_GAP_COMPACT;
+              } else if (nextBlock.type === "text") {
+                total += PROMPT_PARTS_TO_TEXT_GAP_COMPACT;
+              } else {
+                total += partsGap;
+              }
+            } else if (
+              fontSize <= 9.5 &&
+              !nextBlock &&
+              item.answerLayout &&
+              item.answerLayout.kind === "bitmapGrid"
+            ) {
+              total += PROMPT_PARTS_TO_ANSWER_BITMAP_GAP_COMPACT;
             } else {
               total += partsGap;
             }
@@ -1102,8 +1120,23 @@
           }
           if (block.type === "parts") {
             renderPromptParts(Array.isArray(block.parts) ? block.parts : [], x, maxWidth, fontSize, promptLineH);
-            if (compactMode && nextBlock && nextBlock.type === "bitmap") {
-              y += PROMPT_PARTS_TO_BITMAP_GAP_COMPACT;
+            if (compactMode && nextBlock) {
+              if (nextBlock.type === "bitmap") {
+                y += PROMPT_PARTS_TO_BITMAP_GAP_COMPACT;
+              } else if (nextBlock.type === "parts") {
+                y += PROMPT_PARTS_TO_PARTS_GAP_COMPACT;
+              } else if (nextBlock.type === "text") {
+                y += PROMPT_PARTS_TO_TEXT_GAP_COMPACT;
+              } else {
+                y += partsGap;
+              }
+            } else if (
+              compactMode &&
+              !nextBlock &&
+              item.answerLayout &&
+              item.answerLayout.kind === "bitmapGrid"
+            ) {
+              y += PROMPT_PARTS_TO_ANSWER_BITMAP_GAP_COMPACT;
             } else {
               y += partsGap;
             }
@@ -1661,6 +1694,9 @@
 
         items.forEach(function (item) {
           var x;
+          var compactBitmapAnswerH = item.answerLayout && item.answerLayout.kind === "bitmapGrid"
+            ? bitmapGridHeight(item.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
+            : 0;
           var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
           var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
           var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
@@ -1669,7 +1705,7 @@
           var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
           var promptBitmapTailGap = item.promptBitmap ? 4 : 0;
           var treeTailGap = item.promptTree ? 6 : 0;
-          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactGapAfterBlock;
 
           var targetColumn = chooseCompactColumn(blockHeight);
           x = targetColumn === 0 ? leftX : rightX;
@@ -1694,6 +1730,10 @@
           if (item.promptTree) {
             y += 6;
           }
+          if (item.answerLayout && item.answerLayout.kind === "bitmapGrid") {
+            y += drawBitmapGrid(x, y, item.answerLayout, columnWidth, true, false);
+            y += PROMPT_BITMAP_GAP_COMPACT;
+          }
           y += compactGapAfterBlock;
           compactColumnY[targetColumn] = y;
         });
@@ -1714,6 +1754,9 @@
 
         items.forEach(function (item) {
           var x = column === 0 ? leftX : rightX;
+          var compactBitmapAnswerH = item.answerLayout && item.answerLayout.kind === "bitmapGrid"
+            ? bitmapGridHeight(item.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
+            : 0;
           var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
           var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
           var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
@@ -1722,7 +1765,7 @@
           var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
           var promptBitmapTailGap = item.promptBitmap ? 4 : 0;
           var treeTailGap = item.promptTree ? 6 : 0;
-          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactGapAfterBlock;
 
           ensureCompactSpace(blockHeight);
           x = column === 0 ? leftX : rightX;
@@ -1745,6 +1788,10 @@
           drawPromptTree(item, x, columnWidth, true);
           if (item.promptTree) {
             y += 6;
+          }
+          if (item.answerLayout && item.answerLayout.kind === "bitmapGrid") {
+            y += drawBitmapGrid(x, y, item.answerLayout, columnWidth, true, false);
+            y += PROMPT_BITMAP_GAP_COMPACT;
           }
           y += compactGapAfterBlock;
         });
