@@ -413,9 +413,9 @@
       for (var exI = 0; exI < 15; exI++) exGrid.push('B');
       for (var exI = 0; exI < 9; exI++) exGrid.push('W');
       byId('rle-q-text').innerHTML =
-        'Reading left-to-right, top-to-bottom, this 3\u2009\u00d7\u20098 grid can be encoded using RLE as <span class="rle-inline-code">B15W9</span>:' +
+        'Reading left-to-right, top-to-bottom, this 3\u2009\u00d7\u20098 bitmap grid can be encoded using RLE as <span class="rle-inline-code">B15W9</span>:' +
         '<div style="margin:10px 0 14px;">' + buildExampleGridHtml(8, exGrid) + '</div>' +
-        'Decode <span class="rle-inline-code">' + escapeHtml(data.encoded) + '</span> by clicking the grid below. ' +
+        'Decode <span class="rle-inline-code">' + escapeHtml(data.encoded) + '</span> by clicking the bitmap grid below. ' +
         'The grid is ' + data.rows + '\u2009\u00d7\u2009' + data.cols + '.';
       buildBitmapGrid(data.cols, data.rows);
     } else if (generated.currentType === 'type4') {
@@ -423,14 +423,14 @@
       for (var exJ = 0; exJ < 15; exJ++) exGrid2.push('B');
       for (var exJ = 0; exJ < 9; exJ++) exGrid2.push('W');
       byId('rle-q-text').innerHTML =
-        'Reading left-to-right, top-to-bottom, this 3\u2009\u00d7\u20098 grid can be encoded using RLE as <span class="rle-inline-code">B15W9</span>:' +
+        'Reading left-to-right, top-to-bottom, this 3\u2009\u00d7\u20098 bitmap grid can be encoded using RLE as <span class="rle-inline-code">B15W9</span>:' +
         '<div style="margin:10px 0 14px;">' + buildExampleGridHtml(8, exGrid2) + '</div>' +
-        'Using the same notation, encode this ' + data.rows + '\u2009\u00d7\u2009' + data.cols + ' grid:' +
+        'Using the same notation, encode this ' + data.rows + '\u2009\u00d7\u2009' + data.cols + ' bitmap grid:' +
         '<div style="margin:10px 0 14px;">' + buildExampleGridHtml(data.cols, data.grid) + '</div>';
     } else {
       byId('rle-q-text').innerHTML =
         'The text <span class="rle-inline-code">' + escapeHtml(example.text) + '</span> (' + example.inputLength + ' chars) can be compressed with RLE into <span class="rle-inline-code">' + escapeHtml(example.encoded) + '</span> (' + example.encodedLength + ' chars), saving ' + example.saved + ' chars.' +
-        '<br><br>Using this notation, compress the string <span class="rle-inline-code">' + escapeHtml(data.text) + '</span>';
+        '<br><br>Using this notation, apply RLE to the string <span class="rle-inline-code">' + escapeHtml(data.text) + '</span>';
     }
 
     clearQuizFeedback();

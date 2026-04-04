@@ -403,6 +403,7 @@
       }).join('');
       const inputLength = text.length;
       const encodedLength = encoded.length;
+      if (inputLength > 40) continue;
       if (inputLength === encodedLength) continue;
 
       return {

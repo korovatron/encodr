@@ -89,10 +89,11 @@
       ]
     },
     {
-      id: "huffman",
-      label: "Huffman Coding",
+      id: "compression",
+      label: "Compression",
       subtypes: [
-        { id: "mixed", label: "Random Huffman question type" }
+        { id: "huffman", label: "Huffman Coding" },
+        { id: "rle", label: "Run Length Encoding (RLE)" }
       ]
     }
   ];
@@ -328,6 +329,34 @@
     return names.slice(0, -1).join(", ") + ", and " + names[names.length - 1];
   }
 
+  function rleBitmapRowsText(grid, cols) {
+    var rows = [];
+    var safeCols = Math.max(1, cols || 1);
+    for (var i = 0; i < grid.length; i += safeCols) {
+      rows.push(grid.slice(i, i + safeCols).join(""));
+    }
+    return rows.join(" / ");
+  }
+
+  function rleExampleBitmap() {
+    var grid = [];
+    for (var i = 0; i < 15; i++) grid.push("B");
+    for (var j = 0; j < 9; j++) grid.push("W");
+    return {
+      rows: 3,
+      cols: 8,
+      grid: grid
+    };
+  }
+
+  var PROMPT_BOX_GAP = 4;
+  var PROMPT_PARTS_LINE_GAP = 8;
+  var PROMPT_PARTS_LINE_GAP_COMPACT = 14;
+  var PROMPT_PARTS_TO_BITMAP_GAP_COMPACT = 0;
+  var PROMPT_BITMAP_GAP_COMPACT = 16;
+  var PROMPT_BITMAP_GAP_NORMAL = 20;
+  var PROMPT_BOX_LINE_LEAD_COMPACT = 6;
+
   function binaryPointIndex(text) {
     var raw = String(text || "");
     var point = raw.indexOf(".");
@@ -339,11 +368,13 @@
     return m ? m[0] : null;
   }
 
-  function mapQuestion(source) {
+  function mapQuestion(source, constraints) {
     var generators = window.EncodrQuizGenerators;
     if (!generators) {
       throw new Error("Generators are not loaded yet. Refresh and try again.");
     }
+
+    var rules = constraints || {};
 
     if (source.topicId === "unsigned") {
       var uq = generators.unsigned.generate(source.subtypeId);
@@ -533,8 +564,8 @@
       };
     }
 
-    if (source.topicId === "huffman") {
-      var hq = generators.huffman.generate(source.subtypeId || "mixed");
+    if (source.topicId === "compression" && source.subtypeId === "huffman") {
+      var hq = generators.huffman.generate("mixed");
       if (hq.currentType === "type1") {
         var symbols = Array.isArray(hq.symbols) ? hq.symbols : [];
         var codePairs = symbols.map(function (sym) {
@@ -542,7 +573,7 @@
         }).join(", ");
         var hfSuffix1 = "is encoded into the Huffman tree below. Write down the codes for the letters";
         return {
-          topic: source.topicLabel,
+          topic: "Huffman Coding",
           prompt: "The phrase '" + hq.phrase + "' " + hfSuffix1 + " " + formatHuffmanSymbolList(symbols) + ".",
           promptPrefix: "The phrase",
           promptInlineBoxText: hq.phrase,
@@ -558,7 +589,7 @@
 
       var hfSuffix2 = "is encoded into the Huffman tree below. Calculate the number of ASCII bits, the number of Huffman bits, and the number of bits saved.";
       return {
-        topic: source.topicLabel,
+        topic: "Huffman Coding",
         prompt: "The phrase '" + hq.phrase + "' " + hfSuffix2,
         promptPrefix: "The phrase",
         promptInlineBoxText: hq.phrase,
@@ -568,6 +599,165 @@
         answerLayout: null,
         promptBitBoxes: [],
         promptTree: hq.data.tree || null
+      };
+    }
+
+    if (source.topicId === "compression" && source.subtypeId === "rle") {
+      var rleMode = pick(["type1", "type2", "type3", "type4"]);
+      var rq = generators.rle.generate(rleMode);
+      var type1MaxChars = Number.isFinite(rules.rleType1MaxChars) ? rules.rleType1MaxChars : 40;
+
+      if (rq.currentType === "type1" && rq.data && rq.data.text && rq.data.text.length > type1MaxChars) {
+        for (var rleTries = 0; rleTries < 200; rleTries++) {
+          var retry = generators.rle.generate("type1");
+          if (retry && retry.data && retry.data.text && retry.data.text.length <= type1MaxChars) {
+            rq = retry;
+            break;
+          }
+        }
+      }
+
+      if (rq.currentType === "type2") {
+        return {
+          topic: "Run Length Encoding (RLE)",
+          prompt: "A string has been compressed with RLE into " + rq.data.encoded + ". Expand it back into the original uncompressed string.",
+          promptBlocks: [
+            {
+              type: "parts",
+              parts: [
+                { type: "text", text: "A string has been compressed with RLE into " },
+                { type: "box", text: rq.data.encoded },
+                { type: "text", text: "." }
+              ]
+            },
+            {
+              type: "text",
+              text: "Expand it back into the original uncompressed string."
+            }
+          ],
+          instruction: "Write the full original string.",
+          answer: rq.data.text,
+          answerLayout: null,
+          promptBitBoxes: [],
+          promptTree: null
+        };
+      }
+
+      if (rq.currentType === "type3") {
+        return {
+          topic: "Run Length Encoding (RLE)",
+          prompt: "Reading left-to-right, top-to-bottom, the 3 x 8 bitmap grid below can be encoded using RLE as B15W9. Using this notation, decode " + rq.data.encoded + " and shade the bitmap grid below.",
+          promptBlocks: [
+            {
+              type: "parts",
+              parts: [
+                { type: "text", text: "Reading left-to-right, top-to-bottom, the 3 x 8 bitmap grid below can be encoded using RLE as " },
+                { type: "box", text: "B15W9" },
+                { type: "text", text: "." }
+              ]
+            },
+            {
+              type: "bitmap",
+              bitmap: rleExampleBitmap()
+            },
+            {
+              type: "parts",
+              parts: [
+                { type: "text", text: "Using this notation, decode " },
+                { type: "box", text: rq.data.encoded },
+                { type: "text", text: " and shade the bitmap grid below." }
+              ]
+            }
+          ],
+          instruction: "Shade the grid to show the decoded bitmap.",
+          answer: "Rows: " + rleBitmapRowsText(rq.data.grid, rq.data.cols),
+          answerLayout: {
+            kind: "bitmapGrid",
+            rows: rq.data.rows,
+            cols: rq.data.cols,
+            grid: rq.data.grid
+          },
+          promptBitBoxes: [],
+          promptTree: null,
+          promptBitmap: null,
+          promptBitmaps: []
+        };
+      }
+
+      if (rq.currentType === "type4") {
+        return {
+          topic: "Run Length Encoding (RLE)",
+          prompt: "Reading left-to-right, top-to-bottom, the 3 x 8 bitmap grid below can be encoded using RLE as B15W9. Using this notation, encode the bitmap grid shown below.",
+          promptBlocks: [
+            {
+              type: "parts",
+              parts: [
+                { type: "text", text: "Reading left-to-right, top-to-bottom, the 3 x 8 bitmap grid below can be encoded using RLE as " },
+                { type: "box", text: "B15W9" },
+                { type: "text", text: "." }
+              ]
+            },
+            {
+              type: "bitmap",
+              bitmap: rleExampleBitmap()
+            },
+            {
+              type: "text",
+              text: "Using this notation, encode the bitmap grid shown below."
+            },
+            {
+              type: "bitmap",
+              bitmap: {
+                rows: rq.data.rows,
+                cols: rq.data.cols,
+                grid: rq.data.grid
+              }
+            }
+          ],
+          instruction: "Write the RLE encoded string.",
+          answer: rq.data.encoded,
+          answerLayout: null,
+          promptBitBoxes: [],
+          promptTree: null,
+          promptBitmap: null,
+          promptBitmaps: []
+        };
+      }
+
+      return {
+        topic: "Run Length Encoding (RLE)",
+        prompt: "The text AAAAGGGTT can be compressed with RLE into A4G3T2. Using this notation, apply RLE to the string " + rq.data.text + ". Also state the initial character count, the compressed character count, the saving, and whether this results in compression or expansion.",
+        promptBlocks: [
+          {
+            type: "parts",
+            parts: [
+              { type: "text", text: "The text " },
+              { type: "box", text: "AAAAGGGTT" },
+              { type: "text", text: " can be compressed with RLE into " },
+              { type: "box", text: "A4G3T2" },
+              { type: "text", text: "." }
+            ]
+          },
+          {
+            type: "parts",
+            parts: [
+              { type: "text", text: "Using this notation, apply RLE to the string " },
+              { type: "box", text: rq.data.text },
+              { type: "text", text: "." }
+            ]
+          },
+          {
+            type: "text",
+            text: "Also state the initial character count, the compressed character count, the saving, and whether this results in compression or expansion."
+          }
+        ],
+        instruction: "Write the RLE-encoded string, the initial character count, the encoded character count, the saving, and whether this results in compression or expansion.",
+        answer: "Compressed: " + rq.data.encoded + ", Initial character count: " + rq.data.inputLength + ", Compressed character count: " + rq.data.encodedLength + ", Saving: " + rq.data.netChange + ", Result: " + rq.data.effect,
+        answerLayout: null,
+        promptBitBoxes: [],
+        promptTree: null,
+        promptBitmap: null,
+        promptBitmaps: []
       };
     }
 
@@ -592,15 +782,27 @@
     };
   }
 
-  function buildWorksheetItems(count, selections) {
+  function buildWorksheetItems(count, selections, layoutMode) {
     soundFileSizeLastKind = null;
     soundFileSizeStreak = 0;
+    var rleType1MaxChars = layoutMode === "normal" ? 40 : 30;
 
-    var huffmanSelection = selections.find(function (sel) { return sel.topicId === "huffman"; }) || null;
-    var otherSelections = selections.filter(function (sel) { return sel.topicId !== "huffman"; });
+    var compressionSelection = selections.find(function (sel) { return sel.topicId === "compression"; }) || null;
+    var hasHuffman = !!(compressionSelection && compressionSelection.subtypeIds.indexOf("huffman") !== -1);
+    var hasRle = !!(compressionSelection && compressionSelection.subtypeIds.indexOf("rle") !== -1);
+
+    var otherSelections = selections.filter(function (sel) { return sel.topicId !== "compression"; });
+    if (hasRle) {
+      otherSelections.push({
+        topicId: "compression",
+        topicLabel: "Run Length Encoding (RLE)",
+        subtypeIds: ["rle"],
+        options: compressionSelection ? (compressionSelection.options || {}) : {}
+      });
+    }
 
     // Distribute count evenly across selected topics
-    var nonHuffmanCount = huffmanSelection ? Math.max(0, count - 1) : count;
+    var nonHuffmanCount = hasHuffman ? Math.max(0, count - 1) : count;
     var numTopics = otherSelections.length;
     var base = numTopics ? Math.floor(nonHuffmanCount / numTopics) : 0;
     var remainder = numTopics ? (nonHuffmanCount % numTopics) : 0;
@@ -609,12 +811,12 @@
     // then distribute remaining questions across other selected topics.
     var huffmanSource = null;
     var otherSources = [];
-    if (huffmanSelection) {
+    if (hasHuffman) {
       huffmanSource = {
-        topicId: huffmanSelection.topicId,
-        topicLabel: huffmanSelection.topicLabel,
-        subtypeId: "mixed",
-        options: huffmanSelection.options || {}
+        topicId: "compression",
+        topicLabel: "Huffman Coding",
+        subtypeId: "huffman",
+        options: compressionSelection ? (compressionSelection.options || {}) : {}
       };
     }
 
@@ -642,7 +844,7 @@
     // Generate questions
     var items = [];
     sources.forEach(function (source, idx) {
-      var q = mapQuestion(source);
+      var q = mapQuestion(source, { rleType1MaxChars: rleType1MaxChars });
       items.push({
         number: idx + 1,
         topic: q.topic,
@@ -651,11 +853,14 @@
         promptInlineBoxText: q.promptInlineBoxText || "",
         promptSuffix: q.promptSuffix || "",
         promptInlineSymbols: Array.isArray(q.promptInlineSymbols) ? q.promptInlineSymbols : [],
+        promptBlocks: Array.isArray(q.promptBlocks) ? q.promptBlocks : [],
         instruction: q.instruction,
         answer: q.answer,
         answerLayout: q.answerLayout || null,
         promptBitBoxes: Array.isArray(q.promptBitBoxes) ? q.promptBitBoxes : [],
-        promptTree: q.promptTree || null
+        promptTree: q.promptTree || null,
+        promptBitmap: q.promptBitmap || null,
+        promptBitmaps: Array.isArray(q.promptBitmaps) ? q.promptBitmaps : (q.promptBitmap ? [q.promptBitmap] : [])
       });
     });
     return items;
@@ -724,7 +929,135 @@
       return !!(item && item.promptInlineBoxText && item.promptSuffix);
     }
 
+    function textTokensForPromptParts(text) {
+      var src = String(text || "");
+      var tokens = src.match(/\S+\s*|\s+/g);
+      return tokens || [];
+    }
+
+    function isPunctuationToken(token) {
+      return /^[,.;:!?]+\s*$/.test(String(token || ""));
+    }
+
+    function partStartsWithPunctuation(part) {
+      var text = String((part && part.text) || "");
+      return /^\s*[,.;:!?]/.test(text);
+    }
+
+    function measurePromptParts(parts, fontSize, promptLineH, maxWidth) {
+      var xCur = 0;
+      var lines = 1;
+      var lineStep = promptLineH + (fontSize <= 9.5 ? PROMPT_BOX_LINE_LEAD_COMPACT : 0);
+      doc.setFontSize(fontSize);
+
+      parts.forEach(function (part, idx) {
+        if (part.type === "box") {
+          var boxText = String(part.text || "");
+          if (!boxText) return;
+          doc.setFont("helvetica", "bold");
+          var nextPart = idx < parts.length - 1 ? parts[idx + 1] : null;
+          var rightGap = (idx < parts.length - 1 && !partStartsWithPunctuation(nextPart)) ? PROMPT_BOX_GAP : 0;
+          var boxWidth = doc.getTextWidth(boxText) + 12 + (idx > 0 ? PROMPT_BOX_GAP : 0) + rightGap;
+          if (xCur > 0 && xCur + boxWidth > maxWidth) {
+            lines += 1;
+            xCur = 0;
+          }
+          xCur += boxWidth;
+          return;
+        }
+
+        doc.setFont("helvetica", "normal");
+        var tokens = textTokensForPromptParts(part.text);
+        tokens.forEach(function (token) {
+          var width = doc.getTextWidth(token);
+          if (xCur > 0 && xCur + width > maxWidth && !isPunctuationToken(token)) {
+            lines += 1;
+            xCur = 0;
+          }
+          xCur += width;
+        });
+      });
+
+      return lines * lineStep;
+    }
+
+    function renderPromptParts(parts, x, maxWidth, fontSize, promptLineH) {
+      var xCur = x;
+      var yCur = y;
+      var compactMode = fontSize <= 9.5;
+      var lineStep = promptLineH + (compactMode ? PROMPT_BOX_LINE_LEAD_COMPACT : 0);
+
+      doc.setFontSize(fontSize);
+      parts.forEach(function (part, idx) {
+        if (part.type === "box") {
+          var boxText = String(part.text || "");
+          if (!boxText) return;
+          doc.setFont("helvetica", "bold");
+          var nextPart = idx < parts.length - 1 ? parts[idx + 1] : null;
+          var leftGap = idx > 0 ? PROMPT_BOX_GAP : 0;
+          var rightGap = (idx < parts.length - 1 && !partStartsWithPunctuation(nextPart)) ? PROMPT_BOX_GAP : 0;
+          var boxWidth = doc.getTextWidth(boxText) + 12;
+          var fullWidth = leftGap + boxWidth + rightGap;
+
+          if (xCur > x && xCur + fullWidth > x + maxWidth) {
+            xCur = x;
+            yCur += lineStep;
+          }
+
+          xCur += leftGap;
+          var by = yCur - fontSize + (compactMode ? -1.6 : -0.5);
+          var bh = fontSize + 5;
+          doc.setFillColor(246, 246, 246);
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.8);
+          doc.roundedRect(xCur, by, boxWidth, bh, 3, 3, "FD");
+          doc.setTextColor(0);
+          doc.text(boxText, xCur + boxWidth / 2, yCur + (compactMode ? -1.2 : -0.6), { align: "center" });
+          xCur += boxWidth + rightGap;
+          return;
+        }
+
+        doc.setFont("helvetica", "normal");
+        var tokens = textTokensForPromptParts(part.text);
+        tokens.forEach(function (token) {
+          var width = doc.getTextWidth(token);
+          if (xCur > x && xCur + width > x + maxWidth && !isPunctuationToken(token)) {
+            xCur = x;
+            yCur += lineStep;
+          }
+          doc.setTextColor(0);
+          doc.text(token, xCur, yCur);
+          xCur += width;
+        });
+      });
+
+      y = yCur + lineStep;
+    }
+
     function promptTextHeight(item, fontSize, promptLineH, maxWidth) {
+      var lineStep = promptLineH + (fontSize <= 9.5 ? PROMPT_BOX_LINE_LEAD_COMPACT : 0);
+      if (Array.isArray(item.promptBlocks) && item.promptBlocks.length) {
+        var total = 0;
+        var partsGap = fontSize <= 9.5 ? PROMPT_PARTS_LINE_GAP_COMPACT : PROMPT_PARTS_LINE_GAP;
+        item.promptBlocks.forEach(function (block, idx) {
+          var nextBlock = idx < item.promptBlocks.length - 1 ? item.promptBlocks[idx + 1] : null;
+          if (block.type === "text") {
+            total += wrappedLines(block.text || "", fontSize, false, maxWidth).length * promptLineH;
+          } else if (block.type === "parts") {
+            total += measurePromptParts(Array.isArray(block.parts) ? block.parts : [], fontSize, promptLineH, maxWidth);
+            if (fontSize <= 9.5 && nextBlock && nextBlock.type === "bitmap") {
+              total += PROMPT_PARTS_TO_BITMAP_GAP_COMPACT;
+            } else {
+              total += partsGap;
+            }
+          } else if (block.type === "bitmap") {
+            total += bitmapGridHeight(block.bitmap, maxWidth, fontSize <= 9.5);
+            total += fontSize <= 9.5 ? PROMPT_BITMAP_GAP_COMPACT : PROMPT_BITMAP_GAP_NORMAL;
+          }
+        });
+        return total;
+      }
+
       if (!hasPromptInlineBox(item)) {
         return wrappedLines(item.prompt, fontSize, false, maxWidth).length * promptLineH;
       }
@@ -739,7 +1072,7 @@
       doc.setFont("helvetica", "bold");
       var boxW = doc.getTextWidth(boxText) + 12;
 
-      var firstLineHeight = promptLineH;
+      var firstLineHeight = lineStep;
       var suffixLines;
       if (prefixW + boxW + 10 <= maxWidth) {
         doc.setFont("helvetica", "normal");
@@ -747,12 +1080,43 @@
       } else {
         doc.setFont("helvetica", "normal");
         suffixLines = doc.splitTextToSize(prefix + " " + suffix, maxWidth);
-        firstLineHeight = promptLineH;
+        firstLineHeight = lineStep;
       }
-      return firstLineHeight + (suffixLines.length * promptLineH);
+      return firstLineHeight + (suffixLines.length * lineStep);
     }
 
     function renderPromptText(item, x, maxWidth, fontSize, promptLineH) {
+      if (Array.isArray(item.promptBlocks) && item.promptBlocks.length) {
+        var compactMode = fontSize <= 9.5;
+        var partsGap = compactMode ? PROMPT_PARTS_LINE_GAP_COMPACT : PROMPT_PARTS_LINE_GAP;
+        item.promptBlocks.forEach(function (block, idx) {
+          var nextBlock = idx < item.promptBlocks.length - 1 ? item.promptBlocks[idx + 1] : null;
+          if (block.type === "text") {
+            var textLines = wrappedLines(block.text || "", fontSize, false, maxWidth);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(fontSize);
+            doc.setTextColor(0);
+            doc.text(textLines, x, y);
+            y += textLines.length * promptLineH;
+            return;
+          }
+          if (block.type === "parts") {
+            renderPromptParts(Array.isArray(block.parts) ? block.parts : [], x, maxWidth, fontSize, promptLineH);
+            if (compactMode && nextBlock && nextBlock.type === "bitmap") {
+              y += PROMPT_PARTS_TO_BITMAP_GAP_COMPACT;
+            } else {
+              y += partsGap;
+            }
+            return;
+          }
+          if (block.type === "bitmap") {
+            y += drawBitmapGrid(x, y, block.bitmap, maxWidth, compactMode, true);
+            y += compactMode ? PROMPT_BITMAP_GAP_COMPACT : PROMPT_BITMAP_GAP_NORMAL;
+          }
+        });
+        return;
+      }
+
       if (!hasPromptInlineBox(item)) {
         var lines = wrappedLines(item.prompt, fontSize, false, maxWidth);
         doc.setFont("helvetica", "normal");
@@ -809,7 +1173,8 @@
       var prefixW = doc.getTextWidth(prefix) + 8;
       doc.setFont("helvetica", "bold");
       var boxW = doc.getTextWidth(boxText) + 12;
-      var inlineFits = (prefixW + boxW + 10 <= maxWidth);
+      var inlineFits = (prefixW + PROMPT_BOX_GAP + boxW + 10 <= maxWidth);
+      var lineStep = promptLineH + (fontSize <= 9.5 ? PROMPT_BOX_LINE_LEAD_COMPACT : 0);
 
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0);
@@ -817,7 +1182,7 @@
 
       if (inlineFits) {
         var isCompactText = fontSize <= 9.5;
-        var bx = x + prefixW;
+        var bx = x + prefixW + PROMPT_BOX_GAP;
         var by = y - fontSize + (isCompactText ? -1.6 : -0.5);
         var bh = fontSize + 5;
         doc.setFillColor(246, 246, 246);
@@ -827,21 +1192,21 @@
         doc.setFont("helvetica", "bold");
         doc.setTextColor(0);
         doc.text(boxText, bx + boxW / 2, y + (isCompactText ? -1.2 : -0.6), { align: "center" });
-        y += promptLineH;
+        y += lineStep;
 
         doc.setFont("helvetica", "normal");
         doc.setTextColor(0);
         var suffixLines = doc.splitTextToSize(suffix, maxWidth);
         doc.text(suffixLines, x, y);
-        y += suffixLines.length * promptLineH;
+        y += suffixLines.length * lineStep;
         renderInlineSymbolTokens();
         return;
       }
 
-      y += promptLineH;
+      y += lineStep;
       var fallbackLines = doc.splitTextToSize(prefix + " " + suffix, maxWidth);
       doc.text(fallbackLines, x, y);
-      y += fallbackLines.length * promptLineH;
+      y += fallbackLines.length * lineStep;
       renderInlineSymbolTokens();
     }
 
@@ -918,6 +1283,56 @@
       return total;
     }
 
+    function promptBitmapHeight(item, maxWidth, compactMode) {
+      if (Array.isArray(item.promptBlocks) && item.promptBlocks.length) return 0;
+      var bitmaps = Array.isArray(item.promptBitmaps) ? item.promptBitmaps : [];
+      if (!bitmaps.length) return 0;
+      var total = 0;
+      bitmaps.forEach(function (bitmap, idx) {
+        total += bitmapGridHeight(bitmap, maxWidth || (pageW - margin * 2), compactMode);
+        total += compactMode ? PROMPT_BITMAP_GAP_COMPACT : PROMPT_BITMAP_GAP_NORMAL;
+      });
+      return total;
+    }
+
+    function bitmapGridHeight(bitmap, maxWidth, compactMode) {
+      if (!bitmap || !bitmap.rows || !bitmap.cols) return 0;
+      var cols = Math.max(1, bitmap.cols);
+      var rows = Math.max(1, bitmap.rows);
+      var gap = compactMode ? 2 : 3;
+      var maxCell = compactMode ? 12 : 16;
+      var cell = Math.max(6, Math.min(maxCell, Math.floor((maxWidth - ((cols - 1) * gap)) / cols)));
+      return rows * cell + (rows - 1) * gap;
+    }
+
+    function drawBitmapGrid(x, yStart, bitmap, maxWidth, compactMode, drawValues) {
+      if (!bitmap || !bitmap.rows || !bitmap.cols) return 0;
+      var cols = Math.max(1, bitmap.cols);
+      var rows = Math.max(1, bitmap.rows);
+      var grid = Array.isArray(bitmap.grid) ? bitmap.grid : [];
+      var gap = compactMode ? 2 : 3;
+      var maxCell = compactMode ? 12 : 16;
+      var cell = Math.max(6, Math.min(maxCell, Math.floor((maxWidth - ((cols - 1) * gap)) / cols)));
+      var totalW = cols * cell + (cols - 1) * gap;
+      var offsetX = x + Math.max(0, Math.floor((maxWidth - totalW) / 2));
+      var yy = yStart;
+
+      for (var row = 0; row < rows; row++) {
+        for (var col = 0; col < cols; col++) {
+          var idx = row * cols + col;
+          var xx = offsetX + col * (cell + gap);
+          var fill = drawValues ? (grid[idx] === "B" ? [20, 20, 20] : [255, 255, 255]) : [255, 255, 255];
+          doc.setFillColor(fill[0], fill[1], fill[2]);
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.8);
+          doc.rect(xx, yy, cell, cell, "FD");
+        }
+        yy += cell + gap;
+      }
+
+      return rows * cell + (rows - 1) * gap;
+    }
+
     function renderPromptBitBoxes(item, x, maxWidth) {
       if (!item.promptBitBoxes || !item.promptBitBoxes.length) return;
       item.promptBitBoxes.forEach(function (entry) {
@@ -933,6 +1348,16 @@
             showLabel: entry.showLabel
           }
         );
+      });
+    }
+
+    function renderPromptBitmap(item, x, maxWidth, compactMode) {
+      if (Array.isArray(item.promptBlocks) && item.promptBlocks.length) return;
+      var bitmaps = Array.isArray(item.promptBitmaps) ? item.promptBitmaps : [];
+      if (!bitmaps.length) return;
+      bitmaps.forEach(function (bitmap) {
+        y += drawBitmapGrid(x, y, bitmap, maxWidth, compactMode, true);
+        y += compactMode ? PROMPT_BITMAP_GAP_COMPACT : PROMPT_BITMAP_GAP_NORMAL;
       });
     }
 
@@ -1103,6 +1528,9 @@
       if (layout.kind === "binaryBoxes") {
         return lineH + 8 + 16;
       }
+      if (layout.kind === "bitmapGrid") {
+        return lineH + bitmapGridHeight(layout, pageW - margin * 2, false) + 14;
+      }
       if (layout.kind === "mantissaExponent") {
         var base = 2 * (lineH + 8 + 16);
         if (layout.includeErrors) base += 2 * lineH + 4;
@@ -1137,6 +1565,17 @@
         return;
       }
 
+      if (layout.kind === "bitmapGrid") {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.setTextColor(0);
+        doc.text("Answer grid:", margin, y + lineH - 2);
+        y += lineH + 2;
+        y += drawBitmapGrid(margin, y, layout, pageW - margin * 2, false, false);
+        y += 12;
+        return;
+      }
+
       if (layout.kind === "mantissaExponent") {
         y += drawMantissaExponentBoxes(margin, y, layout);
         y += 6;
@@ -1164,13 +1603,15 @@
           var l1 = wrappedLines("Q" + item.number, 12, true);
           var promptTextH = promptTextHeight(item, 11, lineH, pageW - margin * 2);
           var promptBoxH = promptBitBoxesHeight(item, pageW - margin * 2);
+          var promptBitmapH = promptBitmapHeight(item, pageW - margin * 2, false);
           var treeH = promptTreeHeight(item, false);
-          var blockHeight = (l1.length * lineH) + promptTextH + promptBoxH + treeH + answerAreaHeight(item) + (2 * 4);
+          var blockHeight = (l1.length * lineH) + promptTextH + promptBoxH + promptBitmapH + treeH + answerAreaHeight(item) + (2 * 4);
 
           ensureSpace(blockHeight);
           writeLines(l1, 12, true);
           renderPromptText(item, margin, pageW - margin * 2, 11, lineH);
           renderPromptBitBoxes(item, margin, pageW - margin * 2);
+          renderPromptBitmap(item, margin, pageW - margin * 2, false);
           drawPromptTree(item, margin, pageW - margin * 2, false);
           renderAnswerArea(item);
         });
@@ -1223,10 +1664,12 @@
           var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
           var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
           var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
+          var promptBitmapHCompact = promptBitmapHeight(item, columnWidth, true);
           var treeHCompact = promptTreeHeight(item, true);
           var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
+          var promptBitmapTailGap = item.promptBitmap ? 4 : 0;
           var treeTailGap = item.promptTree ? 6 : 0;
-          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
 
           var targetColumn = chooseCompactColumn(blockHeight);
           x = targetColumn === 0 ? leftX : rightX;
@@ -1246,6 +1689,7 @@
           if (item.promptBitBoxes && item.promptBitBoxes.length) {
             y += 6;
           }
+          renderPromptBitmap(item, x, columnWidth, true);
           drawPromptTree(item, x, columnWidth, true);
           if (item.promptTree) {
             y += 6;
@@ -1273,10 +1717,12 @@
           var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
           var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
           var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
+          var promptBitmapHCompact = promptBitmapHeight(item, columnWidth, true);
           var treeHCompact = promptTreeHeight(item, true);
           var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
+          var promptBitmapTailGap = item.promptBitmap ? 4 : 0;
           var treeTailGap = item.promptTree ? 6 : 0;
-          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactGapAfterBlock;
 
           ensureCompactSpace(blockHeight);
           x = column === 0 ? leftX : rightX;
@@ -1295,6 +1741,7 @@
           if (item.promptBitBoxes && item.promptBitBoxes.length) {
             y += 6;
           }
+          renderPromptBitmap(item, x, columnWidth, true);
           drawPromptTree(item, x, columnWidth, true);
           if (item.promptTree) {
             y += 6;
@@ -1329,11 +1776,18 @@
     // Fill column 0 top-to-bottom, then overflow into column 1, then new page.
     var ansCol = 0;
     items.forEach(function (item) {
-      var text = "Q" + item.number + ": " + item.answer;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(ansFs);
-      var wrapped = doc.splitTextToSize(text, ansColW);
-      var blockH = wrapped.length * ansLineH + 4;
+      var isBitmapAnswer = item.answerLayout && item.answerLayout.kind === "bitmapGrid";
+      var blockH;
+      var wrapped = null;
+      if (isBitmapAnswer) {
+        blockH = ansLineH + bitmapGridHeight(item.answerLayout, ansColW, true) + 8;
+      } else {
+        var text = "Q" + item.number + ": " + item.answer;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(ansFs);
+        wrapped = doc.splitTextToSize(text, ansColW);
+        blockH = wrapped.length * ansLineH + 4;
+      }
       if (ansColY[ansCol] + blockH > contentBottom) {
         if (ansCol === 0) {
           // Move to column 1 at the same top baseline.
@@ -1347,8 +1801,16 @@
           ansCol = 0;
         }
       }
-      doc.setTextColor(0);
-      doc.text(wrapped, ansColX[ansCol], ansColY[ansCol]);
+      if (isBitmapAnswer) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(ansFs);
+        doc.setTextColor(0);
+        doc.text("Q" + item.number + ":", ansColX[ansCol], ansColY[ansCol]);
+        drawBitmapGrid(ansColX[ansCol], ansColY[ansCol] + 4, item.answerLayout, ansColW, true, true);
+      } else {
+        doc.setTextColor(0);
+        doc.text(wrapped, ansColX[ansCol], ansColY[ansCol]);
+      }
       ansColY[ansCol] += blockH;
     });
 
@@ -1387,7 +1849,7 @@
     }
 
     var includesHuffman = selections.some(function (sel) {
-      return sel.topicId === "huffman";
+      return sel.topicId === "compression" && Array.isArray(sel.subtypeIds) && sel.subtypeIds.indexOf("huffman") !== -1;
     });
 
     var pool = buildSourcePool(selections);
@@ -1402,7 +1864,7 @@
       : "Generating worksheet questions...", "");
 
     try {
-      var items = buildWorksheetItems(count, selections);
+      var items = buildWorksheetItems(count, selections, layoutMode);
       setStatus("Rendering PDF...", "");
       var pdf = await buildPdf(items, title, layoutMode);
       var filename = slugify(title) + "-" + new Date().toISOString().slice(0, 10) + ".pdf";
