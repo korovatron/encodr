@@ -435,12 +435,6 @@
     }).join('');
   }
 
-  function setQuizModeButtons() {
-    document.querySelectorAll('[data-hf-qt]').forEach(function (btn) {
-      btn.classList.toggle('active', btn.getAttribute('data-hf-qt') === Quiz.mode);
-    });
-  }
-
   function setQuestionTypeView(type) {
     var type1 = byId('hf-type1-area');
     var type2 = byId('hf-type2-area');
@@ -614,14 +608,6 @@
   function initQuiz() {
     if (Quiz.initialized) return;
 
-    document.querySelectorAll('[data-hf-qt]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        Quiz.mode = btn.getAttribute('data-hf-qt') || 'mixed';
-        setQuizModeButtons();
-        generateQuestion();
-      });
-    });
-
     var submitBtn = byId('hf-q-submit');
     var nextBtn = byId('hf-q-next');
     var resetBtn = byId('hf-q-reset-score');
@@ -645,7 +631,6 @@
     }
 
     updateQuizScore();
-    setQuizModeButtons();
     generateQuestion();
     Quiz.initialized = true;
   }

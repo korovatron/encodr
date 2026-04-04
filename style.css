@@ -514,7 +514,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   color: var(--ml);
   box-shadow: 0 0 8px rgba(255,255,0,.30);
 }
-.quiz-score-area { display: flex; align-items: center; gap: 14px; }
+.quiz-score-area { display: flex; align-items: center; gap: 14px; margin-left: auto; }
 .quiz-score-txt { font-size: 17px; font-weight: 700; font-family: 'Consolas', monospace; }
 .quiz-q-card { margin-bottom: 10px; }
 .quiz-q-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; justify-content: space-between; }

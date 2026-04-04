@@ -279,12 +279,6 @@
     if (modal && modal.open) modal.close();
   }
 
-  function setQuizModeButtons() {
-    document.querySelectorAll('[data-rle-qt]').forEach(function (btn) {
-      btn.classList.toggle('active', btn.getAttribute('data-rle-qt') === Quiz.mode);
-    });
-  }
-
   function setQuestionTypeView(type) {
     var type1 = byId('rle-type1-area');
     var type2 = byId('rle-type2-area');
@@ -581,14 +575,6 @@
   function initQuiz() {
     if (Quiz.initialized) return;
 
-    document.querySelectorAll('[data-rle-qt]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        Quiz.mode = btn.getAttribute('data-rle-qt') || 'mixed';
-        setQuizModeButtons();
-        generateQuestion();
-      });
-    });
-
     document.querySelectorAll('[data-rle-effect]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (Quiz.locked) return;
@@ -630,7 +616,6 @@
     }
 
     updateQuizScore();
-    setQuizModeButtons();
     generateQuestion();
     Quiz.initialized = true;
   }
