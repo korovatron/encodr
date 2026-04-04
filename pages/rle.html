@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <title>Encodr – Run Length Encoding</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/rle.js" defer></script>
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+  <style>
+    .rle-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .rle-layout .card {
+      min-width: 0;
+    }
+
+    .rle-card-input  { grid-column: 1; grid-row: 1; }
+    .rle-card-output { grid-column: 2; grid-row: 1; }
+    .rle-card-visual { grid-column: 1 / span 2; grid-row: 2; }
+
+    .rle-editor {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+      -webkit-user-select: text;
+      user-select: text;
+      background: #000;
+      color: var(--text);
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1.5px var(--border);
+      padding: 10px 12px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 22px;
+      letter-spacing: 3px;
+    }
+
+    .rle-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .rle-code-output {
+      background: #000;
+      border-radius: 10px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 18px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 80px;
+    }
+
+    .rle-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .rle-kpi {
+      background: rgba(255,255,255,.05);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    }
+
+    .rle-kpi-lbl {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text);
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .rle-kpi-val {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--ml);
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .rle-kpi-note {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .rle-run-strip {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      align-items: stretch;
+      min-height: 94px;
+    }
+
+    .rle-run-block {
+      flex-shrink: 0;
+      min-width: 42px;
+      border: 1.5px solid transparent;
+      border-radius: 8px;
+      padding: 10px 6px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-sizing: border-box;
+    }
+
+    .rle-run-sym {
+      font-size: 24px;
+      font-weight: 800;
+      font-family: 'Consolas', 'Courier New', monospace;
+      line-height: 1;
+      background: #000;
+      color: #ffff00;
+      border-radius: 6px;
+      padding: 2px 8px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.35);
+    }
+
+    .rle-run-cnt {
+      font-size: 18px;
+      color: var(--muted);
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-weight: 700;
+    }
+
+    .rle-run-pair {
+      font-size: 15px;
+      color: rgba(255,255,255,.4);
+      font-family: 'Consolas', 'Courier New', monospace;
+      white-space: nowrap;
+    }
+
+    .rle-empty-hint {
+      color: var(--muted);
+      font-size: 14px;
+      align-self: center;
+    }
+
+    .rle-visual-note {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .intro-disclosure {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: rgba(255,255,255,.05);
+      overflow: clip;
+    }
+
+    .intro-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(0,0,0,.2);
+    }
+
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+
+    .intro-disclosure summary::after {
+      content: '+';
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ml);
+    }
+
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+
+    .intro-disclosure .intro {
+      margin: 0;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .rle-placeholder {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    @media (min-width: 981px) {
+      .rle-card-input,
+      .rle-card-output {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .rle-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .rle-card-input,
+      .rle-card-output,
+      .rle-card-visual {
+        grid-column: 1;
+      }
+
+      .rle-card-input  { grid-row: 1; }
+      .rle-card-output { grid-row: 2; }
+      .rle-card-visual { grid-row: 3; }
+
+      .rle-kpis {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
+  <span class="breadcrumb-sep">&rsaquo;</span>
+  <span class="hsub">Run Length Encoding</span>
+  <a class="home-btn" href="../index.html">Home</a>
+</header>
+
+<main>
+  <h1>Run Length Encoding</h1>
+  <div class="mode-tabs" role="tablist" aria-label="Run length encoding modes">
+    <button class="mode-tab active" id="tab-explore" role="tab" aria-selected="true">Explore</button>
+  </div>
+
+  <div id="explore-section">
+    <details class="intro-disclosure">
+      <summary>More info</summary>
+      <p class="intro">Run length encoding (RLE) is a lossless compression technique. Consecutive repeated symbols are encoded as a pair: the symbol and how many times it appears consecutively. Every group becomes a pair &mdash; even a single instance is recorded as (symbol,&nbsp;1). AQA exam questions accept different notations: (A,&nbsp;3), A&nbsp;3, and A3 all represent the same run. This tool uses (symbol,&nbsp;count) notation. RLE reduces size when runs are long; it <em>increases</em> size when symbols frequently change, because each symbol still requires two pieces of data.</p>
+    </details>
+
+    <div class="rle-layout">
+      <section class="card rle-card-input">
+        <div class="card-head"><span class="badge badge-r">Input</span></div>
+        <div class="rle-row">
+          <button class="btn btn-sm btn-submit" type="button" data-rle-sample="colors">BBGGGRRRRW</button>
+          <button class="btn btn-sm" type="button" data-rle-sample="text">AAARRRRGGGHH</button>
+          <button class="btn btn-sm" type="button" data-rle-sample="altseq">No repeats</button>
+          <button class="btn btn-sm" type="button" data-rle-sample="clear">Clear</button>
+        </div>
+        <textarea id="rle-input" class="rle-editor" spellcheck="false" maxlength="200" aria-label="Text to compress with run length encoding"></textarea>
+      </section>
+
+      <section class="card rle-card-output">
+        <div class="card-head"><span class="badge badge-r">Encoded</span></div>
+        <div id="rle-encoded" class="rle-code-output" aria-live="polite"></div>
+        <div class="rle-kpis">
+          <div class="rle-kpi">
+            <div class="rle-kpi-lbl">Input Length</div>
+            <div class="rle-kpi-val" id="rle-input-len">0</div>
+            <div class="rle-kpi-note">characters</div>
+          </div>
+          <div class="rle-kpi">
+            <div class="rle-kpi-lbl">RLE Pairs</div>
+            <div class="rle-kpi-val" id="rle-pairs-count">0</div>
+            <div class="rle-kpi-note">encoded size&nbsp;= pairs &times;&nbsp;2</div>
+          </div>
+          <div class="rle-kpi">
+            <div class="rle-kpi-lbl">Net Change</div>
+            <div class="rle-kpi-val" id="rle-net-size">0</div>
+            <div class="rle-kpi-note" id="rle-net-note">&mdash;</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card rle-card-visual">
+        <div class="card-head"><span class="badge badge-r">Run Breakdown</span></div>
+        <div id="rle-visual" class="rle-run-strip"></div>
+        <p class="rle-visual-note">Each block represents one run. Block width is proportional to run length. The pair notation used by this tool is (symbol,&nbsp;count).</p>
+      </section>
+    </div>
+  </div>
+
+  <div id="quiz-section" hidden>
+    <div class="card">
+      <div class="card-head"><span class="badge badge-r">Test</span></div>
+      <p class="rle-placeholder">RLE test questions are coming soon.</p>
+    </div>
+  </div>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
