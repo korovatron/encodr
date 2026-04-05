@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <title>Encodr - Binary Operations and Bitwise Logic</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+  <style>
+    .intro-disclosure {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: rgba(255, 255, 255, 0.05);
+      overflow: clip;
+    }
+    .intro-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+    .intro-disclosure summary::after {
+      content: '+';
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ml);
+    }
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+    .intro-disclosure .intro {
+      margin: 0;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .explore-subtabs {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      margin-bottom: 20px;
+      scrollbar-width: thin;
+    }
+
+    .explore-subtab {
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 100px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .12s, color .12s, border-color .12s;
+    }
+
+    .explore-subtab:hover {
+      background: rgba(255,255,255,.1);
+      color: var(--text);
+    }
+
+    .explore-subtab.active {
+      background: rgba(232,232,0,.14);
+      border-color: rgba(232,232,0,.62);
+      color: var(--ml);
+      box-shadow: 0 0 8px rgba(255,255,0,.28);
+    }
+
+    .draft-note {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .draft-list {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .draft-list li + li { margin-top: 2px; }
+
+    .arith-card {
+      margin-bottom: 12px;
+    }
+
+    .arith-help {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .arith-rowline {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .arith-row-main {
+      min-width: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .arith-rowline.tight {
+      margin-bottom: 1px;
+    }
+
+    .arith-rowline .grid-wrap {
+      flex: 1 1 auto;
+      max-width: 100%;
+      overflow-x: visible;
+    }
+
+    .arith-row-den {
+      min-width: 38px;
+      text-align: right;
+      font-family: 'Consolas', monospace;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    #add-a-den,
+    #add-b-den {
+      align-self: start;
+    }
+
+    /* A includes a visible weight row (24px); B does not. */
+    #add-a-den {
+      margin-top: calc(24px + (var(--box-size, 56px) - 1em) / 2);
+    }
+
+    #add-b-den {
+      margin-top: calc((var(--box-size, 56px) - 1em) / 2);
+    }
+
+    .arith-row-den.sum { color: var(--exl); }
+    .arith-row-den.spacer {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .arith-stack {
+      width: min(100%, 620px);
+      margin: 0 auto;
+    }
+
+    .arith-op {
+      width: 26px;
+      padding-top: calc(24px + (var(--box-size, 56px) - 1em) / 2);
+      text-align: center;
+      font-family: 'Consolas', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    .arith-op.carry {
+      color: var(--exl);
+      font-size: 15px;
+    }
+
+    .arith-op.result {
+      color: var(--ml);
+    }
+
+    .arith-line {
+      width: 100%;
+      border-top: 1px solid var(--border);
+      margin: 6px 0 8px;
+    }
+
+    .add-line {
+      margin-left: 0;
+      margin-right: auto;
+      border-top-width: 3px;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    .add-line-bottom {
+      margin-top: 12px;
+    }
+
+    .arith-rowline.output-row {
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    .arith-rowline.output-sum-row .arith-row-main {
+      padding-bottom: 8px;
+    }
+
+    #add-sum-grid,
+    #add-carry-grid {
+      padding-bottom: 0;
+    }
+
+    .arith-digit {
+      width: var(--box-size, 56px);
+      height: calc(var(--box-size, 56px) * 0.62);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: calc(var(--box-fs, 26px) * 0.9);
+      line-height: 1;
+      font-weight: 700;
+      color: var(--text);
+      user-select: none;
+    }
+
+    .arith-digit-sum {
+      color: var(--exl);
+      font-weight: 700;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+    .arith-digit-sum:not(.arith-digit-blank) {
+      background: #000000;
+      border-radius: 6px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.35);
+      height: calc(var(--box-size, 56px) * 0.5);
+      font-size: var(--box-fs, 26px);
+      line-height: 1;
+      width: calc(var(--box-size, 56px) * 0.5);
+      margin: 0 auto;
+      transform: translateY(5px);
+    }
+    .arith-digit-sum.arith-digit-blank {
+      height: calc(var(--box-size, 56px) * 0.5);
+      width: calc(var(--box-size, 56px) * 0.5);
+      margin: 0 auto;
+      transform: translateY(5px);
+    }
+    .arith-digit-overflow {
+      color: #ff4a4a;
+      box-shadow: 0 0 0 1px rgba(255, 74, 74, .7);
+    }
+    .arith-digit-carry {
+      color: var(--text);
+      font-size: calc(var(--box-fs, 26px) * 0.72);
+    }
+    .arith-digit-blank { color: transparent; }
+
+    .arith-overflow-note {
+      margin: 10px auto 0;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #ff6b6b;
+      font-weight: 600;
+      text-align: center;
+      background: rgba(120, 0, 0, .28);
+      border: 1px solid rgba(255, 90, 90, .75);
+      border-radius: 10px;
+      padding: 8px 12px;
+      max-width: fit-content;
+    }
+
+    #add-overflow-badge[hidden],
+    #add-overflow-note[hidden] {
+      display: none !important;
+    }
+
+    .bit-col-plain {
+      gap: 0;
+      justify-content: center;
+    }
+
+    .arith-rowline.output-row .arith-op {
+      padding-top: calc((calc(var(--box-size, 56px) * 0.62) - 1em) / 2);
+    }
+
+    /* A/B are 8 bits; Sum/Carry are 9 bits. Offset inputs by one column so
+       the extra carry-out bit appears as the leftmost column. */
+    .add-input-grid {
+      margin-left: calc(var(--box-size, 56px) + 5px);
+    }
+
+    .arith-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .arith-eq {
+      font-family: 'Consolas', monospace;
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .arith-subtle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .partials-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .partial-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .partial-row .grid-wrap {
+      flex: 1 1 auto;
+      max-width: calc(100% - 36px);
+      overflow-x: visible;
+    }
+
+    .partial-lbl {
+      width: 26px;
+      padding-top: calc(24px + (var(--box-size, 56px) - 1em) / 2);
+      text-align: center;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 560px) {
+      .arith-op,
+      .partial-lbl {
+        width: 20px;
+      }
+      .arith-op { font-size: 16px; }
+      .arith-op.carry { font-size: 13px; }
+      .arith-eq { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
+  <span class="breadcrumb-sep">&rsaquo;</span>
+  <span class="hsub">Binary Operations and Bitwise Logic</span>
+  <a class="home-btn" href="../index.html">Home</a>
+</header>
+
+<main>
+  <h1>Binary Operations and Bitwise Logic</h1>
+  <div class="mode-tabs" role="tablist" aria-label="Binary operations modes">
+    <button class="mode-tab active" id="tab-explore" role="tab" aria-selected="true">Explore</button>
+    <button class="mode-tab" id="tab-test" role="tab" aria-selected="false">Test</button>
+  </div>
+
+  <section id="explore-section">
+    <details class="intro-disclosure">
+      <summary>More info</summary>
+      <p class="intro">This draft page keeps the standard Encodr Explore/Test layout while splitting Explore into three sub-sections. Content modules can now be built inside each sub-section without changing top-level navigation.</p>
+    </details>
+
+    <div class="explore-subtabs" role="tablist" aria-label="Explore sub-sections">
+      <button class="explore-subtab active" id="subtab-arithmetic" data-pane="arithmetic" role="tab" aria-selected="true">Arithmetic</button>
+      <button class="explore-subtab" id="subtab-bitwise" data-pane="bitwise" role="tab" aria-selected="false">Bitwise and Shifts</button>
+      <button class="explore-subtab" id="subtab-applications" data-pane="applications" role="tab" aria-selected="false">Applications</button>
+    </div>
+
+    <section id="pane-arithmetic">
+      <section class="result-card arith-card">
+        <div class="res-block">
+          <div class="result-badge-row">
+            <div class="card-head" style="margin-bottom:0;"><span class="badge badge-m">Binary Addition</span></div>
+            <div id="add-overflow-badge" class="norm norm-n" hidden>Overflow</div>
+          </div>
+
+          <div class="arith-stack">
+            <div class="arith-rowline tight">
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid add-input-grid" id="add-a-grid"></div></div></div>
+              <div class="arith-row-den" id="add-a-den">0</div>
+            </div>
+            <div class="arith-rowline tight">
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid add-input-grid" id="add-b-grid"></div></div></div>
+              <div class="arith-row-den" id="add-b-den">0</div>
+            </div>
+
+            <div class="arith-line add-line add-line-bottom" aria-hidden="true"></div>
+
+            <div class="arith-rowline output-row output-sum-row">
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="add-sum-grid"></div></div></div>
+              <div class="arith-row-den sum" id="add-sum-den">0</div>
+            </div>
+
+            <div class="arith-line add-line" aria-hidden="true"></div>
+
+            <div class="arith-rowline output-row">
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="add-carry-grid"></div></div></div>
+              <div class="arith-row-den spacer" aria-hidden="true">0</div>
+            </div>
+          </div>
+
+          <p class="arith-overflow-note" id="add-overflow-note" hidden>Overflow: the answer needs more bits than are available in 8-bit storage, so a ninth carry-out bit is produced.</p>
+        </div>
+      </section>
+
+      <section class="result-card arith-card">
+        <div class="res-block">
+          <div class="card-head"><span class="badge badge-e">Binary Multiplication</span></div>
+          <p class="arith-help">Toggle multiplicand and multiplier bits. Partial products and final product update live.</p>
+
+          <div class="arith-rowline">
+            <div class="arith-op">A</div>
+            <div class="grid-wrap"><div class="bit-grid" id="mul-a-grid"></div></div>
+          </div>
+          <div class="arith-rowline">
+            <div class="arith-op">B</div>
+            <div class="grid-wrap"><div class="bit-grid" id="mul-b-grid"></div></div>
+          </div>
+
+          <div class="arith-line" aria-hidden="true"></div>
+
+          <div class="partials-wrap" id="mul-partials"></div>
+
+          <div class="arith-line" aria-hidden="true"></div>
+
+          <div class="arith-rowline">
+            <div class="arith-op result">P</div>
+            <div class="grid-wrap"><div class="bit-grid" id="mul-product-grid"></div></div>
+          </div>
+
+          <div class="arith-meta">
+            <div>
+              <div class="arith-eq" id="mul-eq-dec">0 x 0 = 0</div>
+              <div class="arith-subtle" id="mul-eq-bin">00000000 x 00000000 = 0000000000000000</div>
+            </div>
+            <button class="reset-btn" id="mul-clear" type="button">Clear</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="card" id="pane-bitwise" hidden>
+      <div class="card-head"><span class="badge badge-e">Bitwise and Shifts</span></div>
+      <p class="intro" style="margin-bottom:0;">Draft area for bitwise operators and shift behaviour.</p>
+      <ul class="draft-list">
+        <li>Left and right shifts</li>
+        <li>AND/OR/XOR operations</li>
+        <li>Masks to set, unset, and test bits</li>
+      </ul>
+      <p class="draft-note">Planned interaction pattern: side-by-side binary rows with live operator output and highlighted changed bits.</p>
+    </section>
+
+    <section class="card" id="pane-applications" hidden>
+      <div class="card-head"><span class="badge badge-r">Applications</span></div>
+      <p class="intro" style="margin-bottom:0;">Draft area for applied binary tasks.</p>
+      <ul class="draft-list">
+        <li>Subnet/domain checks from IP and mask</li>
+        <li>Vernam cipher with XOR</li>
+      </ul>
+      <p class="draft-note">Planned interaction pattern: guided worked examples with an input challenge mode once students have practiced each method.</p>
+    </section>
+  </section>
+
+  <section id="test-section" hidden>
+    <div class="card">
+      <div class="card-head"><span class="badge badge-r">Test</span></div>
+      <p class="intro" style="margin-bottom:0;">Draft placeholder for mixed and focused question modes. This section is intentionally scaffold-only for now.</p>
+    </div>
+  </section>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
+
+<script>
+  const ARITH_BITS = 8;
+
+  const AR = {
+    addA: Array(ARITH_BITS).fill(0),
+    addB: Array(ARITH_BITS).fill(0),
+    mulA: Array(ARITH_BITS).fill(0),
+    mulB: Array(ARITH_BITS).fill(0),
+  };
+
+  function bitsToUnsigned(bits) {
+    return bits.reduce((acc, bit) => (acc << 1) | bit, 0);
+  }
+
+  function toBits(value, width) {
+    const bits = Array(width).fill(0);
+    for (let i = width - 1; i >= 0; i -= 1) {
+      bits[i] = value & 1;
+      value >>= 1;
+    }
+    return bits;
+  }
+
+  function formatBits(bits) {
+    return bits.join('').replace(/(.{4})(?=.)/g, '$1 ');
+  }
+
+  function fitGridToContainer(grid, bitCount) {
+    if (!grid || !grid.parentElement) return;
+    const available = grid.parentElement.clientWidth;
+    if (!available) return;
+
+    const gap = 5;
+    const size = Math.max(20, Math.min(56, Math.floor((available - (bitCount - 1) * gap) / bitCount)));
+    grid.style.setProperty('--box-size', size + 'px');
+    grid.style.setProperty('--box-fs', Math.round(size * 26 / 56) + 'px');
+    grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
+  }
+
+  function renderBitGrid(grid, bits, options = {}) {
+    const {
+      classPrefix = 'mb',
+      interactive = false,
+      onToggle = null,
+      labelPrefix = 'Bit',
+      showWeights = false,
+      highestExp = bits.length - 1,
+      reserveWeightRow = true,
+    } = options;
+
+    grid.innerHTML = '';
+
+    bits.forEach((bit, i) => {
+      const col = document.createElement('div');
+      col.className = 'bit-col';
+
+      const wt = document.createElement('div');
+      wt.className = 'bit-wt';
+      if (showWeights) {
+        const exp = highestExp - i;
+        const wtVal = 2 ** exp;
+        wt.innerHTML = wtVal >= 1000 ? `2<sup>${exp}</sup>` : String(wtVal);
+      } else if (reserveWeightRow) {
+        wt.innerHTML = '&nbsp;';
+      }
+
+      const box = document.createElement('div');
+      box.className = `bit-box ${classPrefix}${bit}${interactive ? '' : ' static'}`;
+      box.textContent = bit;
+
+      if (interactive && typeof onToggle === 'function') {
+        box.setAttribute('role', 'button');
+        box.setAttribute('tabindex', '0');
+        box.setAttribute('aria-label', `${labelPrefix} ${i + 1} of ${bits.length}, currently ${bit}`);
+
+        const toggle = () => onToggle(i);
+        box.addEventListener('click', toggle);
+        box.addEventListener('keydown', (ev) => {
+          if (ev.key === ' ' || ev.key === 'Enter') {
+            ev.preventDefault();
+            toggle();
+          }
+        });
+      }
+
+      if (showWeights || reserveWeightRow) {
+        col.append(wt, box);
+      } else {
+        col.appendChild(box);
+      }
+      grid.appendChild(col);
+    });
+
+    fitGridToContainer(grid, bits.length);
+  }
+
+  function renderDigitGrid(grid, bits, options = {}) {
+    const { digitClass = '', cellClass = null } = options;
+    grid.innerHTML = '';
+
+    bits.forEach((bit, i) => {
+      const col = document.createElement('div');
+      col.className = 'bit-col bit-col-plain';
+
+      const digit = document.createElement('div');
+      digit.className = `arith-digit ${digitClass}`.trim();
+      if (typeof cellClass === 'function') {
+        const extraClass = cellClass(bit, i);
+        if (extraClass) digit.classList.add(extraClass);
+      }
+      if (bit === '' || bit === null || bit === undefined) {
+        digit.classList.add('arith-digit-blank');
+        digit.textContent = '\u00a0';
+      } else {
+        digit.textContent = bit;
+      }
+
+      col.appendChild(digit);
+      grid.appendChild(col);
+    });
+
+    fitGridToContainer(grid, bits.length);
+  }
+
+  function renderAddition() {
+    const n = ARITH_BITS;
+    const sumBits = Array(n).fill(0);
+    const carryInto = Array(n).fill(0);
+    let carry = 0;
+
+    for (let i = n - 1; i >= 0; i -= 1) {
+      carryInto[i] = carry;
+      const total = AR.addA[i] + AR.addB[i] + carry;
+      sumBits[i] = total & 1;
+      carry = total > 1 ? 1 : 0;
+    }
+
+    const carryOut = carry;
+    const carryBits = [carryOut, ...carryInto];
+    const carryDisplay = carryBits.map((bit) => (bit === 1 ? 1 : ''));
+    const sum9 = [carryOut, ...sumBits];
+    const firstOne = sum9.findIndex((bit) => bit === 1);
+    const sumDisplay = firstOne === -1
+      ? [...sum9.slice(0, -1).map(() => ''), 0]
+      : sum9.map((bit, idx) => (idx < firstOne ? '' : bit));
+
+    renderDigitGrid(document.getElementById('add-carry-grid'), carryDisplay, {
+      digitClass: 'arith-digit-carry',
+    });
+
+    renderBitGrid(document.getElementById('add-a-grid'), AR.addA, {
+      classPrefix: 'mb',
+      interactive: true,
+      labelPrefix: 'A bit',
+      showWeights: true,
+      onToggle: (i) => {
+        AR.addA[i] ^= 1;
+        renderAddition();
+      },
+    });
+
+    renderBitGrid(document.getElementById('add-b-grid'), AR.addB, {
+      classPrefix: 'mb',
+      interactive: true,
+      labelPrefix: 'B bit',
+      reserveWeightRow: false,
+      onToggle: (i) => {
+        AR.addB[i] ^= 1;
+        renderAddition();
+      },
+    });
+
+    renderDigitGrid(document.getElementById('add-sum-grid'), sumDisplay, {
+      digitClass: 'arith-digit-sum',
+      cellClass: (bit, i) => (i === 0 && bit === 1 ? 'arith-digit-overflow' : ''),
+    });
+
+    const addAInputGrid = document.getElementById('add-a-grid');
+    const addStack = document.querySelector('#pane-arithmetic .arith-stack');
+    const addLineWidth = addAInputGrid ? addAInputGrid.scrollWidth : 0;
+    let addLineOffset = 0;
+
+    if (addAInputGrid && addStack) {
+      const stackRect = addStack.getBoundingClientRect();
+      const aRect = addAInputGrid.getBoundingClientRect();
+      addLineOffset = Math.max(0, aRect.left - stackRect.left);
+    }
+
+    document.querySelectorAll('.add-line').forEach((line) => {
+      line.style.width = addLineWidth > 0 ? `${addLineWidth}px` : '100%';
+      line.style.marginLeft = `${addLineOffset}px`;
+    });
+
+    const aVal = bitsToUnsigned(AR.addA);
+    const bVal = bitsToUnsigned(AR.addB);
+    const sumVal = bitsToUnsigned(sum9);
+
+    document.getElementById('add-a-den').textContent = String(aVal);
+    document.getElementById('add-b-den').textContent = String(bVal);
+    document.getElementById('add-sum-den').textContent = String(sumVal);
+
+    const overflow = carryOut === 1;
+    const overflowBadge = document.getElementById('add-overflow-badge');
+    const overflowNote = document.getElementById('add-overflow-note');
+    if (overflowBadge) overflowBadge.hidden = !overflow;
+    if (overflowNote) overflowNote.hidden = !overflow;
+  }
+
+  function createPartialRow(label, bits) {
+    const row = document.createElement('div');
+    row.className = 'partial-row';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'partial-lbl';
+    lbl.textContent = label;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'grid-wrap';
+
+    const grid = document.createElement('div');
+    grid.className = 'bit-grid';
+
+    wrap.appendChild(grid);
+    row.append(lbl, wrap);
+
+    renderBitGrid(grid, bits, { classPrefix: 'eb', interactive: false });
+    return row;
+  }
+
+  function renderMultiplication() {
+    renderBitGrid(document.getElementById('mul-a-grid'), AR.mulA, {
+      classPrefix: 'mb',
+      interactive: true,
+      labelPrefix: 'Multiplicand bit',
+      onToggle: (i) => {
+        AR.mulA[i] ^= 1;
+        renderMultiplication();
+      },
+    });
+
+    renderBitGrid(document.getElementById('mul-b-grid'), AR.mulB, {
+      classPrefix: 'eb',
+      interactive: true,
+      labelPrefix: 'Multiplier bit',
+      onToggle: (i) => {
+        AR.mulB[i] ^= 1;
+        renderMultiplication();
+      },
+    });
+
+    const aVal = bitsToUnsigned(AR.mulA);
+    const bVal = bitsToUnsigned(AR.mulB);
+    const partials = document.getElementById('mul-partials');
+    partials.innerHTML = '';
+
+    for (let shift = 0; shift < ARITH_BITS; shift += 1) {
+      const bit = AR.mulB[ARITH_BITS - 1 - shift];
+      const rowVal = bit ? (aVal << shift) : 0;
+      const rowBits = toBits(rowVal, ARITH_BITS * 2);
+      partials.appendChild(createPartialRow(`b${shift}`, rowBits));
+    }
+
+    const productVal = aVal * bVal;
+    const productBits = toBits(productVal, ARITH_BITS * 2);
+    renderBitGrid(document.getElementById('mul-product-grid'), productBits, {
+      classPrefix: 'mb',
+      interactive: false,
+    });
+
+    document.getElementById('mul-eq-dec').textContent = `${aVal} x ${bVal} = ${productVal}`;
+    document.getElementById('mul-eq-bin').textContent = `${formatBits(AR.mulA)} x ${formatBits(AR.mulB)} = ${formatBits(productBits)}`;
+  }
+
+  function clearBits(bits) {
+    bits.fill(0);
+  }
+
+  document.getElementById('mul-clear').addEventListener('click', () => {
+    clearBits(AR.mulA);
+    clearBits(AR.mulB);
+    renderMultiplication();
+  });
+
+  window.addEventListener('resize', () => {
+    renderAddition();
+    renderMultiplication();
+  });
+
+  function switchTopSection(which) {
+    const isExplore = which === 'explore';
+    const exploreBtn = document.getElementById('tab-explore');
+    const testBtn = document.getElementById('tab-test');
+
+    document.getElementById('explore-section').hidden = !isExplore;
+    document.getElementById('test-section').hidden = isExplore;
+
+    exploreBtn.classList.toggle('active', isExplore);
+    testBtn.classList.toggle('active', !isExplore);
+    exploreBtn.setAttribute('aria-selected', isExplore ? 'true' : 'false');
+    testBtn.setAttribute('aria-selected', isExplore ? 'false' : 'true');
+  }
+
+  function switchExplorePane(pane) {
+    const panes = ['arithmetic', 'bitwise', 'applications'];
+    panes.forEach((name) => {
+      const section = document.getElementById(`pane-${name}`);
+      const button = document.getElementById(`subtab-${name}`);
+      const active = name === pane;
+
+      section.hidden = !active;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+  }
+
+  document.getElementById('tab-explore').addEventListener('click', () => switchTopSection('explore'));
+  document.getElementById('tab-test').addEventListener('click', () => switchTopSection('test'));
+
+  document.querySelectorAll('.explore-subtab').forEach((btn) => {
+    btn.addEventListener('click', () => switchExplorePane(btn.dataset.pane));
+  });
+
+  switchTopSection('explore');
+  switchExplorePane('arithmetic');
+  renderAddition();
+  renderMultiplication();
+</script>
+
+</body>
+</html>
