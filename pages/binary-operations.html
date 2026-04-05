@@ -523,6 +523,11 @@
             </div>
 
             <div class="arith-line add-line" id="mul-line-bottom" aria-hidden="true"></div>
+
+            <div class="arith-rowline output-row">
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="mul-carry-grid"></div></div></div>
+              <div class="arith-row-den spacer" aria-hidden="true">0</div>
+            </div>
           </div>
 
           <p class="mul-overflow-note" id="mul-overflow-note" hidden>Overflow: the product needs more than 8 bits, so it cannot be fully represented in 8-bit storage.</p>
@@ -888,10 +893,18 @@
     partials.innerHTML = '';
 
     // Always create all 3 partial rows
+    const partialBits = [];
     for (let shift = 0; shift < AR.mulB.length; shift += 1) {
       const bit = AR.mulB[AR.mulB.length - 1 - shift];
       const row = createPartialRow(aVal, bit, shift, MUL_DISP_BITS);
       partials.appendChild(row);
+
+      const leadingCount = MUL_DISP_BITS - ARITH_BITS - shift;
+      const trailingCount = shift;
+      const bits = bit === 0
+        ? Array(MUL_DISP_BITS).fill(0)
+        : [...Array(leadingCount).fill(0), ...toBits(aVal, ARITH_BITS), ...Array(trailingCount).fill(0)];
+      partialBits.push(bits);
     }
 
     // Show all rows if B has any 1 bit, hide all if B is 0
@@ -899,6 +912,25 @@
     const allRows = partials.querySelectorAll('[data-mul-partial]');
     allRows.forEach((row) => {
       row.style.display = shouldShow ? 'grid' : 'none';
+    });
+
+    // Calculate carries from adding partial products
+    const carries = Array(MUL_DISP_BITS).fill(0);
+    if (partialBits.length > 0) {
+      let carry = 0;
+      for (let col = MUL_DISP_BITS - 1; col >= 0; col -= 1) {
+        let sum = carry;
+        for (let row = 0; row < partialBits.length; row += 1) {
+          sum += partialBits[row][col];
+        }
+        carries[col] = sum > 1 ? 1 : 0;
+        carry = sum > 1 ? 1 : 0;
+      }
+    }
+    const carryDisplay = [...Array(2).fill(''), ...carries.slice(2).map((bit) => (bit === 1 ? 1 : ''))];
+
+    renderDigitGrid(document.getElementById('mul-carry-grid'), carryDisplay, {
+      digitClass: 'arith-digit-carry',
     });
 
     const productVal = aVal * bVal;
