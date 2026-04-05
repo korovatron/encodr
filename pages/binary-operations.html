@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="theme-color" content="#050505" />
-  <title>Encodr - Binary Operations and Bitwise Logic</title>
+  <title>Encodr - Binary Arithmetic</title>
   <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
   <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
   <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
@@ -49,57 +49,6 @@
       font-size: 15px;
       line-height: 1.6;
     }
-
-    .explore-subtabs {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-      margin-bottom: 20px;
-      scrollbar-width: thin;
-    }
-
-    .explore-subtab {
-      border: 1px solid rgba(255,255,255,.3);
-      border-radius: 100px;
-      padding: 8px 14px;
-      background: rgba(255,255,255,.04);
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: .4px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background .12s, color .12s, border-color .12s;
-    }
-
-    .explore-subtab:hover {
-      background: rgba(255,255,255,.1);
-      color: var(--text);
-    }
-
-    .explore-subtab.active {
-      background: rgba(232,232,0,.14);
-      border-color: rgba(232,232,0,.62);
-      color: var(--ml);
-      box-shadow: 0 0 8px rgba(255,255,0,.28);
-    }
-
-    .draft-note {
-      margin-top: 12px;
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .draft-list {
-      margin: 10px 0 0;
-      padding-left: 20px;
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    .draft-list li + li { margin-top: 2px; }
 
     .arith-card {
       margin-bottom: 12px;
@@ -432,12 +381,12 @@
 <header>
   <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
   <span class="breadcrumb-sep">&rsaquo;</span>
-  <span class="hsub">Binary Operations and Bitwise Logic</span>
+  <span class="hsub">Binary Arithmetic</span>
   <a class="home-btn" href="../index.html">Home</a>
 </header>
 
 <main>
-  <h1>Binary Operations and Bitwise Logic</h1>
+  <h1>Binary Arithmetic</h1>
   <div class="mode-tabs" role="tablist" aria-label="Binary operations modes">
     <button class="mode-tab active" id="tab-explore" role="tab" aria-selected="true">Explore</button>
     <button class="mode-tab" id="tab-test" role="tab" aria-selected="false">Test</button>
@@ -446,16 +395,9 @@
   <section id="explore-section">
     <details class="intro-disclosure">
       <summary>More info</summary>
-      <p class="intro">This draft page keeps the standard Encodr Explore/Test layout while splitting Explore into three sub-sections. Content modules can now be built inside each sub-section without changing top-level navigation.</p>
+      <p class="intro">Click any bit to toggle it between&nbsp;0 and&nbsp;1.</p>
     </details>
 
-    <div class="explore-subtabs" role="tablist" aria-label="Explore sub-sections">
-      <button class="explore-subtab active" id="subtab-arithmetic" data-pane="arithmetic" role="tab" aria-selected="true">Arithmetic</button>
-      <button class="explore-subtab" id="subtab-bitwise" data-pane="bitwise" role="tab" aria-selected="false">Bitwise and Shifts</button>
-      <button class="explore-subtab" id="subtab-applications" data-pane="applications" role="tab" aria-selected="false">Applications</button>
-    </div>
-
-    <section id="pane-arithmetic">
       <section class="result-card arith-card">
         <div class="res-block">
           <div class="result-badge-row">
@@ -533,34 +475,12 @@
           <p class="mul-overflow-note" id="mul-overflow-note" hidden>Overflow: the product needs more than 8 bits, so it cannot be fully represented in 8-bit storage.</p>
         </div>
       </section>
-    </section>
-
-    <section class="card" id="pane-bitwise" hidden>
-      <div class="card-head"><span class="badge badge-e">Bitwise and Shifts</span></div>
-      <p class="intro" style="margin-bottom:0;">Draft area for bitwise operators and shift behaviour.</p>
-      <ul class="draft-list">
-        <li>Left and right shifts</li>
-        <li>AND/OR/XOR operations</li>
-        <li>Masks to set, unset, and test bits</li>
-      </ul>
-      <p class="draft-note">Planned interaction pattern: side-by-side binary rows with live operator output and highlighted changed bits.</p>
-    </section>
-
-    <section class="card" id="pane-applications" hidden>
-      <div class="card-head"><span class="badge badge-r">Applications</span></div>
-      <p class="intro" style="margin-bottom:0;">Draft area for applied binary tasks.</p>
-      <ul class="draft-list">
-        <li>Subnet/domain checks from IP and mask</li>
-        <li>Vernam cipher with XOR</li>
-      </ul>
-      <p class="draft-note">Planned interaction pattern: guided worked examples with an input challenge mode once students have practiced each method.</p>
-    </section>
   </section>
 
   <section id="test-section" hidden>
     <div class="card">
       <div class="card-head"><span class="badge badge-r">Test</span></div>
-      <p class="intro" style="margin-bottom:0;">Draft placeholder for mixed and focused question modes. This section is intentionally scaffold-only for now.</p>
+      <p class="intro" style="margin-bottom:0;">Coming soon.</p>
     </div>
   </section>
 
@@ -1007,28 +927,10 @@
     testBtn.setAttribute('aria-selected', isExplore ? 'false' : 'true');
   }
 
-  function switchExplorePane(pane) {
-    const panes = ['arithmetic', 'bitwise', 'applications'];
-    panes.forEach((name) => {
-      const section = document.getElementById(`pane-${name}`);
-      const button = document.getElementById(`subtab-${name}`);
-      const active = name === pane;
-
-      section.hidden = !active;
-      button.classList.toggle('active', active);
-      button.setAttribute('aria-selected', active ? 'true' : 'false');
-    });
-  }
-
   document.getElementById('tab-explore').addEventListener('click', () => switchTopSection('explore'));
   document.getElementById('tab-test').addEventListener('click', () => switchTopSection('test'));
 
-  document.querySelectorAll('.explore-subtab').forEach((btn) => {
-    btn.addEventListener('click', () => switchExplorePane(btn.dataset.pane));
-  });
-
   switchTopSection('explore');
-  switchExplorePane('arithmetic');
   renderAddition();
   renderMultiplication();
 </script>
