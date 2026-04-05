@@ -807,6 +807,30 @@ body:has(#save-dialog[open]) { overflow: hidden; }
   clip-path: polygon(0 0, 100% 0, 100% 100%);
 }
 
+@media (max-width: 680px) {
+  .ws-banner {
+    position: relative;
+    align-items: flex-start;
+    padding-right: 84px;
+  }
+
+  .ws-banner-cta-label,
+  .ws-banner-cta-arrow {
+    display: none;
+  }
+
+  .ws-banner-cta {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 0;
+  }
+
+  .ws-banner-cta .ws-banner-cta-pdf {
+    margin: 0;
+  }
+}
+
 .topic-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
