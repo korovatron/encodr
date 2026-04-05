@@ -819,6 +819,11 @@
       const row = createPartialRow(aVal, bit, shift, MUL_DISP_BITS);
       partials.appendChild(row);
 
+      const rowGrid = row.querySelector('.bit-grid');
+      if (rowGrid) {
+        fitGridToContainer(rowGrid, MUL_DISP_BITS);
+      }
+
       const leadingCount = MUL_DISP_BITS - ARITH_BITS - shift;
       const trailingCount = shift;
       const bits = bit === 0
