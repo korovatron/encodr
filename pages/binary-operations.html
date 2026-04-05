@@ -282,6 +282,10 @@
       font-size: calc(var(--box-fs, 26px) * 0.72);
     }
     .arith-digit-blank { color: transparent; }
+    .arith-digit-muted { 
+      color: var(--muted); 
+      opacity: 0.25;
+    }
 
     .arith-overflow-note {
       margin: 10px auto 0;
@@ -813,7 +817,7 @@
 
     const cells = bBit === 0
       ? Array(dispBits).fill('')
-      : [...Array(leadingCount).fill(''), ...toBits(aVal, ARITH_BITS), ...Array(trailingCount).fill('')];
+      : [...Array(leadingCount).fill(''), ...toBits(aVal, ARITH_BITS), ...Array(trailingCount).fill(0)];
 
     const row = document.createElement('div');
     row.className = 'arith-rowline output-row';
@@ -834,6 +838,11 @@
 
     renderDigitGrid(grid, cells, {
       digitClass: 'arith-digit-carry',
+      cellClass: (bit, i) => {
+        // Trailing zeros (right shift padding) get grayed out
+        if (i >= leadingCount + ARITH_BITS) return 'arith-digit-muted';
+        return '';
+      },
     });
 
     const spacer = document.createElement('div');
