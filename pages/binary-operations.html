@@ -914,20 +914,22 @@
       row.style.display = shouldShow ? 'grid' : 'none';
     });
 
-    // Calculate carries from adding partial products
-    const carries = Array(MUL_DISP_BITS).fill(0);
+    // Calculate the carry entering each column when the partial rows are added.
+    // With three partial rows the carry can be greater than 1, so render the
+    // actual carry value in the matching column rather than a boolean flag.
+    const carryInto = Array(MUL_DISP_BITS).fill(0);
     if (partialBits.length > 0) {
       let carry = 0;
       for (let col = MUL_DISP_BITS - 1; col >= 0; col -= 1) {
-        let sum = carry;
+        carryInto[col] = carry;
+        let total = carry;
         for (let row = 0; row < partialBits.length; row += 1) {
-          sum += partialBits[row][col];
+          total += partialBits[row][col];
         }
-        carries[col] = sum > 1 ? 1 : 0;
-        carry = sum > 1 ? 1 : 0;
+        carry = total >> 1;
       }
     }
-    const carryDisplay = [...Array(2).fill(''), ...carries.slice(2).map((bit) => (bit === 1 ? 1 : ''))];
+    const carryDisplay = carryInto.map((value) => (value === 0 ? '' : String(value)));
 
     renderDigitGrid(document.getElementById('mul-carry-grid'), carryDisplay, {
       digitClass: 'arith-digit-carry',
