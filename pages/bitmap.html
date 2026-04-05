@@ -421,6 +421,17 @@
     </div>
   </dialog>
 
+  <dialog id="sprite-tip-dialog" aria-labelledby="sprite-tip-text">
+    <div class="modal">
+      <div class="modal-feedback" id="sprite-tip-text">
+        Recreate this image by entering denary values (0-255) into each byte field.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-next" id="sprite-tip-ok">Got it</button>
+      </div>
+    </div>
+  </dialog>
+
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
 
@@ -767,6 +778,13 @@
     loadSprite(sprite.data);
   }
 
+  const spriteTipDialog = document.getElementById('sprite-tip-dialog');
+  const spriteTipOk = document.getElementById('sprite-tip-ok');
+  function showSpriteRecreateTip() {
+    spriteTipDialog.showModal();
+  }
+  spriteTipOk.addEventListener('click', () => spriteTipDialog.close());
+
   SPRITES.forEach((sprite) => {
     const btn = document.createElement('button');
     btn.className = 'sprite-thumb';
@@ -784,6 +802,7 @@
     btn.addEventListener('click', () => {
       gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
+      showSpriteRecreateTip();
     });
 
     gallery.appendChild(btn);
