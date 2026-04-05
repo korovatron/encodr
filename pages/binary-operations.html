@@ -182,6 +182,7 @@
     .arith-stack {
       width: min(100%, 724px);
       margin: 0 auto;
+      position: relative;
     }
 
     .arith-op {
@@ -314,6 +315,20 @@
 
     /* A/B are 8 bits; Sum/Carry are 9 bits. Offset inputs by one column so
        the extra carry-out bit appears as the leftmost column. */
+    .arith-op-symbol {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Consolas', monospace;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+    }
+
     .blank-spacer {
       visibility: hidden;
       pointer-events: none;
@@ -324,6 +339,11 @@
       flex-direction: column;
       gap: 4px;
       margin: 6px 0;
+    }
+
+    [data-mul-partial] {
+      visibility: inherit !important;
+      display: grid !important;
     }
 
     .mul-overflow-note {
@@ -439,7 +459,8 @@
             <div id="add-overflow-badge" class="norm norm-n" hidden>Overflow</div>
           </div>
 
-          <div class="arith-stack">
+          <div class="arith-stack" id="add-arith-stack">
+            <span id="add-op-plus" class="arith-op-symbol" aria-hidden="true">+</span>
             <div class="arith-rowline tight">
               <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="add-a-grid"></div></div></div>
               <div class="arith-row-den" id="add-a-den">0</div>
@@ -476,6 +497,7 @@
           </div>
 
           <div class="arith-stack" id="mul-arith-stack">
+            <span id="mul-op-times" class="arith-op-symbol" aria-hidden="true">×</span>
             <div class="arith-rowline tight">
               <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="mul-a-grid"></div></div></div>
               <div class="arith-row-den" id="mul-a-den">0</div>
@@ -764,6 +786,20 @@
     document.getElementById('add-b-den').textContent = String(bVal);
     document.getElementById('add-sum-den').textContent = String(sumVal);
 
+    const addBGrid = document.getElementById('add-b-grid');
+    const opPlus = document.getElementById('add-op-plus');
+    if (opPlus && addBGrid && addBGrid.children.length > ADD_LEADING && addStack) {
+      const firstBCol = addBGrid.children[ADD_LEADING];
+      const stackRect = addStack.getBoundingClientRect();
+      const bitRect = firstBCol.getBoundingClientRect();
+      const boxSize = parseFloat(addBGrid.style.getPropertyValue('--box-size') || '56') || 56;
+      opPlus.style.fontSize = Math.round(boxSize * 0.85) + 'px';
+      opPlus.style.width = boxSize + 'px';
+      opPlus.style.height = boxSize + 'px';
+      opPlus.style.left = (bitRect.left - stackRect.left - boxSize - 5) + 'px';
+      opPlus.style.top = (bitRect.top - stackRect.top) + 'px';
+    }
+
     const overflow = carryOut === 1;
     const overflowBadge = document.getElementById('add-overflow-badge');
     const overflowNote = document.getElementById('add-overflow-note');
@@ -781,6 +817,7 @@
 
     const row = document.createElement('div');
     row.className = 'arith-rowline output-row';
+    row.setAttribute('data-mul-partial', '1');
 
     const main = document.createElement('div');
     main.className = 'arith-row-main';
@@ -841,10 +878,19 @@
     const partials = document.getElementById('mul-partials');
     partials.innerHTML = '';
 
+    // Always create all 3 partial rows
     for (let shift = 0; shift < AR.mulB.length; shift += 1) {
       const bit = AR.mulB[AR.mulB.length - 1 - shift];
-      partials.appendChild(createPartialRow(aVal, bit, shift, MUL_DISP_BITS));
+      const row = createPartialRow(aVal, bit, shift, MUL_DISP_BITS);
+      partials.appendChild(row);
     }
+
+    // Show all rows if B has any 1 bit, hide all if B is 0
+    const shouldShow = bVal !== 0;
+    const allRows = partials.querySelectorAll('[data-mul-partial]');
+    allRows.forEach((row) => {
+      row.style.display = shouldShow ? 'grid' : 'none';
+    });
 
     const productVal = aVal * bVal;
     const fullBinary = productVal > 0 ? productVal.toString(2) : '0';
@@ -873,6 +919,20 @@
     document.getElementById('mul-a-den').textContent = String(aVal);
     document.getElementById('mul-b-den').textContent = String(bVal);
     document.getElementById('mul-product-den').textContent = String(productVal);
+
+    const mulBGrid = document.getElementById('mul-b-grid');
+    const opTimes = document.getElementById('mul-op-times');
+    if (opTimes && mulBGrid && mulBGrid.children.length > overflowZone && mulStack) {
+      const firstBCol = mulBGrid.children[overflowZone];
+      const stackRect = mulStack.getBoundingClientRect();
+      const bitRect = firstBCol.getBoundingClientRect();
+      const boxSize = parseFloat(mulBGrid.style.getPropertyValue('--box-size') || '56') || 56;
+      opTimes.style.fontSize = Math.round(boxSize * 0.85) + 'px';
+      opTimes.style.width = boxSize + 'px';
+      opTimes.style.height = boxSize + 'px';
+      opTimes.style.left = (bitRect.left - stackRect.left - boxSize - 5) + 'px';
+      opTimes.style.top = (bitRect.top - stackRect.top) + 'px';
+    }
 
     const overflow = productVal > 255;
     const overflowBadge = document.getElementById('mul-overflow-badge');
