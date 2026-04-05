@@ -160,6 +160,23 @@
       margin-top: calc((var(--box-size, 56px) - 1em) / 2);
     }
 
+    #mul-arith-stack {
+      width: min(100%, 724px);
+    }
+
+    #mul-a-den,
+    #mul-b-den {
+      align-self: start;
+    }
+
+    #mul-a-den {
+      margin-top: calc(24px + (var(--box-size, 56px) - 1em) / 2);
+    }
+
+    #mul-b-den {
+      margin-top: calc((var(--box-size, 56px) - 1em) / 2);
+    }
+
     .arith-row-den.sum { color: var(--exl); }
     .arith-row-den.spacer {
       visibility: hidden;
@@ -284,7 +301,9 @@
     }
 
     #add-overflow-badge[hidden],
-    #add-overflow-note[hidden] {
+    #add-overflow-note[hidden],
+    #mul-overflow-badge[hidden],
+    #mul-overflow-note[hidden] {
       display: none !important;
     }
 
@@ -301,6 +320,32 @@
        the extra carry-out bit appears as the leftmost column. */
     .add-input-grid {
       margin-left: calc(var(--box-size, 56px) + 5px);
+    }
+
+    .blank-spacer {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .mul-partials {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin: 6px 0;
+    }
+
+    .mul-overflow-note {
+      margin: 10px auto 0;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #ff6b6b;
+      font-weight: 600;
+      text-align: center;
+      background: rgba(120, 0, 0, .28);
+      border: 1px solid rgba(255, 90, 90, .75);
+      border-radius: 10px;
+      padding: 8px 12px;
+      max-width: fit-content;
     }
 
     .arith-meta {
@@ -433,36 +478,36 @@
 
       <section class="result-card arith-card">
         <div class="res-block">
-          <div class="card-head"><span class="badge badge-e">Binary Multiplication</span></div>
-          <p class="arith-help">Toggle multiplicand and multiplier bits. Partial products and final product update live.</p>
-
-          <div class="arith-rowline">
-            <div class="arith-op">A</div>
-            <div class="grid-wrap"><div class="bit-grid" id="mul-a-grid"></div></div>
-          </div>
-          <div class="arith-rowline">
-            <div class="arith-op">B</div>
-            <div class="grid-wrap"><div class="bit-grid" id="mul-b-grid"></div></div>
+          <div class="result-badge-row">
+            <div class="card-head" style="margin-bottom:0;"><span class="badge badge-e">Binary Multiplication</span></div>
+            <div id="mul-overflow-badge" class="norm norm-n" hidden>Overflow</div>
           </div>
 
-          <div class="arith-line" aria-hidden="true"></div>
-
-          <div class="partials-wrap" id="mul-partials"></div>
-
-          <div class="arith-line" aria-hidden="true"></div>
-
-          <div class="arith-rowline">
-            <div class="arith-op result">P</div>
-            <div class="grid-wrap"><div class="bit-grid" id="mul-product-grid"></div></div>
-          </div>
-
-          <div class="arith-meta">
-            <div>
-              <div class="arith-eq" id="mul-eq-dec">0 x 0 = 0</div>
-              <div class="arith-subtle" id="mul-eq-bin">00000000 x 00000000 = 0000000000000000</div>
+          <div class="arith-stack" id="mul-arith-stack">
+            <div class="arith-rowline tight">
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="mul-a-grid"></div></div></div>
+              <div class="arith-row-den" id="mul-a-den">0</div>
             </div>
-            <button class="reset-btn" id="mul-clear" type="button">Clear</button>
+            <div class="arith-rowline tight">
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="mul-b-grid"></div></div></div>
+              <div class="arith-row-den" id="mul-b-den">0</div>
+            </div>
+
+            <div class="arith-line add-line" id="mul-line-top" aria-hidden="true"></div>
+
+            <div class="mul-partials" id="mul-partials"></div>
+
+            <div class="arith-line add-line" id="mul-line-mid" aria-hidden="true"></div>
+
+            <div class="arith-rowline output-row output-sum-row">
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="mul-product-grid"></div></div></div>
+              <div class="arith-row-den sum" id="mul-product-den">0</div>
+            </div>
+
+            <div class="arith-line add-line" id="mul-line-bottom" aria-hidden="true"></div>
           </div>
+
+          <p class="mul-overflow-note" id="mul-overflow-note" hidden>Overflow: the product needs more than 8 bits, so it cannot be fully represented in 8-bit storage.</p>
         </div>
       </section>
     </section>
@@ -506,7 +551,7 @@
     addA: Array(ARITH_BITS).fill(0),
     addB: Array(ARITH_BITS).fill(0),
     mulA: Array(ARITH_BITS).fill(0),
-    mulB: Array(ARITH_BITS).fill(0),
+    mulB: Array(3).fill(0),
   };
 
   function bitsToUnsigned(bits) {
@@ -547,9 +592,25 @@
       showWeights = false,
       highestExp = bits.length - 1,
       reserveWeightRow = true,
+      leadingBlanks = 0,
     } = options;
 
     grid.innerHTML = '';
+
+    for (let bi = 0; bi < leadingBlanks; bi++) {
+      const col = document.createElement('div');
+      col.className = 'bit-col';
+      if (showWeights || reserveWeightRow) {
+        const blankWt = document.createElement('div');
+        blankWt.className = 'bit-wt';
+        blankWt.innerHTML = '\u00a0';
+        col.appendChild(blankWt);
+      }
+      const blankBox = document.createElement('div');
+      blankBox.className = 'bit-box mb0 static blank-spacer';
+      col.appendChild(blankBox);
+      grid.appendChild(col);
+    }
 
     bits.forEach((bit, i) => {
       const col = document.createElement('div');
@@ -592,7 +653,7 @@
       grid.appendChild(col);
     });
 
-    fitGridToContainer(grid, bits.length);
+    fitGridToContainer(grid, bits.length + leadingBlanks);
   }
 
   function renderDigitGrid(grid, bits, options = {}) {
@@ -707,13 +768,19 @@
     if (overflowNote) overflowNote.hidden = !overflow;
   }
 
-  function createPartialRow(label, bits) {
-    const row = document.createElement('div');
-    row.className = 'partial-row';
+  function createPartialRow(aVal, bBit, shift, dispBits) {
+    const leadingCount = dispBits - ARITH_BITS - shift;
+    const trailingCount = shift;
 
-    const lbl = document.createElement('div');
-    lbl.className = 'partial-lbl';
-    lbl.textContent = label;
+    const cells = bBit === 0
+      ? Array(dispBits).fill('')
+      : [...Array(leadingCount).fill(''), ...toBits(aVal, ARITH_BITS), ...Array(trailingCount).fill('')];
+
+    const row = document.createElement('div');
+    row.className = 'arith-rowline output-row';
+
+    const main = document.createElement('div');
+    main.className = 'arith-row-main';
 
     const wrap = document.createElement('div');
     wrap.className = 'grid-wrap';
@@ -722,17 +789,32 @@
     grid.className = 'bit-grid';
 
     wrap.appendChild(grid);
-    row.append(lbl, wrap);
+    main.appendChild(wrap);
+    row.appendChild(main);
 
-    renderBitGrid(grid, bits, { classPrefix: 'eb', interactive: false });
+    renderDigitGrid(grid, cells, {
+      digitClass: 'arith-digit-carry',
+    });
+
+    const spacer = document.createElement('div');
+    spacer.className = 'arith-row-den spacer';
+    spacer.setAttribute('aria-hidden', 'true');
+    spacer.textContent = '0';
+    row.appendChild(spacer);
+
     return row;
   }
 
   function renderMultiplication() {
+    const MUL_DISP_BITS = ARITH_BITS + AR.mulB.length;
+    const overflowZone = MUL_DISP_BITS - ARITH_BITS;
+
     renderBitGrid(document.getElementById('mul-a-grid'), AR.mulA, {
       classPrefix: 'mb',
       interactive: true,
       labelPrefix: 'Multiplicand bit',
+      showWeights: true,
+      leadingBlanks: overflowZone,
       onToggle: (i) => {
         AR.mulA[i] ^= 1;
         renderMultiplication();
@@ -740,9 +822,11 @@
     });
 
     renderBitGrid(document.getElementById('mul-b-grid'), AR.mulB, {
-      classPrefix: 'eb',
+      classPrefix: 'mb',
       interactive: true,
       labelPrefix: 'Multiplier bit',
+      reserveWeightRow: false,
+      leadingBlanks: MUL_DISP_BITS - AR.mulB.length,
       onToggle: (i) => {
         AR.mulB[i] ^= 1;
         renderMultiplication();
@@ -754,33 +838,56 @@
     const partials = document.getElementById('mul-partials');
     partials.innerHTML = '';
 
-    for (let shift = 0; shift < ARITH_BITS; shift += 1) {
-      const bit = AR.mulB[ARITH_BITS - 1 - shift];
-      const rowVal = bit ? (aVal << shift) : 0;
-      const rowBits = toBits(rowVal, ARITH_BITS * 2);
-      partials.appendChild(createPartialRow(`b${shift}`, rowBits));
+    for (let shift = 0; shift < AR.mulB.length; shift += 1) {
+      const bit = AR.mulB[AR.mulB.length - 1 - shift];
+      partials.appendChild(createPartialRow(aVal, bit, shift, MUL_DISP_BITS));
     }
 
     const productVal = aVal * bVal;
-    const productBits = toBits(productVal, ARITH_BITS * 2);
-    renderBitGrid(document.getElementById('mul-product-grid'), productBits, {
-      classPrefix: 'mb',
-      interactive: false,
+    const fullBinary = productVal > 0 ? productVal.toString(2) : '0';
+    const padded = fullBinary.padStart(MUL_DISP_BITS, '0');
+    const firstOneIdx = padded.indexOf('1');
+    const productDisplay = firstOneIdx === -1
+      ? [...Array(MUL_DISP_BITS - 1).fill(''), 0]
+      : padded.split('').map((ch, i) => (i < firstOneIdx ? '' : Number(ch)));
+
+    renderDigitGrid(document.getElementById('mul-product-grid'), productDisplay, {
+      digitClass: 'arith-digit-sum',
+      cellClass: (bit, i) => (bit !== '' && i < overflowZone ? 'arith-digit-overflow' : ''),
     });
 
-    document.getElementById('mul-eq-dec').textContent = `${aVal} x ${bVal} = ${productVal}`;
-    document.getElementById('mul-eq-bin').textContent = `${formatBits(AR.mulA)} x ${formatBits(AR.mulB)} = ${formatBits(productBits)}`;
+    const mulAInputGrid = document.getElementById('mul-a-grid');
+    const mulStack = mulAInputGrid ? mulAInputGrid.closest('.arith-stack') : null;
+    const mulLineWidth = mulAInputGrid ? mulAInputGrid.scrollWidth : 0;
+    let mulLineOffset = 0;
+
+    if (mulAInputGrid && mulStack) {
+      const stackRect = mulStack.getBoundingClientRect();
+      const aRect = mulAInputGrid.getBoundingClientRect();
+      mulLineOffset = Math.max(0, aRect.left - stackRect.left);
+    }
+
+    ['mul-line-top', 'mul-line-mid', 'mul-line-bottom'].forEach((id) => {
+      const line = document.getElementById(id);
+      if (!line) return;
+      line.style.width = mulLineWidth > 0 ? `${mulLineWidth}px` : '100%';
+      line.style.marginLeft = `${mulLineOffset}px`;
+    });
+
+    document.getElementById('mul-a-den').textContent = String(aVal);
+    document.getElementById('mul-b-den').textContent = String(bVal);
+    document.getElementById('mul-product-den').textContent = String(productVal);
+
+    const overflow = productVal > 255;
+    const overflowBadge = document.getElementById('mul-overflow-badge');
+    const overflowNote = document.getElementById('mul-overflow-note');
+    if (overflowBadge) overflowBadge.hidden = !overflow;
+    if (overflowNote) overflowNote.hidden = !overflow;
   }
 
   function clearBits(bits) {
     bits.fill(0);
   }
-
-  document.getElementById('mul-clear').addEventListener('click', () => {
-    clearBits(AR.mulA);
-    clearBits(AR.mulB);
-    renderMultiplication();
-  });
 
   window.addEventListener('resize', () => {
     renderAddition();
