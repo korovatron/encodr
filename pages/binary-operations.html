@@ -160,10 +160,6 @@
       margin-top: calc((var(--box-size, 56px) - 1em) / 2);
     }
 
-    #mul-arith-stack {
-      width: min(100%, 724px);
-    }
-
     #mul-a-den,
     #mul-b-den {
       align-self: start;
@@ -184,7 +180,7 @@
     }
 
     .arith-stack {
-      width: min(100%, 620px);
+      width: min(100%, 724px);
       margin: 0 auto;
     }
 
@@ -318,10 +314,6 @@
 
     /* A/B are 8 bits; Sum/Carry are 9 bits. Offset inputs by one column so
        the extra carry-out bit appears as the leftmost column. */
-    .add-input-grid {
-      margin-left: calc(var(--box-size, 56px) + 5px);
-    }
-
     .blank-spacer {
       visibility: hidden;
       pointer-events: none;
@@ -449,11 +441,11 @@
 
           <div class="arith-stack">
             <div class="arith-rowline tight">
-              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid add-input-grid" id="add-a-grid"></div></div></div>
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="add-a-grid"></div></div></div>
               <div class="arith-row-den" id="add-a-den">0</div>
             </div>
             <div class="arith-rowline tight">
-              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid add-input-grid" id="add-b-grid"></div></div></div>
+              <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="add-b-grid"></div></div></div>
               <div class="arith-row-den" id="add-b-den">0</div>
             </div>
 
@@ -684,6 +676,19 @@
     fitGridToContainer(grid, bits.length);
   }
 
+  function measureActiveCols(grid, leadingBlanks, stack) {
+    if (!grid || !stack || grid.children.length <= leadingBlanks) {
+      return { width: grid ? grid.scrollWidth : 0, offset: 0 };
+    }
+    const stackRect = stack.getBoundingClientRect();
+    const firstRect = grid.children[leadingBlanks].getBoundingClientRect();
+    const lastRect = grid.children[grid.children.length - 1].getBoundingClientRect();
+    return {
+      width: lastRect.right - firstRect.left,
+      offset: Math.max(0, firstRect.left - stackRect.left),
+    };
+  }
+
   function renderAddition() {
     const n = ARITH_BITS;
     const sumBits = Array(n).fill(0);
@@ -706,7 +711,10 @@
       ? [...sum9.slice(0, -1).map(() => ''), 0]
       : sum9.map((bit, idx) => (idx < firstOne ? '' : bit));
 
-    renderDigitGrid(document.getElementById('add-carry-grid'), carryDisplay, {
+    const ADD_LEADING = 3; // extra blank columns left of A/B (to match 11-cell mul grid)
+    const SUM_LEADING = ADD_LEADING - 1; // sum/carry are 9 bits: 2+9=11
+
+    renderDigitGrid(document.getElementById('add-carry-grid'), [...Array(SUM_LEADING).fill(''), ...carryDisplay], {
       digitClass: 'arith-digit-carry',
     });
 
@@ -715,6 +723,7 @@
       interactive: true,
       labelPrefix: 'A bit',
       showWeights: true,
+      leadingBlanks: ADD_LEADING,
       onToggle: (i) => {
         AR.addA[i] ^= 1;
         renderAddition();
@@ -726,27 +735,21 @@
       interactive: true,
       labelPrefix: 'B bit',
       reserveWeightRow: false,
+      leadingBlanks: ADD_LEADING,
       onToggle: (i) => {
         AR.addB[i] ^= 1;
         renderAddition();
       },
     });
 
-    renderDigitGrid(document.getElementById('add-sum-grid'), sumDisplay, {
+    renderDigitGrid(document.getElementById('add-sum-grid'), [...Array(SUM_LEADING).fill(''), ...sumDisplay], {
       digitClass: 'arith-digit-sum',
-      cellClass: (bit, i) => (i === 0 && bit === 1 ? 'arith-digit-overflow' : ''),
+      cellClass: (bit, i) => (i === SUM_LEADING && bit === 1 ? 'arith-digit-overflow' : ''),
     });
 
     const addAInputGrid = document.getElementById('add-a-grid');
-    const addStack = document.querySelector('#pane-arithmetic .arith-stack');
-    const addLineWidth = addAInputGrid ? addAInputGrid.scrollWidth : 0;
-    let addLineOffset = 0;
-
-    if (addAInputGrid && addStack) {
-      const stackRect = addStack.getBoundingClientRect();
-      const aRect = addAInputGrid.getBoundingClientRect();
-      addLineOffset = Math.max(0, aRect.left - stackRect.left);
-    }
+    const addStack = addAInputGrid ? addAInputGrid.closest('.arith-stack') : null;
+    const { width: addLineWidth, offset: addLineOffset } = measureActiveCols(addAInputGrid, ADD_LEADING, addStack);
 
     document.querySelectorAll('.add-line').forEach((line) => {
       line.style.width = addLineWidth > 0 ? `${addLineWidth}px` : '100%';
@@ -858,14 +861,7 @@
 
     const mulAInputGrid = document.getElementById('mul-a-grid');
     const mulStack = mulAInputGrid ? mulAInputGrid.closest('.arith-stack') : null;
-    const mulLineWidth = mulAInputGrid ? mulAInputGrid.scrollWidth : 0;
-    let mulLineOffset = 0;
-
-    if (mulAInputGrid && mulStack) {
-      const stackRect = mulStack.getBoundingClientRect();
-      const aRect = mulAInputGrid.getBoundingClientRect();
-      mulLineOffset = Math.max(0, aRect.left - stackRect.left);
-    }
+    const { width: mulLineWidth, offset: mulLineOffset } = measureActiveCols(mulAInputGrid, overflowZone, mulStack);
 
     ['mul-line-top', 'mul-line-mid', 'mul-line-bottom'].forEach((id) => {
       const line = document.getElementById(id);
