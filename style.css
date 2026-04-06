@@ -789,8 +789,8 @@ body:has(#save-dialog[open]) { overflow: hidden; }
 }
 .ws-banner-desc {
   font-size: 13px;
-  color: rgba(255,255,255,.75);
-  line-height: 1.5;
+  color: var(--muted);
+  line-height: 1.6;
 }
 .ws-banner-cta {
   font-size: 15px;
