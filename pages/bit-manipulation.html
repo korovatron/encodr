@@ -213,6 +213,82 @@
       margin-bottom: 12px;
     }
 
+    .shift-flow-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .shift-flow-toggle input {
+      accent-color: #ffd900;
+    }
+
+    .shift-out-indicator {
+      --shift-x: 0px;
+      --shift-y: -50%;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      position: absolute;
+      top: 50%;
+      transform: translate(var(--shift-x), var(--shift-y));
+      z-index: 1;
+    }
+
+    .shift-out-indicator.side-left {
+      right: calc(100% + 10px);
+    }
+
+    .shift-out-indicator.side-right {
+      left: calc(100% + 10px);
+    }
+
+    .result-grid-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+    }
+
+    .result-grid-anchor {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 100%;
+    }
+
+    .result-grid-line .grid-wrap {
+      width: auto;
+      flex: 0 1 auto;
+    }
+
+    .shift-out-bit {
+      min-width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 120, 120, 0.5);
+      background: rgba(255, 96, 96, 0.16);
+      color: #ffd9d9;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .bit-box.shift-injected {
+      color: #00ff00;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.35);
+    }
+
     @media (max-width: 640px) {
       .res-summary {
         font-size: 18px;
@@ -259,6 +335,13 @@
         <button class="step" id="shift-plus" aria-label="Increase shift amount">+</button>
         <span class="chip-lbl chip-lbl-u">(0-7)</span>
       </div>
+
+      <div class="chip chip-u" id="shift-visual-chip" hidden>
+        <label class="shift-flow-toggle" for="shift-flow-toggle">
+          <input type="checkbox" id="shift-flow-toggle" checked />
+          Show shifted/new bits
+        </label>
+      </div>
     </div>
 
     <div class="result-card">
@@ -293,8 +376,13 @@
       <div class="res-block">
         <div class="labelled-grid-row">
           <span class="badge badge-r row-badge">Result</span>
-          <div class="grid-wrap">
-            <div class="bit-grid" id="result-grid"></div>
+          <div class="result-grid-line">
+            <div class="result-grid-anchor">
+              <div class="shift-out-indicator" id="result-shift-out" hidden></div>
+              <div class="grid-wrap">
+                <div class="bit-grid" id="result-grid"></div>
+              </div>
+            </div>
           </div>
           <div class="row-main">
             <div class="res-big" id="result-denary">0</div>
@@ -410,7 +498,8 @@
     operation: 'and',
     valueBits: [1, 0, 1, 1, 0, 0, 1, 0],
     maskBits: [0, 0, 0, 0, 1, 1, 0, 0],
-    shiftAmount: 1
+    shiftAmount: 1,
+    showShiftFlow: true
   };
 
   function hasMask(op) {
@@ -455,7 +544,9 @@
     grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
   }
 
-  function renderBitGrid(gridId, bits, variant, interactive, onToggle) {
+  function renderBitGrid(gridId, bits, variant, interactive, onToggle, options) {
+    const opts = options || {};
+    const injectedSet = new Set(Array.isArray(opts.injectedIndices) ? opts.injectedIndices : []);
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
 
@@ -471,6 +562,10 @@
       const box = document.createElement('div');
       box.className = `bit-box ${variant}${bit}` + (interactive ? '' : ' static');
       box.textContent = String(bit);
+      if (injectedSet.has(i)) {
+        box.classList.add('shift-injected');
+        box.setAttribute('title', 'New bit introduced by shift');
+      }
 
       if (interactive) {
         box.setAttribute('role', 'button');
@@ -501,6 +596,107 @@
     if (op === 'not') return '~';
     if (op === 'lshift') return '<<';
     return '>>';
+  }
+
+  function getShiftFlowMeta() {
+    if (!hasShift(S.operation) || !S.showShiftFlow) {
+      return { shiftedOut: [], injectedIndices: [] };
+    }
+
+    const n = Math.max(0, Math.min(7, S.shiftAmount | 0));
+    if (n === 0) {
+      return { shiftedOut: [], injectedIndices: [] };
+    }
+
+    if (S.operation === 'lshift') {
+      return {
+        shiftedOut: S.valueBits.slice(0, n),
+        injectedIndices: Array.from({ length: n }, (_, idx) => 8 - n + idx)
+      };
+    }
+
+    return {
+      shiftedOut: S.valueBits.slice(8 - n),
+      injectedIndices: Array.from({ length: n }, (_, idx) => idx)
+    };
+  }
+
+  function renderShiftOutIndicator(bits) {
+    const host = document.getElementById('result-shift-out');
+    host.innerHTML = '';
+    host.className = 'shift-out-indicator';
+    host.style.removeProperty('--shift-x');
+    host.style.setProperty('--shift-y', '-50%');
+
+    if (!hasShift(S.operation) || !S.showShiftFlow || !bits.length) {
+      host.hidden = true;
+      return;
+    }
+
+    host.classList.add(S.operation === 'rshift' ? 'side-right' : 'side-left');
+
+    bits.forEach(bit => {
+      const chip = document.createElement('span');
+      chip.className = 'shift-out-bit';
+      chip.textContent = String(bit);
+      host.appendChild(chip);
+    });
+
+    host.hidden = false;
+
+    function positionShiftOut() {
+      const resultGrid = document.getElementById('result-grid');
+      const firstBox = resultGrid ? resultGrid.querySelector('.bit-box') : null;
+      if (!firstBox || !host.parentElement) {
+        host.style.top = '50%';
+        host.style.setProperty('--shift-y', '-50%');
+        return;
+      }
+
+      const anchorRect = host.parentElement.getBoundingClientRect();
+      const boxRect = firstBox.getBoundingClientRect();
+      const centerY = (boxRect.top + (boxRect.height / 2)) - anchorRect.top;
+      const belowBoxY = (boxRect.bottom - anchorRect.top) + 6;
+      host.style.top = `${Math.round(centerY)}px`;
+      host.style.setProperty('--shift-y', '-50%');
+
+      const card = host.closest('.result-card');
+      if (!card) return;
+
+      const cardRect = card.getBoundingClientRect();
+      const hostRect = host.getBoundingClientRect();
+      const side = S.operation === 'rshift' ? 'right' : 'left';
+      var dx = 0;
+      var safePad = 6;
+      const gapToGrid = 10;
+      const required = hostRect.width + gapToGrid;
+      const available = side === 'left'
+        ? (anchorRect.left - cardRect.left - safePad)
+        : (cardRect.right - anchorRect.right - safePad);
+      const needsDrop = required > available;
+
+      const overflowsLeft = hostRect.left < cardRect.left + safePad;
+      const overflowsRight = hostRect.right > cardRect.right - safePad;
+
+      if (overflowsLeft) {
+        dx += Math.ceil((cardRect.left + safePad) - hostRect.left);
+      }
+      if (overflowsRight) {
+        dx -= Math.ceil(hostRect.right - (cardRect.right - safePad));
+      }
+
+      if (dx !== 0) {
+        host.style.setProperty('--shift-x', `${dx}px`);
+      }
+
+      if (needsDrop || overflowsLeft || overflowsRight) {
+        host.style.top = `${Math.round(belowBoxY)}px`;
+        host.style.setProperty('--shift-y', '0px');
+      }
+    }
+
+    positionShiftOut();
+    requestAnimationFrame(positionShiftOut);
   }
 
   function computeResultBits() {
@@ -577,7 +773,9 @@
 
     document.getElementById('mask-card').hidden = !usesMask;
     document.getElementById('shift-chip').hidden = !usesShift;
+    document.getElementById('shift-visual-chip').hidden = !usesShift;
     document.getElementById('shift-amount').textContent = String(S.shiftAmount);
+    document.getElementById('shift-flow-toggle').checked = S.showShiftFlow;
 
     renderOperationButtons();
 
@@ -596,7 +794,11 @@
     }
 
     const resultBits = computeResultBits();
-    renderBitGrid('result-grid', resultBits, 'mb', false, null);
+    const shiftFlow = getShiftFlowMeta();
+    renderBitGrid('result-grid', resultBits, 'mb', false, null, {
+      injectedIndices: shiftFlow.injectedIndices
+    });
+    renderShiftOutIndicator(shiftFlow.shiftedOut);
     renderSummary(resultBits);
   }
 
@@ -937,6 +1139,11 @@
 
   document.getElementById('shift-plus').addEventListener('click', () => {
     S.shiftAmount = Math.min(7, S.shiftAmount + 1);
+    renderAll();
+  });
+
+  document.getElementById('shift-flow-toggle').addEventListener('change', ev => {
+    S.showShiftFlow = !!ev.target.checked;
     renderAll();
   });
 
