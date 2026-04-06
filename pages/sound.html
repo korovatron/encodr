@@ -1190,7 +1190,11 @@
 
   document.getElementById('sq-submit').addEventListener('click', checkAnswer);
   document.getElementById('sq-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') checkAnswer();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      checkAnswer();
+    }
   });
   document.getElementById('sq-next').addEventListener('click', () => {
     document.getElementById('sq-modal').close();

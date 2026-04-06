@@ -1300,7 +1300,11 @@
 
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
   document.getElementById('q-denary-input').addEventListener('keydown', ev => {
-    if (ev.key === 'Enter' && !QS.answered) checkQuizAnswer();
+    if (ev.key === 'Enter' && !QS.answered) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      checkQuizAnswer();
+    }
   });
   document.getElementById('q-next').addEventListener('click', () => {
     closeModal();

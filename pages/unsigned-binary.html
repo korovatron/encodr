@@ -669,13 +669,25 @@
 
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
   document.getElementById('q-input').addEventListener('keydown', ev => {
-    if (ev.key === 'Enter' && !QS.answered && QS.answerKind !== 'range') checkQuizAnswer();
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind !== 'range') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      checkQuizAnswer();
+    }
   });
   document.getElementById('q-min-input').addEventListener('keydown', ev => {
-    if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') checkQuizAnswer();
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      checkQuizAnswer();
+    }
   });
   document.getElementById('q-max-input').addEventListener('keydown', ev => {
-    if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') checkQuizAnswer();
+    if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      checkQuizAnswer();
+    }
   });
   document.getElementById('q-next').addEventListener('click', () => {
     closeModal();

@@ -539,6 +539,101 @@
     };
   }
 
+  function binaryMulCarryStats(aVal, bVal) {
+    var width = 11; // 8-bit multiplicand and 3-bit multiplier display width
+    var partials = [];
+    var hasCarry = false;
+
+    for (var shift = 0; shift < 3; shift++) {
+      var bit = (bVal >> shift) & 1;
+      partials.push(bit ? (aVal << shift) : 0);
+    }
+
+    var carry = 0;
+    for (var col = 0; col < width; col++) {
+      var total = carry;
+      for (var row = 0; row < partials.length; row++) {
+        total += (partials[row] >> col) & 1;
+      }
+      carry = total >> 1;
+      if (carry > 1) return { valid: false, hasCarry: hasCarry };
+      if (carry === 1) hasCarry = true;
+    }
+
+    return { valid: true, hasCarry: hasCarry };
+  }
+
+  function binaryArithmeticAdditionQuestion() {
+    var a = randInt(0, 255);
+    var b = randInt(0, 255);
+    var sum = a + b;
+    var overflow = sum > 255;
+
+    return {
+      currentType: 'add',
+      answerKind: 'binary-overflow',
+      prompt: pick([
+        'Use binary column addition to add ' + fmtBin(a, 8) + ' and ' + fmtBin(b, 8) + '. Do not convert to denary.',
+        'Add these two 8-bit binary values using column addition: ' + fmtBin(a, 8) + ' + ' + fmtBin(b, 8) + '. Keep the working in binary (no denary conversion).',
+        'Using binary column addition only, find the sum of ' + fmtBin(a, 8) + ' and ' + fmtBin(b, 8) + '. Do not convert to denary first.'
+      ]),
+      formatHint: 'Enter the binary sum. Include the carry-out bit if overflow occurs, then choose whether overflow happened.',
+      expectedBinary: sum.toString(2),
+      expectedValue: sum,
+      expectedOverflow: overflow,
+      leftOperand: fmtBin(a, 8),
+      rightOperand: fmtBin(b, 8)
+    };
+  }
+
+  function binaryArithmeticMultiplicationQuestion() {
+    function pickExamStyleMultiplier() {
+      // Bias away from very easy cases such as x2, while keeping variety.
+      return pick([3, 5, 6, 7, 3, 5, 6, 7, 4, 2]);
+    }
+
+    for (var tries = 0; tries < 600; tries++) {
+      var a = randInt(0, 255);
+      var b = pickExamStyleMultiplier();
+      var product = a * b;
+      var carryStats = binaryMulCarryStats(a, b);
+
+      if (product > 255) continue;
+      if (!carryStats.valid) continue;
+      if (!carryStats.hasCarry) continue;
+
+      return {
+        currentType: 'mul',
+        answerKind: 'binary',
+        prompt: pick([
+          'Use binary long multiplication to calculate ' + fmtBin(a, 8) + ' x ' + fmtBin(b, 3) + '. Do not convert to denary.',
+          'Multiply these binary values using column multiplication: ' + fmtBin(a, 8) + ' x ' + fmtBin(b, 3) + '. Keep everything in binary.',
+          'Using binary multiplication only, find ' + fmtBin(a, 8) + ' x ' + fmtBin(b, 3) + '. Do not convert to denary first.'
+        ]),
+        formatHint: 'Enter the binary product.',
+        expectedBinary: product.toString(2),
+        expectedValue: product,
+        expectedOverflow: false,
+        leftOperand: fmtBin(a, 8),
+        rightOperand: fmtBin(b, 3)
+      };
+    }
+
+    // Guaranteed-valid fallback: non-trivial multiplier, at least one carry,
+    // no carry > 1, and no overflow.
+    return {
+      currentType: 'mul',
+      answerKind: 'binary',
+      prompt: 'Use binary long multiplication to calculate 00111111 x 011. Do not convert to denary.',
+      formatHint: 'Enter the binary product.',
+      expectedBinary: '10111101',
+      expectedValue: 189,
+      expectedOverflow: false,
+      leftOperand: '00111111',
+      rightOperand: '011'
+    };
+  }
+
   window.EncodrQuizGenerators = {
     unsigned: {
       generate: function (questionType) {
@@ -1295,6 +1390,17 @@
           : [genFileSizeBits, genFileSizeBytes, genFileSizeUnit, genSolveResolution, genHalvingEffect, genDuration];
         const pool = active.length ? active : fallback;
         return pick(pool)();
+      }
+    },
+
+    binaryArithmetic: {
+      generate: function (questionType) {
+        var mode = questionType === 'add' || questionType === 'mul' ? questionType : 'mixed';
+        if (mode === 'add') return binaryArithmeticAdditionQuestion();
+        if (mode === 'mul') return binaryArithmeticMultiplicationQuestion();
+        return Math.random() < 0.5
+          ? binaryArithmeticAdditionQuestion()
+          : binaryArithmeticMultiplicationQuestion();
       }
     },
 

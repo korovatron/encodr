@@ -11,6 +11,7 @@
   <link rel="manifest" href="../site.webmanifest" />
   <link rel="stylesheet" href="../style.css" />
   <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/quiz-generators.js" defer></script>
   <!-- Cloudflare Web Analytics -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
   <!-- End Cloudflare Web Analytics -->
@@ -478,14 +479,65 @@
   </section>
 
   <section id="test-section" hidden>
-    <div class="card">
-      <div class="card-head"><span class="badge badge-r">Test</span></div>
-      <p class="intro" style="margin-bottom:0;">Coming soon.</p>
+    <div class="quiz-topbar">
+      <div class="qtype-group">
+        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
+        <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
+        <button class="qtype-btn" data-qt="add"><span class="qt-long">Addition</span><span class="qt-short">ADD</span></button>
+        <button class="qtype-btn" data-qt="mul"><span class="qt-long">Multiplication</span><span class="qt-short">MUL</span></button>
+      </div>
+      <div class="quiz-score-area">
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="q-reset-score">Reset score</button>
+      </div>
+    </div>
+
+    <div class="card quiz-q-card">
+      <div class="res-block">
+        <div class="quiz-q-header">
+          <span class="quiz-q-num" id="q-num">Question 1</span>
+          <span class="badge" id="q-type-badge"></span>
+        </div>
+        <div class="quiz-q-text" id="q-text"></div>
+        <p class="quiz-format-hint" id="q-format-hint"></p>
+      </div>
+    </div>
+
+    <div class="card" id="q-answer-card">
+      <div class="res-block">
+        <div class="err-grid">
+          <div>
+            <div class="q-answer-lbl" id="q-answer-lbl">Binary Answer</div>
+            <input class="q-denary-input q-err-input" type="text" id="q-input"
+                   placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
+          </div>
+          <div id="q-overflow-wrap">
+            <div class="q-answer-lbl">Overflow?</div>
+            <div class="qtype-group" role="radiogroup" aria-label="Overflow">
+              <button class="qtype-btn" id="q-overflow-no" type="button" data-overflow="no">No</button>
+              <button class="qtype-btn" id="q-overflow-yes" type="button" data-overflow="yes">Yes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-actions">
+      <button class="btn btn-submit" id="q-submit">Check Answer</button>
     </div>
   </section>
 
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
+
+<dialog id="q-modal" aria-labelledby="q-modal-feedback">
+  <div class="modal">
+    <div class="modal-feedback" id="q-modal-feedback"></div>
+    <div class="modal-footer">
+      <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
   const ARITH_BITS = 8;
@@ -913,6 +965,154 @@
     bits.fill(0);
   }
 
+  const QS = {
+    questionType: 'mixed', // 'mixed' | 'add' | 'mul'
+    currentType: 'add',
+    questionNum: 1,
+    correct: 0,
+    wrong: 0,
+    total: 0,
+    answered: false,
+    prompt: '',
+    formatHint: '',
+    expectedBinary: '',
+    expectedValue: 0,
+    expectedOverflow: false,
+    selectedOverflow: null,
+    hasStarted: false
+  };
+
+  const LS_SCORE_BINARY_ARITH = 'encodr-binary-arithmetic-score';
+
+  function loadScoreBinaryArith() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_SCORE_BINARY_ARITH)) || { correct: 0, wrong: 0, total: 0 };
+    } catch {
+      return { correct: 0, wrong: 0, total: 0 };
+    }
+  }
+
+  function saveScoreBinaryArith() {
+    localStorage.setItem(LS_SCORE_BINARY_ARITH, JSON.stringify({
+      correct: QS.correct,
+      wrong: QS.wrong,
+      total: QS.total
+    }));
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById('q-correct').textContent = QS.correct;
+    document.getElementById('q-wrong').textContent = QS.wrong;
+    document.getElementById('q-total').textContent = QS.total;
+  }
+
+  function normalizeBinary(raw) {
+    if (!raw) return null;
+    let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
+    if (/^0b/i.test(s)) s = s.slice(2);
+    if (!/^[01]+$/.test(s)) return null;
+    return s;
+  }
+
+  function openModal() {
+    const dlg = document.getElementById('q-modal');
+    if (!dlg.open) dlg.showModal();
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeModal() {
+    const dlg = document.getElementById('q-modal');
+    if (dlg.open) dlg.close();
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+  }
+
+  function setOverflowChoice(choice) {
+    QS.selectedOverflow = choice;
+    document.getElementById('q-overflow-no').classList.toggle('active', choice === false);
+    document.getElementById('q-overflow-yes').classList.toggle('active', choice === true);
+  }
+
+  function generateQuizQuestion() {
+    const generated = window.EncodrQuizGenerators.binaryArithmetic.generate(QS.questionType);
+    Object.assign(QS, generated);
+    QS.answered = false;
+    QS.selectedOverflow = null;
+    const needsOverflow = QS.currentType === 'add';
+
+    const badge = document.getElementById('q-type-badge');
+    if (QS.currentType === 'add') {
+      badge.className = 'badge badge-m';
+      badge.textContent = 'ADD';
+    } else {
+      badge.className = 'badge badge-e';
+      badge.textContent = 'MUL';
+    }
+
+    document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
+    document.getElementById('q-text').textContent = QS.prompt;
+    document.getElementById('q-format-hint').textContent = QS.formatHint;
+    document.getElementById('q-input').value = '';
+    document.getElementById('q-input').disabled = false;
+    document.getElementById('q-submit').disabled = false;
+    document.getElementById('q-overflow-wrap').hidden = !needsOverflow;
+
+    setOverflowChoice(null);
+    closeModal();
+    document.getElementById('q-modal-feedback').innerHTML = '';
+  }
+
+  function checkQuizAnswer() {
+    if (QS.answered) return;
+    const needsOverflow = QS.currentType === 'add';
+
+    const inputEl = document.getElementById('q-input');
+    const normalized = normalizeBinary(inputEl.value || '');
+    if (!normalized) {
+      inputEl.focus();
+      return;
+    }
+    if (needsOverflow && QS.selectedOverflow === null) {
+      document.getElementById('q-overflow-no').focus();
+      return;
+    }
+
+    const studentValue = parseInt(normalized, 2);
+    const valueCorrect = studentValue === QS.expectedValue;
+    const studentOverflow = needsOverflow ? QS.selectedOverflow : null;
+    const overflowCorrect = needsOverflow ? (studentOverflow === QS.expectedOverflow) : true;
+    const correct = valueCorrect && overflowCorrect;
+
+    QS.answered = true;
+    QS.total++;
+    document.getElementById('q-submit').disabled = true;
+    inputEl.disabled = true;
+
+    if (correct) QS.correct++; else QS.wrong++;
+    updateScoreDisplay();
+    saveScoreBinaryArith();
+
+    const expectedOverflowText = QS.expectedOverflow ? 'Yes' : 'No';
+    const studentOverflowText = studentOverflow ? 'Yes' : 'No';
+    const expected = needsOverflow
+      ? (QS.expectedBinary + ' (overflow: ' + expectedOverflowText + ')')
+      : QS.expectedBinary;
+    const student = needsOverflow
+      ? (normalized + ' (overflow: ' + studentOverflowText + ')')
+      : normalized;
+
+    const html = correct
+      ? `✓ Correct! The answer is <strong>${expected}</strong>.`
+      : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${student}</strong>, answer: <strong>${expected}</strong>.</span>`;
+
+    const fbEl = document.getElementById('q-modal-feedback');
+    fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
+    fbEl.innerHTML = html;
+    if (document.activeElement) document.activeElement.blur();
+    openModal();
+  }
+
   window.addEventListener('resize', () => {
     renderAddition();
     renderMultiplication();
@@ -930,10 +1130,69 @@
     testBtn.classList.toggle('active', !isExplore);
     exploreBtn.setAttribute('aria-selected', isExplore ? 'true' : 'false');
     testBtn.setAttribute('aria-selected', isExplore ? 'false' : 'true');
+
+    if (isExplore) {
+      closeModal();
+      return;
+    }
+
+    QS.questionNum = 1;
+    updateScoreDisplay();
+    generateQuizQuestion();
+    QS.hasStarted = true;
   }
 
   document.getElementById('tab-explore').addEventListener('click', () => switchTopSection('explore'));
   document.getElementById('tab-test').addEventListener('click', () => switchTopSection('test'));
+
+  document.querySelectorAll('.qtype-btn[data-qt]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('active')) return;
+      document.querySelectorAll('.qtype-btn[data-qt]').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      QS.questionType = btn.dataset.qt;
+      closeModal();
+      QS.questionNum++;
+      generateQuizQuestion();
+      QS.hasStarted = true;
+    });
+  });
+
+  document.getElementById('q-overflow-no').addEventListener('click', () => setOverflowChoice(false));
+  document.getElementById('q-overflow-yes').addEventListener('click', () => setOverflowChoice(true));
+
+  document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
+  document.getElementById('q-input').addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && !QS.answered) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      checkQuizAnswer();
+    }
+  });
+  document.getElementById('q-next').addEventListener('click', () => {
+    closeModal();
+    QS.questionNum++;
+    generateQuizQuestion();
+    QS.hasStarted = true;
+  });
+  document.getElementById('q-reset-score').addEventListener('click', () => {
+    QS.correct = 0;
+    QS.wrong = 0;
+    QS.total = 0;
+    QS.questionNum = 1;
+    localStorage.removeItem(LS_SCORE_BINARY_ARITH);
+    updateScoreDisplay();
+    if (!document.getElementById('test-section').hidden) {
+      generateQuizQuestion();
+      QS.hasStarted = true;
+    }
+  });
+
+  const _score = loadScoreBinaryArith();
+  QS.correct = _score.correct;
+  QS.wrong = _score.wrong;
+  QS.total = _score.total;
+  updateScoreDisplay();
 
   switchTopSection('explore');
   renderAddition();
