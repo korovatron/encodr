@@ -203,6 +203,16 @@
       justify-content: center;
     }
 
+    .q-effect-op-btn,
+    .q-factor-btn {
+      min-width: 88px;
+      justify-content: center;
+    }
+
+    .q-choice-row-spaced {
+      margin-bottom: 12px;
+    }
+
     @media (max-width: 640px) {
       .res-summary {
         font-size: 18px;
@@ -319,21 +329,13 @@
         <p class="quiz-format-hint" id="q-format-hint"></p>
 
         <div class="q-visual-stack" id="q-shift-visual" hidden>
-          <div class="q-visual-row">
-            <span class="q-visual-lbl">Value</span>
-            <div class="grid-wrap">
-              <div class="bit-grid" id="q-shift-grid"></div>
-            </div>
-          </div>
-          <div class="q-visual-row">
-            <span class="q-visual-lbl">Operation</span>
-            <div class="q-op-pill" id="q-shift-op"></div>
+          <div class="grid-wrap">
+            <div class="bit-grid" id="q-shift-grid"></div>
           </div>
         </div>
 
         <div class="q-visual-stack" id="q-mask-visual" hidden>
           <div class="q-visual-row">
-            <span class="q-visual-lbl">Current Bulbs</span>
             <div class="bulb-grid" id="q-bulb-grid"></div>
           </div>
         </div>
@@ -348,16 +350,30 @@
       </div>
     </div>
 
+    <div class="card" id="q-shift-effect-answer-card" hidden>
+      <div class="res-block">
+        <div class="q-answer-lbl">Your Answer</div>
+        <div class="q-choice-row q-choice-row-spaced" id="q-effect-op-wrap">
+          <button class="qtype-btn q-effect-op-btn" id="q-effect-multiply" type="button" data-effect-op="multiply">Multiply</button>
+          <button class="qtype-btn q-effect-op-btn" id="q-effect-divide" type="button" data-effect-op="divide">Divide</button>
+        </div>
+        <div class="q-choice-row" id="q-effect-factor-wrap">
+          <button class="qtype-btn q-factor-btn" type="button" data-factor="2">2</button>
+          <button class="qtype-btn q-factor-btn" type="button" data-factor="4">4</button>
+          <button class="qtype-btn q-factor-btn" type="button" data-factor="8">8</button>
+          <button class="qtype-btn q-factor-btn" type="button" data-factor="16">16</button>
+        </div>
+      </div>
+    </div>
+
     <div class="card" id="q-mask-answer-card" hidden>
       <div class="res-block">
         <div class="q-answer-lbl">Your Answer</div>
-        <div class="q-err-lbl">Choose an operation</div>
         <div class="q-choice-row" id="q-op-wrap">
           <button class="qtype-btn q-op-btn" id="q-op-and" type="button" data-op="and">AND</button>
           <button class="qtype-btn q-op-btn" id="q-op-or" type="button" data-op="or">OR</button>
           <button class="qtype-btn q-op-btn" id="q-op-xor" type="button" data-op="xor">XOR</button>
         </div>
-        <div class="q-err-lbl" style="margin-top:14px;">Enter an 8-bit mask</div>
         <input class="q-denary-input" type="text" id="q-mask-input"
                placeholder="e.g. 00100010" inputmode="numeric" autocomplete="off" spellcheck="false" />
       </div>
@@ -629,16 +645,21 @@
   const QS = {
     questionType: 'mixed',
     currentType: 'shift',
+    shiftQuestionKind: 'result',
     questionNum: 1,
     correct: 0,
     wrong: 0,
     total: 0,
     answered: false,
     selectedOperation: null,
+    selectedEffectOp: null,
+    selectedFactor: null,
     prompt: '',
     formatHint: '',
     valueBits: '00000000',
     expectedBits: '00000000',
+    expectedEffectOp: '',
+    expectedFactor: 2,
     initialBits: '00000000',
     targetBits: '00000000',
     shiftLabel: '',
@@ -692,19 +713,43 @@
     });
   }
 
+  function setSelectedEffectOperation(op) {
+    QS.selectedEffectOp = op;
+    document.querySelectorAll('.q-effect-op-btn').forEach(btn => {
+      const isActive = btn.dataset.effectOp === op;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
+  function setSelectedEffectFactor(factor) {
+    QS.selectedFactor = factor;
+    document.querySelectorAll('.q-factor-btn').forEach(btn => {
+      const isActive = Number(btn.dataset.factor) === Number(factor);
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
   function renderQuizVisuals() {
     const isShift = QS.currentType === 'shift';
+    const isShiftEffect = isShift && QS.shiftQuestionKind === 'effect';
+    const isShiftResult = isShift && QS.shiftQuestionKind !== 'effect';
     const shiftBits = QS.valueBits.split('').map(Number);
     const maskBits = QS.initialBits.split('').map(Number);
 
-    document.getElementById('q-shift-visual').hidden = !isShift;
+    document.getElementById('q-shift-visual').hidden = !isShiftResult;
     document.getElementById('q-mask-visual').hidden = isShift;
-    document.getElementById('q-answer-card').hidden = !isShift;
+    document.getElementById('q-answer-card').hidden = !isShiftResult;
+    document.getElementById('q-shift-effect-answer-card').hidden = !isShiftEffect;
     document.getElementById('q-mask-answer-card').hidden = isShift;
 
-    if (isShift) {
+    if (isShiftResult) {
       renderBitGrid('q-shift-grid', shiftBits, 'mb', false, null);
-      document.getElementById('q-shift-op').textContent = QS.shiftLabel;
+      return;
+    }
+
+    if (isShiftEffect) {
       return;
     }
 
@@ -717,6 +762,8 @@
     Object.assign(QS, generated);
     QS.answered = false;
     QS.selectedOperation = null;
+    QS.selectedEffectOp = null;
+    QS.selectedFactor = null;
 
     const isShift = QS.currentType === 'shift';
     const badge = document.getElementById('q-type-badge');
@@ -732,13 +779,20 @@
     document.getElementById('q-input').disabled = false;
     document.getElementById('q-mask-input').disabled = false;
     document.getElementById('q-submit').disabled = false;
+    document.querySelectorAll('#q-shift-effect-answer-card button').forEach(btn => {
+      btn.disabled = false;
+    });
 
     V.clearInputError(document.getElementById('q-input'));
     V.clearInputError(document.getElementById('q-mask-input'));
     V.clearGroupError(document.getElementById('q-op-wrap'));
+    V.clearGroupError(document.getElementById('q-effect-op-wrap'));
+    V.clearGroupError(document.getElementById('q-effect-factor-wrap'));
     V.clearSummary('q-submit');
 
     setSelectedQuizOperation(null);
+    setSelectedEffectOperation(null);
+    setSelectedEffectFactor(null);
     closeModal();
     document.getElementById('q-modal-feedback').innerHTML = '';
     renderQuizVisuals();
@@ -751,29 +805,61 @@
     const inputEl = document.getElementById('q-input');
     const maskInputEl = document.getElementById('q-mask-input');
     const opWrap = document.getElementById('q-op-wrap');
+    const effectOpWrap = document.getElementById('q-effect-op-wrap');
+    const effectFactorWrap = document.getElementById('q-effect-factor-wrap');
 
     V.clearInputError(inputEl);
     V.clearInputError(maskInputEl);
     V.clearGroupError(opWrap);
+    V.clearGroupError(effectOpWrap);
+    V.clearGroupError(effectFactorWrap);
     V.clearSummary('q-submit');
 
     let correct = false;
     let feedbackHtml = '';
 
     if (isShift) {
-      const normalized = normalizeBinary(inputEl.value || '');
-      if (!normalized) {
-        V.setInputError(inputEl, 'Enter a valid 8-bit binary answer using only 0 and 1.');
-        V.setSummary('q-submit', 'Please fix the highlighted field.');
-        inputEl.focus();
-        return;
-      }
+      if (QS.shiftQuestionKind === 'effect') {
+        if (!QS.selectedEffectOp) {
+          V.setGroupError(effectOpWrap, 'Choose Multiply or Divide.');
+          V.setSummary('q-submit', 'Please fix the highlighted field.');
+          document.getElementById('q-effect-multiply').focus();
+          return;
+        }
+        if (!QS.selectedFactor) {
+          V.setGroupError(effectFactorWrap, 'Choose a factor.');
+          V.setSummary('q-submit', 'Please fix the highlighted field.');
+          document.querySelector('#q-effect-factor-wrap .q-factor-btn').focus();
+          return;
+        }
 
-      correct = normalized === QS.expectedBits;
-      feedbackHtml = correct
-        ? `✓ Correct! The result is <strong>${QS.expectedBits}</strong>.`
-        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${normalized}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
-      inputEl.disabled = true;
+        correct = QS.selectedEffectOp === QS.expectedEffectOp
+          && Number(QS.selectedFactor) === Number(QS.expectedFactor);
+
+        const expectedText = `${QS.expectedEffectOp} by ${QS.expectedFactor}`;
+        const actualText = `${QS.selectedEffectOp} by ${QS.selectedFactor}`;
+        feedbackHtml = correct
+          ? `✓ Correct! Net effect: <strong>${expectedText}</strong>.`
+          : `<span class="fb-wrong">✗ Incorrect — you chose <strong>${actualText}</strong>, answer: <strong>${expectedText}</strong>.</span>`;
+
+        document.querySelectorAll('#q-shift-effect-answer-card button').forEach(btn => {
+          btn.disabled = true;
+        });
+      } else {
+        const normalized = normalizeBinary(inputEl.value || '');
+        if (!normalized) {
+          V.setInputError(inputEl, 'Enter a valid 8-bit binary answer using only 0 and 1.');
+          V.setSummary('q-submit', 'Please fix the highlighted field.');
+          inputEl.focus();
+          return;
+        }
+
+        correct = normalized === QS.expectedBits;
+        feedbackHtml = correct
+          ? `✓ Correct! The result is <strong>${QS.expectedBits}</strong>.`
+          : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${normalized}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
+        inputEl.disabled = true;
+      }
     } else {
       const normalizedMask = normalizeBinary(maskInputEl.value || '');
       if (QS.selectedOperation === null) {
@@ -871,6 +957,24 @@
       const V = window.EncodrValidation;
       setSelectedQuizOperation(btn.dataset.op);
       V.clearGroupError(document.getElementById('q-op-wrap'));
+      V.maybeClearSummary('q-submit');
+    });
+  });
+
+  document.querySelectorAll('.q-effect-op-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const V = window.EncodrValidation;
+      setSelectedEffectOperation(btn.dataset.effectOp);
+      V.clearGroupError(document.getElementById('q-effect-op-wrap'));
+      V.maybeClearSummary('q-submit');
+    });
+  });
+
+  document.querySelectorAll('.q-factor-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const V = window.EncodrValidation;
+      setSelectedEffectFactor(Number(btn.dataset.factor));
+      V.clearGroupError(document.getElementById('q-effect-factor-wrap'));
       V.maybeClearSummary('q-submit');
     });
   });

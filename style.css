@@ -563,6 +563,10 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   padding: 3px 10px; border-radius: 100px;
   box-shadow: 0 0 0 2px #fff;
 }
+#q-mask-answer-card .q-choice-row {
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
 .q-denary-input {
   display: block; width: 100%;
   background: #000;

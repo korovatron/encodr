@@ -661,13 +661,42 @@
 
     return {
       currentType: 'shift',
-      prompt: 'Apply the shift shown to the 8-bit value below.',
+      shiftQuestionKind: 'result',
+      prompt: 'Apply a ' + (op === 'lshift' ? 'left' : 'right') + ' shift, ' + amount + ' place' + (amount !== 1 ? 's' : '') + ' to the value shown below.',
       formatHint: 'Enter the 8-bit binary result.',
       valueBits: fmtBin(value, 8),
       shiftLabel: (op === 'lshift' ? 'Left shift ' : 'Right shift ') + amount,
       shiftAmount: amount,
       shiftOp: op,
       expectedBits: fmtBin(expected, 8)
+    };
+  }
+
+  function bitManipulationShiftEffectQuestion() {
+    var leftAmount = randInt(1, 5);
+    var rightAmount = randInt(1, 5);
+
+    while (Math.abs(leftAmount - rightAmount) === 0 || Math.abs(leftAmount - rightAmount) > 4) {
+      leftAmount = randInt(1, 5);
+      rightAmount = randInt(1, 5);
+    }
+
+    var leftFirst = Math.random() < 0.5;
+    var firstDir = leftFirst ? 'left' : 'right';
+    var firstAmount = leftFirst ? leftAmount : rightAmount;
+    var secondDir = leftFirst ? 'right' : 'left';
+    var secondAmount = leftFirst ? rightAmount : leftAmount;
+    var net = leftAmount - rightAmount;
+    var expectedEffectOp = net > 0 ? 'multiply' : 'divide';
+    var expectedFactor = Math.pow(2, Math.abs(net));
+
+    return {
+      currentType: 'shift',
+      shiftQuestionKind: 'effect',
+      prompt: 'State the arithmetic effect of applying a ' + firstDir + ' binary shift of ' + firstAmount + ' followed by a ' + secondDir + ' binary shift of ' + secondAmount + ' to a binary number.',
+      formatHint: 'Choose Multiply or Divide, then choose the factor.',
+      expectedEffectOp: expectedEffectOp,
+      expectedFactor: expectedFactor
     };
   }
 
@@ -1497,11 +1526,16 @@
     bitManipulation: {
       generate: function (questionType) {
         var mode = questionType === 'shift' || questionType === 'mask' ? questionType : 'mixed';
-        if (mode === 'shift') return bitManipulationShiftQuestion();
+        if (mode === 'shift') {
+          return Math.random() < 0.5
+            ? bitManipulationShiftQuestion()
+            : bitManipulationShiftEffectQuestion();
+        }
         if (mode === 'mask') return bitManipulationMaskQuestion();
-        return Math.random() < 0.5
-          ? bitManipulationShiftQuestion()
-          : bitManipulationMaskQuestion();
+        var roll = Math.random();
+        if (roll < 0.34) return bitManipulationShiftQuestion();
+        if (roll < 0.67) return bitManipulationShiftEffectQuestion();
+        return bitManipulationMaskQuestion();
       }
     },
 
