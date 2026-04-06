@@ -97,6 +97,14 @@
       ]
     },
     {
+      id: "bitManipulation",
+      label: "Bit Manipulation",
+      subtypes: [
+        { id: "shift", label: "Shifts" },
+        { id: "mask", label: "Masking" }
+      ]
+    },
+    {
       id: "compression",
       label: "Compression",
       subtypes: [
@@ -381,6 +389,16 @@
   var PROMPT_BITMAP_GAP_COMPACT = 16;
   var PROMPT_BITMAP_GAP_NORMAL = 20;
   var PROMPT_BOX_LINE_LEAD_COMPACT = 6;
+  var POST_PROMPT_INSTRUCTION_PRE_GAP = 10;
+  var POST_PROMPT_INSTRUCTION_TO_ANSWER_GAP = 4;
+  var BINARY_BOX_HEIGHT = 16;
+  var BINARY_BOX_LABEL_GAP = 4;
+  var BINARY_BOX_ROW_GAP = 8;
+  var BINARY_BOX_AFTER_GAP = 6;
+  var BULB_NUMBER_TOP_GAP = 1;
+  var BULB_NUMBER_TO_BOX_GAP = 4;
+  var BULB_BOX_HEIGHT = 16;
+  var BULB_ROW_BOTTOM_GAP = 4;
 
   function binaryPointIndex(text) {
     var raw = String(text || "");
@@ -613,6 +631,118 @@
           lineCount: 2
         },
         promptBitBoxes: [],
+        promptTree: null,
+        promptBitmap: null,
+        promptBitmaps: []
+      };
+    }
+
+    if (source.topicId === "bitManipulation") {
+      var bmq = generators.bitManipulation.generate(source.subtypeId);
+
+      if (bmq.currentType === "shift") {
+        if (bmq.shiftQuestionKind === "effect") {
+          return {
+            topic: source.topicLabel,
+            prompt: plainText(bmq.prompt),
+            instruction: "",
+            answer: (bmq.expectedEffectOp === "multiply" ? "Multiply" : "Divide") + " by " + bmq.expectedFactor,
+            answerLayout: null,
+            promptBitBoxes: [],
+            promptTree: null,
+            promptBitmap: null,
+            promptBitmaps: []
+          };
+        }
+
+        var shiftDir = bmq.shiftOp === "lshift" ? "left" : "right";
+        var shiftPlaces = Number.isFinite(bmq.shiftAmount) ? bmq.shiftAmount : 1;
+        var shiftValue = String(bmq.valueBits || "");
+
+        return {
+          topic: source.topicLabel,
+          prompt: "Apply a " + shiftDir + " shift, " + shiftPlaces + " place" + (shiftPlaces !== 1 ? "s" : "") + " to the 8-bit value shown below.",
+          instruction: "Write your answer as an 8-bit binary value.",
+          instructionAfterPromptBoxes: true,
+          answer: String(bmq.expectedBits || ""),
+          answerLayout: {
+            kind: "binaryBoxes",
+            bits: 8,
+            showLabel: false,
+            extraBottomGap: 12
+          },
+          promptBitBoxes: [
+            {
+              label: "Value:",
+              bitText: shiftValue,
+              bits: 8,
+              pointIndex: null,
+              showLabel: false
+            }
+          ],
+          promptTree: null,
+          promptBitmap: null,
+          promptBitmaps: []
+        };
+      }
+
+      var initialBits = String(bmq.initialBits || "");
+      var targetBits = String(bmq.targetBits || "");
+      var maskBits = "";
+      var opName = "XOR";
+      var allSet = true;
+      var allClear = true;
+
+      for (var mb = 0; mb < 8; mb++) {
+        var fromBit = initialBits.charAt(mb);
+        var toBit = targetBits.charAt(mb);
+        if (fromBit !== toBit) {
+          if (!(fromBit === "0" && toBit === "1")) allSet = false;
+          if (!(fromBit === "1" && toBit === "0")) allClear = false;
+        }
+      }
+
+      if (allSet) {
+        opName = "OR";
+        for (var ms = 0; ms < 8; ms++) {
+          maskBits += initialBits.charAt(ms) !== targetBits.charAt(ms) ? "1" : "0";
+        }
+      } else if (allClear) {
+        opName = "AND";
+        for (var mc = 0; mc < 8; mc++) {
+          maskBits += initialBits.charAt(mc) !== targetBits.charAt(mc) ? "0" : "1";
+        }
+      } else {
+        opName = "XOR";
+        for (var mx = 0; mx < 8; mx++) {
+          maskBits += initialBits.charAt(mx) !== targetBits.charAt(mx) ? "1" : "0";
+        }
+      }
+
+      var actionText = String(bmq.actionText || "change the bulbs shown");
+      actionText = actionText.charAt(0).toLowerCase() + actionText.slice(1);
+      var maskPrompt = "The bits in an 8-bit register represent the states of 8 bulbs, where 0 means off and 1 means on. The current state is shown below. What operation and mask will " + actionText + "";
+      if (!/[.!?]$/.test(maskPrompt)) maskPrompt += ".";
+
+      return {
+        topic: source.topicLabel,
+        prompt: maskPrompt,
+        instruction: "",
+        answer: opName + " with mask " + maskBits,
+        answerLayout: {
+          kind: "maskOperation",
+          bits: 8
+        },
+        promptBitBoxes: [
+          {
+            label: "Current state:",
+            bitText: initialBits,
+            bits: 8,
+            pointIndex: null,
+            showLabel: false,
+            bulbDisplay: true
+          }
+        ],
         promptTree: null,
         promptBitmap: null,
         promptBitmaps: []
@@ -934,6 +1064,7 @@
         promptInlineSymbols: Array.isArray(q.promptInlineSymbols) ? q.promptInlineSymbols : [],
         promptBlocks: Array.isArray(q.promptBlocks) ? q.promptBlocks : [],
         instruction: q.instruction,
+        instructionAfterPromptBoxes: !!q.instructionAfterPromptBoxes,
         answer: q.answer,
         answerLayout: q.answerLayout || null,
         promptBitBoxes: Array.isArray(q.promptBitBoxes) ? q.promptBitBoxes : [],
@@ -1187,6 +1318,7 @@
     function renderPromptText(item, x, maxWidth, fontSize, promptLineH) {
       function renderInstruction() {
         if (!item.instruction) return;
+        if (item.instructionAfterPromptBoxes) return;
         var lines = wrappedLines(item.instruction, fontSize, false, maxWidth);
         doc.setFont("helvetica", "italic");
         doc.setFontSize(fontSize);
@@ -1338,6 +1470,19 @@
       renderInstruction();
     }
 
+    function renderPostPromptInstruction(item, x, maxWidth, fontSize, promptLineH) {
+      if (!item || !item.instructionAfterPromptBoxes || !item.instruction) return;
+      y += POST_PROMPT_INSTRUCTION_PRE_GAP;
+      var lines = wrappedLines(item.instruction, fontSize, false, maxWidth);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(fontSize);
+      doc.setTextColor(0);
+      for (var i = 0; i < lines.length; i++) {
+        doc.text(lines[i], x, y + (i * promptLineH));
+      }
+      y += (lines.length - 1) * promptLineH + POST_PROMPT_INSTRUCTION_TO_ANSWER_GAP;
+    }
+
     function writeCentred(text, fontSize, isBold) {
       doc.setFont("helvetica", isBold ? "bold" : "normal");
       doc.setFontSize(fontSize);
@@ -1350,9 +1495,9 @@
       var opts = options || {};
       var safeBits = Math.max(2, Math.min(32, Math.floor(bits || 0)));
       var available = opts.maxWidth || (pageW - margin * 2);
-      var boxH = 16;
-      var labelGap = 4;
-      var rowGap = 8;
+      var boxH = BINARY_BOX_HEIGHT;
+      var labelGap = BINARY_BOX_LABEL_GAP;
+      var rowGap = BINARY_BOX_ROW_GAP;
       var showLabel = opts.showLabel !== false;
       var cellW = Math.max(10, Math.min(18, Math.floor(available / safeBits)));
       var totalW = cellW * safeBits;
@@ -1399,14 +1544,16 @@
 
     function promptBitBoxesHeight(item, maxWidth) {
       if (!item.promptBitBoxes || !item.promptBitBoxes.length) return 0;
-      var width = maxWidth || (pageW - margin * 2);
       var total = 0;
       item.promptBitBoxes.forEach(function (entry) {
+        if (entry.bulbDisplay) {
+          total += BULB_NUMBER_TOP_GAP + BULB_NUMBER_TO_BOX_GAP + BULB_BOX_HEIGHT + BULB_ROW_BOTTOM_GAP;
+          return;
+        }
         var safeBits = Math.max(2, Math.min(32, Math.floor(entry.bits || bitsInBinaryString(entry.bitText))));
-        var cellW = Math.max(10, Math.min(18, Math.floor(width / safeBits)));
-        var boxH = 16;
+        var boxH = BINARY_BOX_HEIGHT;
         var showLabel = entry.showLabel !== false;
-        total += (showLabel ? lineH : 0) + 4 + boxH + 8;
+        total += (showLabel ? lineH : 0) + BINARY_BOX_LABEL_GAP + boxH + BINARY_BOX_ROW_GAP;
       });
       return total;
     }
@@ -1461,9 +1608,51 @@
       return rows * cell + (rows - 1) * gap;
     }
 
+    function drawBulbStateBoxes(x, yStart, bitText, maxWidth) {
+      var safeBits = 8;
+      var available = maxWidth || (pageW - margin * 2);
+      var cellW = Math.max(16, Math.min(24, Math.floor(available / safeBits)));
+      var totalW = cellW * safeBits;
+      var labelH = BULB_NUMBER_TOP_GAP;
+      var boxH = BULB_BOX_HEIGHT;
+      var numY = yStart + labelH;
+      var boxY = numY + BULB_NUMBER_TO_BOX_GAP;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(0);
+      for (var bn = 0; bn < safeBits; bn++) {
+        var cx = x + bn * cellW + cellW / 2;
+        doc.text(String(bn + 1), cx, numY, { align: "center" });
+      }
+
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.9);
+      doc.rect(x, boxY, totalW, boxH);
+      for (var bi = 1; bi < safeBits; bi++) {
+        doc.line(x + bi * cellW, boxY, x + bi * cellW, boxY + boxH);
+      }
+
+      if (bitText) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
+        doc.setTextColor(0);
+        for (var bj = 0; bj < Math.min(bitText.length, safeBits); bj++) {
+          var label = bitText[bj] === "1" ? "ON" : "OFF";
+          doc.text(label, x + bj * cellW + cellW / 2, boxY + boxH / 2 + 3, { align: "center" });
+        }
+      }
+
+      return labelH + BULB_NUMBER_TO_BOX_GAP + boxH + BULB_ROW_BOTTOM_GAP;
+    }
+
     function renderPromptBitBoxes(item, x, maxWidth) {
       if (!item.promptBitBoxes || !item.promptBitBoxes.length) return;
       item.promptBitBoxes.forEach(function (entry) {
+        if (entry.bulbDisplay) {
+          y += drawBulbStateBoxes(x, y, entry.bitText, maxWidth);
+          return;
+        }
         y += drawSegmentedBinaryBoxes(
           x,
           y,
@@ -1713,7 +1902,14 @@
       var layout = item.answerLayout;
       if (!layout) return 2 * lineH + 12;
       if (layout.kind === "binaryBoxes") {
-        return lineH + 8 + 16;
+        return (layout.showLabel === false ? 0 : lineH)
+          + BINARY_BOX_LABEL_GAP
+          + BINARY_BOX_HEIGHT
+          + BINARY_BOX_AFTER_GAP
+          + (Number(layout.extraBottomGap) || 0);
+      }
+      if (layout.kind === "maskOperation") {
+        return (lineH + 4) + (4 + 16 + 8) + 8;
       }
       if (layout.kind === "binaryArithmetic") {
         return binaryArithmeticLayoutHeight(layout, pageW - margin * 2, false);
@@ -1750,8 +1946,59 @@
       }
 
       if (layout.kind === "binaryBoxes") {
-        y += drawSegmentedBinaryBoxes(margin, y, layout.bits, "Answer:", layout.pointIndex);
-        y += 6;
+        y += drawSegmentedBinaryBoxes(
+          margin,
+          y,
+          layout.bits,
+          "Answer:",
+          layout.pointIndex,
+          { showLabel: layout.showLabel !== false }
+        );
+        y += BINARY_BOX_AFTER_GAP;
+        if (layout.extraBottomGap) {
+          y += Number(layout.extraBottomGap) || 0;
+        }
+        return;
+      }
+
+      if (layout.kind === "maskOperation") {
+        var instructionText = "Write the operation and mask.";
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.setTextColor(0);
+        doc.text(instructionText, margin, y + lineH - 2);
+        y += lineH + 4;
+
+        var bits = Math.max(2, Math.min(32, Math.floor(layout.bits || 8)));
+        var boxWidthBudget = 170;
+        var cellW = Math.max(10, Math.min(18, Math.floor(boxWidthBudget / bits)));
+        var totalW = cellW * bits;
+        var boxY = y + 4;
+        var boxH = 16;
+        var opLabel = "Operation:";
+        var opLabelX = margin;
+        var opBaseY = boxY + boxH / 2 + 6;
+        doc.text(opLabel, opLabelX, opBaseY);
+
+        var opLabelW = doc.getTextWidth(opLabel);
+        var opBoxX = opLabelX + opLabelW + 8;
+        var opBoxW = 96;
+        var opBoxH = 16;
+        doc.setLineWidth(0.9);
+        doc.rect(opBoxX, opBaseY - opBoxH + 2, opBoxW, opBoxH);
+
+        var boxX = opBoxX + opBoxW + 14;
+
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.9);
+        doc.rect(boxX, boxY, totalW, boxH);
+        for (var bi = 1; bi < bits; bi++) {
+          var xLine = boxX + bi * cellW;
+          doc.line(xLine, boxY, xLine, boxY + boxH);
+        }
+
+        y += 4 + boxH + 8;
+        y += 16;
         return;
       }
 
@@ -1784,6 +2031,42 @@
     }
 
     function renderWorksheetSection(compactMode) {
+      function isCompactShiftInlineInstructionCase(item) {
+        return !!(
+          item &&
+          compactMode &&
+          item.instructionAfterPromptBoxes &&
+          item.instruction &&
+          item.answerLayout &&
+          item.answerLayout.kind === "binaryBoxes" &&
+          Array.isArray(item.promptBitBoxes) &&
+          item.promptBitBoxes.length
+        );
+      }
+
+      function getCompactRenderItem(item) {
+        if (!isCompactShiftInlineInstructionCase(item)) return item;
+        var mergedPrompt = String(item.prompt || "") + " " + String(item.instruction || "");
+        return Object.assign({}, item, {
+          prompt: mergedPrompt.trim(),
+          instruction: "",
+          instructionAfterPromptBoxes: false
+        });
+      }
+
+      function hasBulbPromptBox(item) {
+        return !!(
+          item &&
+          Array.isArray(item.promptBitBoxes) &&
+          item.promptBitBoxes.some(function (entry) { return !!entry.bulbDisplay; })
+        );
+      }
+
+      function compactPromptBoxTailGapFor(item) {
+        if (!item || !item.promptBitBoxes || !item.promptBitBoxes.length) return 0;
+        return hasBulbPromptBox(item) ? 12 : 6;
+      }
+
       function isRleType2CompactSpacingCase(item) {
         return !!(
           item &&
@@ -1811,14 +2094,21 @@
           var l1 = wrappedLines("Q" + item.number, 12, true);
           var promptTextH = promptTextHeight(item, 11, lineH, pageW - margin * 2);
           var promptBoxH = promptBitBoxesHeight(item, pageW - margin * 2);
+          var postPromptInstructionH = (item.instructionAfterPromptBoxes && item.instruction)
+            ? (wrappedLines(item.instruction, 11, false, pageW - margin * 2).length * lineH + 4)
+            : 0;
           var promptBitmapH = promptBitmapHeight(item, pageW - margin * 2, false);
           var treeH = promptTreeHeight(item, false);
-          var blockHeight = (l1.length * lineH) + promptTextH + promptBoxH + promptBitmapH + treeH + answerAreaHeight(item) + (2 * 4);
+          var blockHeight = (l1.length * lineH) + promptTextH + promptBoxH + postPromptInstructionH + promptBitmapH + treeH + answerAreaHeight(item) + (2 * 4);
 
           ensureSpace(blockHeight);
           writeLines(l1, 12, true);
           renderPromptText(item, margin, pageW - margin * 2, 11, lineH);
           renderPromptBitBoxes(item, margin, pageW - margin * 2);
+          renderPostPromptInstruction(item, margin, pageW - margin * 2, 11, lineH);
+          if (item.promptBitBoxes && item.promptBitBoxes.length && !item.instructionAfterPromptBoxes) {
+            y += 6;
+          }
           renderPromptBitmap(item, margin, pageW - margin * 2, false);
           drawPromptTree(item, margin, pageW - margin * 2, false);
           renderAnswerArea(item);
@@ -1869,21 +2159,25 @@
 
         items.forEach(function (item) {
           var x;
+          var renderItem = getCompactRenderItem(item);
           var compactRleType2TailGap = isRleType2CompactSpacingCase(item) ? 4 : 0;
-          var compactBitmapAnswerH = item.answerLayout && item.answerLayout.kind === "bitmapGrid"
-            ? bitmapGridHeight(item.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
-            : item.answerLayout && item.answerLayout.kind === "binaryArithmetic"
-            ? binaryArithmeticLayoutHeight(item.answerLayout, columnWidth, true) + 4
+          var compactBitmapAnswerH = renderItem.answerLayout && renderItem.answerLayout.kind === "bitmapGrid"
+            ? bitmapGridHeight(renderItem.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
+            : renderItem.answerLayout && renderItem.answerLayout.kind === "binaryArithmetic"
+            ? binaryArithmeticLayoutHeight(renderItem.answerLayout, columnWidth, true) + 4
             : 0;
-          var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
-          var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
-          var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
-          var promptBitmapHCompact = promptBitmapHeight(item, columnWidth, true);
-          var treeHCompact = promptTreeHeight(item, true);
-          var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
-          var promptBitmapTailGap = item.promptBitmap ? 4 : 0;
-          var treeTailGap = item.promptTree ? 6 : 0;
-          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactRleType2TailGap + compactGapAfterBlock;
+          var qLines = wrappedLines("Q" + renderItem.number, compactQFont, true, columnWidth);
+          var pTextH = promptTextHeight(renderItem, compactPFont, compactPLineH, columnWidth);
+          var promptBoxHCompact = promptBitBoxesHeight(renderItem, columnWidth);
+          var postPromptInstructionHCompact = (renderItem.instructionAfterPromptBoxes && renderItem.instruction)
+            ? (wrappedLines(renderItem.instruction, compactPFont, false, columnWidth).length * compactPLineH + 4)
+            : 0;
+          var promptBitmapHCompact = promptBitmapHeight(renderItem, columnWidth, true);
+          var treeHCompact = promptTreeHeight(renderItem, true);
+          var promptBoxTailGap = compactPromptBoxTailGapFor(renderItem);
+          var promptBitmapTailGap = renderItem.promptBitmap ? 4 : 0;
+          var treeTailGap = renderItem.promptTree ? 6 : 0;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + postPromptInstructionHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactRleType2TailGap + compactGapAfterBlock;
 
           var targetColumn = chooseCompactColumn(blockHeight);
           x = targetColumn === 0 ? leftX : rightX;
@@ -1898,21 +2192,22 @@
           doc.setFont("helvetica", "normal");
           doc.setFontSize(compactPFont);
           doc.setTextColor(0);
-          renderPromptText(item, x, columnWidth, compactPFont, compactPLineH);
-          renderPromptBitBoxes(item, x, columnWidth);
-          if (item.promptBitBoxes && item.promptBitBoxes.length) {
+          renderPromptText(renderItem, x, columnWidth, compactPFont, compactPLineH);
+          renderPromptBitBoxes(renderItem, x, columnWidth);
+          if (renderItem.promptBitBoxes && renderItem.promptBitBoxes.length && !renderItem.instructionAfterPromptBoxes) {
+            y += compactPromptBoxTailGapFor(renderItem);
+          }
+          renderPostPromptInstruction(renderItem, x, columnWidth, compactPFont, compactPLineH);
+          renderPromptBitmap(renderItem, x, columnWidth, true);
+          drawPromptTree(renderItem, x, columnWidth, true);
+          if (renderItem.promptTree) {
             y += 6;
           }
-          renderPromptBitmap(item, x, columnWidth, true);
-          drawPromptTree(item, x, columnWidth, true);
-          if (item.promptTree) {
-            y += 6;
-          }
-          if (item.answerLayout && item.answerLayout.kind === "bitmapGrid") {
-            y += drawBitmapGrid(x, y, item.answerLayout, columnWidth, true, false);
+          if (renderItem.answerLayout && renderItem.answerLayout.kind === "bitmapGrid") {
+            y += drawBitmapGrid(x, y, renderItem.answerLayout, columnWidth, true, false);
             y += PROMPT_BITMAP_GAP_COMPACT;
-          } else if (item.answerLayout && item.answerLayout.kind === "binaryArithmetic") {
-            y += drawBinaryArithmeticLayout(x, y, item.answerLayout, columnWidth, true);
+          } else if (renderItem.answerLayout && renderItem.answerLayout.kind === "binaryArithmetic") {
+            y += drawBinaryArithmeticLayout(x, y, renderItem.answerLayout, columnWidth, true);
             y += 4;
           }
           y += compactRleType2TailGap;
@@ -1935,22 +2230,26 @@
         }
 
         items.forEach(function (item) {
+          var renderItem = getCompactRenderItem(item);
           var x = column === 0 ? leftX : rightX;
           var compactRleType2TailGap = isRleType2CompactSpacingCase(item) ? 4 : 0;
-          var compactBitmapAnswerH = item.answerLayout && item.answerLayout.kind === "bitmapGrid"
-            ? bitmapGridHeight(item.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
-            : item.answerLayout && item.answerLayout.kind === "binaryArithmetic"
-            ? binaryArithmeticLayoutHeight(item.answerLayout, columnWidth, true) + 4
+          var compactBitmapAnswerH = renderItem.answerLayout && renderItem.answerLayout.kind === "bitmapGrid"
+            ? bitmapGridHeight(renderItem.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
+            : renderItem.answerLayout && renderItem.answerLayout.kind === "binaryArithmetic"
+            ? binaryArithmeticLayoutHeight(renderItem.answerLayout, columnWidth, true) + 4
             : 0;
-          var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
-          var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
-          var promptBoxHCompact = promptBitBoxesHeight(item, columnWidth);
-          var promptBitmapHCompact = promptBitmapHeight(item, columnWidth, true);
-          var treeHCompact = promptTreeHeight(item, true);
-          var promptBoxTailGap = (item.promptBitBoxes && item.promptBitBoxes.length) ? 6 : 0;
-          var promptBitmapTailGap = item.promptBitmap ? 4 : 0;
-          var treeTailGap = item.promptTree ? 6 : 0;
-          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactRleType2TailGap + compactGapAfterBlock;
+          var qLines = wrappedLines("Q" + renderItem.number, compactQFont, true, columnWidth);
+          var pTextH = promptTextHeight(renderItem, compactPFont, compactPLineH, columnWidth);
+          var promptBoxHCompact = promptBitBoxesHeight(renderItem, columnWidth);
+          var postPromptInstructionHCompact = (renderItem.instructionAfterPromptBoxes && renderItem.instruction)
+            ? (wrappedLines(renderItem.instruction, compactPFont, false, columnWidth).length * compactPLineH + 4)
+            : 0;
+          var promptBitmapHCompact = promptBitmapHeight(renderItem, columnWidth, true);
+          var treeHCompact = promptTreeHeight(renderItem, true);
+          var promptBoxTailGap = compactPromptBoxTailGapFor(renderItem);
+          var promptBitmapTailGap = renderItem.promptBitmap ? 4 : 0;
+          var treeTailGap = renderItem.promptTree ? 6 : 0;
+          var blockHeight = qLines.length * compactQLineH + compactGapAfterQ + pTextH + promptBoxHCompact + postPromptInstructionHCompact + promptBoxTailGap + promptBitmapHCompact + promptBitmapTailGap + treeHCompact + treeTailGap + compactBitmapAnswerH + compactRleType2TailGap + compactGapAfterBlock;
 
           ensureCompactSpace(blockHeight);
           x = column === 0 ? leftX : rightX;
@@ -1964,21 +2263,22 @@
           doc.setFont("helvetica", "normal");
           doc.setFontSize(compactPFont);
           doc.setTextColor(0);
-          renderPromptText(item, x, columnWidth, compactPFont, compactPLineH);
-          renderPromptBitBoxes(item, x, columnWidth);
-          if (item.promptBitBoxes && item.promptBitBoxes.length) {
+          renderPromptText(renderItem, x, columnWidth, compactPFont, compactPLineH);
+          renderPromptBitBoxes(renderItem, x, columnWidth);
+          if (renderItem.promptBitBoxes && renderItem.promptBitBoxes.length && !renderItem.instructionAfterPromptBoxes) {
+            y += compactPromptBoxTailGapFor(renderItem);
+          }
+          renderPostPromptInstruction(renderItem, x, columnWidth, compactPFont, compactPLineH);
+          renderPromptBitmap(renderItem, x, columnWidth, true);
+          drawPromptTree(renderItem, x, columnWidth, true);
+          if (renderItem.promptTree) {
             y += 6;
           }
-          renderPromptBitmap(item, x, columnWidth, true);
-          drawPromptTree(item, x, columnWidth, true);
-          if (item.promptTree) {
-            y += 6;
-          }
-          if (item.answerLayout && item.answerLayout.kind === "bitmapGrid") {
-            y += drawBitmapGrid(x, y, item.answerLayout, columnWidth, true, false);
+          if (renderItem.answerLayout && renderItem.answerLayout.kind === "bitmapGrid") {
+            y += drawBitmapGrid(x, y, renderItem.answerLayout, columnWidth, true, false);
             y += PROMPT_BITMAP_GAP_COMPACT;
-          } else if (item.answerLayout && item.answerLayout.kind === "binaryArithmetic") {
-            y += drawBinaryArithmeticLayout(x, y, item.answerLayout, columnWidth, true);
+          } else if (renderItem.answerLayout && renderItem.answerLayout.kind === "binaryArithmetic") {
+            y += drawBinaryArithmeticLayout(x, y, renderItem.answerLayout, columnWidth, true);
             y += 4;
           }
           y += compactRleType2TailGap;
