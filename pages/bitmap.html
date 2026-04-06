@@ -965,6 +965,7 @@
   }
 
   function nextQuestion() {
+    const V = window.EncodrValidation;
     bqQuestion = genQuestion();
     document.getElementById('bq-num').textContent = `Question ${bqCount++}`;
     document.getElementById('bq-type-badge').textContent = bqQuestion.badge;
@@ -972,14 +973,23 @@
     document.getElementById('bq-text').innerHTML = bqQuestion.text.replace(/\n\n/g, '<br><br>');
     document.getElementById('bq-unit-label').textContent = bqQuestion.unitLabel;
     document.getElementById('bq-input').value = '';
+    V.clearInputError(document.getElementById('bq-input'));
+    V.clearSummary('bq-submit');
     document.getElementById('bq-input').focus();
   }
 
   function checkAnswer() {
-    const raw = document.getElementById('bq-input').value.trim().replace(/,/g, '');
+    const V = window.EncodrValidation;
+    const inputEl = document.getElementById('bq-input');
+    V.clearInputError(inputEl);
+    V.clearSummary('bq-submit');
+
+    const raw = inputEl.value.trim().replace(/,/g, '');
     const given = parseFloat(raw);
     if (isNaN(given)) {
-      document.getElementById('bq-input').focus();
+      V.setInputError(inputEl, 'Enter a valid numeric answer.');
+      V.setSummary('bq-submit', 'Please fix the highlighted field.');
+      inputEl.focus();
       return;
     }
     bqTotal++;
@@ -998,6 +1008,15 @@
 
   document.getElementById('bq-submit').addEventListener('click', checkAnswer);
   document.getElementById('bq-submit').addEventListener('touchend', (e) => { e.preventDefault(); checkAnswer(); });
+  document.getElementById('bq-input').addEventListener('input', () => {
+    const V = window.EncodrValidation;
+    const inputEl = document.getElementById('bq-input');
+    const raw = inputEl.value.trim().replace(/,/g, '');
+    if (raw && !isNaN(parseFloat(raw))) {
+      V.clearInputError(inputEl);
+      V.maybeClearSummary('bq-submit');
+    }
+  });
   document.getElementById('bq-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       e.preventDefault();

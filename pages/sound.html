@@ -1155,6 +1155,7 @@
   }
 
   function nextQuestion() {
+    const V = window.EncodrValidation;
     sqQuestion = genQuestion();
     document.getElementById('sq-num').textContent       = `Question ${sqCount++}`;
     document.getElementById('sq-badge').textContent     = sqQuestion.badge;
@@ -1163,13 +1164,25 @@
     document.getElementById('sq-input').value           = '';
     document.getElementById('sq-input').disabled        = false;
     document.getElementById('sq-submit').disabled       = false;
+    V.clearInputError(document.getElementById('sq-input'));
+    V.clearSummary('sq-submit');
     document.getElementById('sq-input').focus();
   }
 
   function checkAnswer() {
-    const raw   = document.getElementById('sq-input').value.trim().replace(/,/g, '');
+    const V = window.EncodrValidation;
+    const inputEl = document.getElementById('sq-input');
+    V.clearInputError(inputEl);
+    V.clearSummary('sq-submit');
+
+    const raw   = inputEl.value.trim().replace(/,/g, '');
     const given = parseFloat(raw);
-    if (isNaN(given)) { document.getElementById('sq-input').focus(); return; }
+    if (isNaN(given)) {
+      V.setInputError(inputEl, 'Enter a valid numeric answer.');
+      V.setSummary('sq-submit', 'Please fix the highlighted field.');
+      inputEl.focus();
+      return;
+    }
 
     document.getElementById('sq-input').disabled  = true;
     document.getElementById('sq-submit').disabled = true;
@@ -1189,6 +1202,15 @@
   }
 
   document.getElementById('sq-submit').addEventListener('click', checkAnswer);
+  document.getElementById('sq-input').addEventListener('input', () => {
+    const V = window.EncodrValidation;
+    const inputEl = document.getElementById('sq-input');
+    const raw = inputEl.value.trim().replace(/,/g, '');
+    if (raw && !isNaN(parseFloat(raw))) {
+      V.clearInputError(inputEl);
+      V.maybeClearSummary('sq-submit');
+    }
+  });
   document.getElementById('sq-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       e.preventDefault();

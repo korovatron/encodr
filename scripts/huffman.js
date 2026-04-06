@@ -433,6 +433,17 @@
         '<input id="hf-code-' + idx + '" data-hf-symbol="' + escapeHtml(sym) + '" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Enter your answer" />' +
         '</div>';
     }).join('');
+
+    var V = window.EncodrValidation;
+    host.querySelectorAll('input').forEach(function (input) {
+      input.addEventListener('input', function () {
+        var val = String(input.value || '').replace(/\s+/g, '');
+        if (val.length && /^[01]+$/.test(val)) {
+          V.clearInputError(input);
+          V.maybeClearSummary('hf-q-submit');
+        }
+      });
+    });
   }
 
   function setQuestionTypeView(type) {
@@ -517,14 +528,26 @@
   }
 
   function clearAnswerInputErrors() {
+    var V = window.EncodrValidation;
     document.querySelectorAll('#hf-answer-card input').forEach(function (input) {
-      input.style.borderColor = '';
+      if (V) {
+        V.clearInputError(input);
+      } else {
+        input.style.borderColor = '';
+      }
     });
+    if (V) V.clearSummary('hf-q-submit');
   }
 
-  function markInvalidInput(input) {
+  function markInvalidInput(input, message) {
     if (!input) return;
-    input.style.borderColor = '#ffff00';
+    var V = window.EncodrValidation;
+    if (V) {
+      V.setInputError(input, message || 'Please fix this field.');
+      V.setSummary('hf-q-submit', 'Please fix the highlighted field.');
+    } else {
+      input.style.borderColor = '#ffff00';
+    }
     input.focus();
   }
 
@@ -546,7 +569,11 @@
         var requiredInput = byId('hf-code-' + i);
         var requiredValue = requiredInput ? String(requiredInput.value || '').replace(/\s+/g, '') : '';
         if (!requiredValue.length) {
-          markInvalidInput(requiredInput);
+          markInvalidInput(requiredInput, 'This Huffman code is required.');
+          return;
+        }
+        if (!/^[01]+$/.test(requiredValue)) {
+          markInvalidInput(requiredInput, 'Use only 0 and 1 for Huffman codes.');
           return;
         }
       }
@@ -573,15 +600,15 @@
       var inSaved = parseWholeNumber(savedEl ? savedEl.value : '');
 
       if (inAscii === null) {
-        markInvalidInput(asciiEl);
+        markInvalidInput(asciiEl, 'Enter a whole number for ASCII bits.');
         return;
       }
       if (inHuffman === null) {
-        markInvalidInput(huffmanEl);
+        markInvalidInput(huffmanEl, 'Enter a whole number for Huffman bits.');
         return;
       }
       if (inSaved === null) {
-        markInvalidInput(savedEl);
+        markInvalidInput(savedEl, 'Enter a whole number for bits saved.');
         return;
       }
 
@@ -611,6 +638,17 @@
     var submitBtn = byId('hf-q-submit');
     var nextBtn = byId('hf-q-next');
     var resetBtn = byId('hf-q-reset-score');
+
+    [byId('hf-in-ascii'), byId('hf-in-huffman'), byId('hf-in-saved')].forEach(function (input) {
+      if (!input) return;
+      input.addEventListener('input', function () {
+        var V = window.EncodrValidation;
+        if (parseWholeNumber(input.value) !== null) {
+          V.clearInputError(input);
+          V.maybeClearSummary('hf-q-submit');
+        }
+      });
+    });
 
     if (submitBtn) submitBtn.addEventListener('click', checkCurrentAnswer);
     if (nextBtn) {

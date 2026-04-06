@@ -520,6 +520,7 @@
   }
 
   function generateQuizQuestion() {
+    const V = window.EncodrValidation;
     Object.assign(QS, window.EncodrQuizGenerators.twosComplement.generate(QS.questionType));
     QS.answered = false;
 
@@ -559,6 +560,11 @@
     document.getElementById('q-min-sign-btn').disabled = false;
     document.getElementById('q-max-sign-btn').disabled = false;
 
+    V.clearInputError(document.getElementById('q-input'));
+    V.clearInputError(document.getElementById('q-min-input'));
+    V.clearInputError(document.getElementById('q-max-input'));
+    V.clearSummary('q-submit');
+
     closeModal();
     document.getElementById('q-modal-feedback').innerHTML = '';
     document.getElementById('q-submit').disabled = false;
@@ -566,15 +572,34 @@
 
   function checkQuizAnswer() {
     if (QS.answered) return;
+    const V = window.EncodrValidation;
+    const qInput = document.getElementById('q-input');
+    const qMinInput = document.getElementById('q-min-input');
+    const qMaxInput = document.getElementById('q-max-input');
+
+    V.clearInputError(qInput);
+    V.clearInputError(qMinInput);
+    V.clearInputError(qMaxInput);
+    V.clearSummary('q-submit');
 
     let correct = false;
     let html = '';
 
     if (QS.answerKind === 'range') {
-      const minRaw = (document.getElementById('q-min-input').value || '').trim();
-      const maxRaw = (document.getElementById('q-max-input').value || '').trim();
-      if (!/^-?\d+$/.test(minRaw)) { document.getElementById('q-min-input').focus(); return; }
-      if (!/^-?\d+$/.test(maxRaw)) { document.getElementById('q-max-input').focus(); return; }
+      const minRaw = (qMinInput.value || '').trim();
+      const maxRaw = (qMaxInput.value || '').trim();
+      if (!/^-?\d+$/.test(minRaw)) {
+        V.setInputError(qMinInput, 'Enter a valid integer for the smallest value.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        qMinInput.focus();
+        return;
+      }
+      if (!/^-?\d+$/.test(maxRaw)) {
+        V.setInputError(qMaxInput, 'Enter a valid integer for the largest value.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        qMaxInput.focus();
+        return;
+      }
 
       const minVal = parseInt(minRaw, 10);
       const maxVal = parseInt(maxRaw, 10);
@@ -585,13 +610,18 @@
         : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${minVal}</strong> to <strong>${maxVal}</strong>, ` +
           `answer: <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.</span>`;
 
-      document.getElementById('q-min-input').disabled = true;
-      document.getElementById('q-max-input').disabled = true;
+      qMinInput.disabled = true;
+      qMaxInput.disabled = true;
       document.getElementById('q-min-sign-btn').disabled = true;
       document.getElementById('q-max-sign-btn').disabled = true;
     } else if (QS.answerKind === 'den') {
-      const raw = (document.getElementById('q-input').value || '').trim();
-      if (!/^-?\d+$/.test(raw)) { document.getElementById('q-input').focus(); return; }
+      const raw = (qInput.value || '').trim();
+      if (!/^-?\d+$/.test(raw)) {
+        V.setInputError(qInput, 'Enter a valid denary integer.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        qInput.focus();
+        return;
+      }
       const student = parseInt(raw, 10);
       correct = student === QS.expectedValue;
 
@@ -599,22 +629,33 @@
         ? `✓ Correct! Denary value is <strong>${QS.expectedValue}</strong>.`
         : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${student}</strong>, answer: <strong>${QS.expectedValue}</strong>.</span>`;
 
-      document.getElementById('q-input').disabled = true;
+      qInput.disabled = true;
       document.getElementById('q-sign-btn').disabled = true;
     } else {
-      const raw = (document.getElementById('q-input').value || '').trim();
+      const raw = (qInput.value || '').trim();
       const parsed = normalizeBinary(raw);
-      if (!parsed) { document.getElementById('q-input').focus(); return; }
+      if (!parsed) {
+        V.setInputError(qInput, 'Use only 0 and 1 for a binary answer.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        qInput.focus();
+        return;
+      }
 
       const sameLen = parsed.length === QS.bits;
       const sameValue = twosValueFromBits(parsed) === QS.expectedValue;
+      if (!sameLen) {
+        V.setInputError(qInput, `Enter exactly ${QS.bits} bits.`);
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        qInput.focus();
+        return;
+      }
       correct = sameLen && sameValue;
 
       html = correct
         ? `✓ Correct! ${QS.expectedValue} in ${QS.bits} bits is <strong>${QS.expectedBits}</strong>.`
         : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${parsed}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
 
-      document.getElementById('q-input').disabled = true;
+      qInput.disabled = true;
       document.getElementById('q-sign-btn').disabled = true;
     }
 
@@ -664,6 +705,45 @@
     });
   });
 
+  function wireLiveValidation() {
+    const V = window.EncodrValidation;
+    const qInput = document.getElementById('q-input');
+    const qMinInput = document.getElementById('q-min-input');
+    const qMaxInput = document.getElementById('q-max-input');
+
+    qInput.addEventListener('input', () => {
+      const raw = (qInput.value || '').trim();
+      let valid = false;
+      if (raw) {
+        if (QS.answerKind === 'den') valid = /^-?\d+$/.test(raw);
+        else if (QS.answerKind === 'bin') {
+          const parsed = normalizeBinary(raw);
+          valid = !!parsed && parsed.length === QS.bits;
+        }
+      }
+      if (valid) {
+        V.clearInputError(qInput);
+        V.maybeClearSummary('q-submit');
+      }
+    });
+
+    qMinInput.addEventListener('input', () => {
+      const raw = (qMinInput.value || '').trim();
+      if (/^-?\d+$/.test(raw)) {
+        V.clearInputError(qMinInput);
+        V.maybeClearSummary('q-submit');
+      }
+    });
+
+    qMaxInput.addEventListener('input', () => {
+      const raw = (qMaxInput.value || '').trim();
+      if (/^-?\d+$/.test(raw)) {
+        V.clearInputError(qMaxInput);
+        V.maybeClearSummary('q-submit');
+      }
+    });
+  }
+
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
   document.getElementById('q-sign-btn').addEventListener('click', () => toggleInputSign('q-input'));
   document.getElementById('q-min-sign-btn').addEventListener('click', () => toggleInputSign('q-min-input'));
@@ -703,6 +783,8 @@
     updateScoreDisplay();
     generateQuizQuestion();
   });
+
+  wireLiveValidation();
 
   let resizeTimer;
   window.addEventListener('resize', () => {

@@ -965,6 +965,7 @@
   }
 
   function renderQuizQuestion() {
+    const V = window.EncodrValidation;
     const t = QS.currentType;
     document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
 
@@ -1053,6 +1054,10 @@
     document.getElementById('q-modal-feedback').innerHTML = '';
     document.getElementById('q-submit').hidden   = false;
     document.getElementById('q-submit').disabled = false;
+    V.clearInputError(document.getElementById('q-denary-input'));
+    V.clearInputError(document.getElementById('q-abs-err'));
+    V.clearInputError(document.getElementById('q-rel-err'));
+    V.clearSummary('q-submit');
   }
 
   function renderQuizGrid(type, bits, interactive) {
@@ -1101,38 +1106,69 @@
 
   function checkQuizAnswer() {
     if (QS.answered) return;
+    const V = window.EncodrValidation;
+    const denaryInput = document.getElementById('q-denary-input');
+    const absInp = document.getElementById('q-abs-err');
+    const relInp = document.getElementById('q-rel-err');
+
+    V.clearInputError(denaryInput);
+    V.clearInputError(absInp);
+    V.clearInputError(relInp);
+    V.clearSummary('q-submit');
 
     let student = null;
     let stuAbs = null;
     let stuRel = null;
 
     if (['1', '3', '4', '5', '6'].includes(QS.currentType)) {
-      const raw = (document.getElementById('q-denary-input').value || '')
+      const raw = (denaryInput.value || '')
         .trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
       if (!raw) {
-        document.getElementById('q-denary-input').focus();
+        V.setInputError(denaryInput, 'This answer is required.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        denaryInput.focus();
         return;
       }
       student = parseFloat(raw);
       if (isNaN(student)) {
-        document.getElementById('q-denary-input').focus();
+        V.setInputError(denaryInput, 'Enter a valid denary number.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        denaryInput.focus();
         return;
       }
     } else if (QS.isInexact) {
-      const absInp = document.getElementById('q-abs-err');
-      const relInp = document.getElementById('q-rel-err');
       const absRaw = (absInp.value || '').trim();
       const relRaw = (relInp.value || '').trim();
-      if (!absRaw) { absInp.focus(); return; }
-      if (!relRaw) { relInp.focus(); return; }
+      if (!absRaw) {
+        V.setInputError(absInp, 'Enter the absolute error value.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        absInp.focus();
+        return;
+      }
+      if (!relRaw) {
+        V.setInputError(relInp, 'Enter the percentage relative error value.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        relInp.focus();
+        return;
+      }
 
       const parseErr = raw => parseFloat(
         (raw || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.')
       );
       stuAbs = parseErr(absRaw);
       stuRel = parseErr(relRaw);
-      if (isNaN(stuAbs)) { absInp.focus(); return; }
-      if (isNaN(stuRel)) { relInp.focus(); return; }
+      if (isNaN(stuAbs)) {
+        V.setInputError(absInp, 'Enter a valid number for absolute error.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        absInp.focus();
+        return;
+      }
+      if (isNaN(stuRel)) {
+        V.setInputError(relInp, 'Enter a valid number for percentage relative error.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        relInp.focus();
+        return;
+      }
     }
 
     QS.answered = true;
@@ -1298,6 +1334,37 @@
     });
   });
 
+  function wireLiveValidation() {
+    const V = window.EncodrValidation;
+    const denaryInput = document.getElementById('q-denary-input');
+    const absInp = document.getElementById('q-abs-err');
+    const relInp = document.getElementById('q-rel-err');
+
+    denaryInput.addEventListener('input', () => {
+      const raw = (denaryInput.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
+      if (raw && !isNaN(parseFloat(raw))) {
+        V.clearInputError(denaryInput);
+        V.maybeClearSummary('q-submit');
+      }
+    });
+
+    absInp.addEventListener('input', () => {
+      const raw = (absInp.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
+      if (raw && !isNaN(parseFloat(raw))) {
+        V.clearInputError(absInp);
+        V.maybeClearSummary('q-submit');
+      }
+    });
+
+    relInp.addEventListener('input', () => {
+      const raw = (relInp.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
+      if (raw && !isNaN(parseFloat(raw))) {
+        V.clearInputError(relInp);
+        V.maybeClearSummary('q-submit');
+      }
+    });
+  }
+
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
   document.getElementById('q-denary-input').addEventListener('keydown', ev => {
     if (ev.key === 'Enter' && !QS.answered) {
@@ -1318,6 +1385,8 @@
     updateScoreDisplay();
     generateQuizQuestion();
   });
+
+  wireLiveValidation();
 </script>
 
 </body>

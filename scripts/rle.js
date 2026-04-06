@@ -350,21 +350,42 @@
   }
 
   function clearAnswerInputErrors() {
+    var V = window.EncodrValidation;
     document.querySelectorAll('#rle-answer-card input').forEach(function (input) {
-      input.style.borderColor = '';
+      if (V) {
+        V.clearInputError(input);
+      } else {
+        input.style.borderColor = '';
+      }
     });
+    if (V) {
+      V.clearGroupError(byId('rle-effect-toggle'));
+      V.clearSummary('rle-q-submit');
+    }
     document.querySelectorAll('[data-rle-effect]').forEach(function (btn) {
       btn.style.borderColor = btn.classList.contains('active') ? '' : 'rgba(255,255,255,.20)';
     });
   }
 
-  function markInvalidInput(input) {
+  function markInvalidInput(input, message) {
     if (!input) return;
-    input.style.borderColor = '#ffff00';
+    var V = window.EncodrValidation;
+    if (V) {
+      V.setInputError(input, message || 'Please fix this field.');
+      V.setSummary('rle-q-submit', 'Please fix the highlighted field.');
+    } else {
+      input.style.borderColor = '#ffff00';
+    }
     if (typeof input.focus === 'function') input.focus();
   }
 
-  function markEffectInvalid() {
+  function markEffectInvalid(message) {
+    var V = window.EncodrValidation;
+    var effectToggle = byId('rle-effect-toggle');
+    if (V && effectToggle) {
+      V.setGroupError(effectToggle, message || 'Choose whether the result is compressed or expanded.');
+      V.setSummary('rle-q-submit', 'Please fix the highlighted field.');
+    }
     document.querySelectorAll('[data-rle-effect]').forEach(function (btn) {
       btn.style.borderColor = '#ffff00';
     });
@@ -466,7 +487,7 @@
       var decodedInput = byId('rle-q-decoded');
       var decodedValue = normaliseDecodedText(decodedInput ? decodedInput.value : '');
       if (!decodedValue.length) {
-        markInvalidInput(decodedInput);
+        markInvalidInput(decodedInput, 'Enter the uncompressed string.');
         return;
       }
 
@@ -512,7 +533,7 @@
       var encodedBitmapInput = byId('rle-q-encoded-bitmap');
       var encodedBitmapValue = normaliseCompactRle(encodedBitmapInput ? encodedBitmapInput.value : '');
       if (!encodedBitmapValue.length) {
-        markInvalidInput(encodedBitmapInput);
+        markInvalidInput(encodedBitmapInput, 'Enter the RLE encoded bitmap string.');
         return;
       }
 
@@ -540,19 +561,19 @@
     var effect = Quiz.selectedEffect;
 
     if (!encodedValue.length) {
-      markInvalidInput(encodedInput);
+      markInvalidInput(encodedInput, 'Enter the compressed string.');
       return;
     }
     if (inputLength === null) {
-      markInvalidInput(inputLenInput);
+      markInvalidInput(inputLenInput, 'Enter a whole number for initial char count.');
       return;
     }
     if (compressedLength === null) {
-      markInvalidInput(compressedLenInput);
+      markInvalidInput(compressedLenInput, 'Enter a whole number for compressed char count.');
       return;
     }
     if (!effect) {
-      markEffectInvalid();
+      markEffectInvalid('Choose whether the result is compressed or expanded.');
       return;
     }
 
@@ -579,6 +600,11 @@
       btn.addEventListener('click', function () {
         if (Quiz.locked) return;
         setEffectSelection(btn.getAttribute('data-rle-effect'));
+        var V = window.EncodrValidation;
+        if (V) {
+          V.clearGroupError(byId('rle-effect-toggle'));
+          V.clearSummary('rle-q-submit');
+        }
       });
     });
 
@@ -586,6 +612,39 @@
     var nextBtn = byId('rle-q-next');
     var resetBtn = byId('rle-q-reset-score');
     var clearGridBtn = byId('rle-q3-clear');
+
+    [byId('rle-q-encoded'), byId('rle-q-encoded-bitmap')].forEach(function (input) {
+      if (!input) return;
+      input.addEventListener('input', function () {
+        var V = window.EncodrValidation;
+        if (normaliseCompactRle(input.value).length) {
+          V.clearInputError(input);
+          V.maybeClearSummary('rle-q-submit');
+        }
+      });
+    });
+
+    [byId('rle-q-input-length'), byId('rle-q-compressed-length')].forEach(function (input) {
+      if (!input) return;
+      input.addEventListener('input', function () {
+        var V = window.EncodrValidation;
+        if (parseWholeNumber(input.value) !== null) {
+          V.clearInputError(input);
+          V.maybeClearSummary('rle-q-submit');
+        }
+      });
+    });
+
+    var decodedInput = byId('rle-q-decoded');
+    if (decodedInput) {
+      decodedInput.addEventListener('input', function () {
+        var V = window.EncodrValidation;
+        if (normaliseDecodedText(decodedInput.value).length) {
+          V.clearInputError(decodedInput);
+          V.maybeClearSummary('rle-q-submit');
+        }
+      });
+    }
 
     if (submitBtn) submitBtn.addEventListener('click', checkCurrentAnswer);
     if (nextBtn) {
