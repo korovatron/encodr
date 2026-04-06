@@ -89,6 +89,14 @@
       ]
     },
     {
+      id: "binaryArithmetic",
+      label: "Binary Arithmetic",
+      subtypes: [
+        { id: "add", label: "Addition" },
+        { id: "mul", label: "Multiplication" }
+      ]
+    },
+    {
       id: "compression",
       label: "Compression",
       subtypes: [
@@ -581,6 +589,36 @@
       };
     }
 
+    if (source.topicId === "binaryArithmetic") {
+      var baq = generators.binaryArithmetic.generate(source.subtypeId);
+      var isAdd = baq.currentType === "add";
+      var binaryArithmeticAnswer = baq.expectedBinary;
+      if (isAdd) {
+        binaryArithmeticAnswer += " (overflow: " + (baq.expectedOverflow ? "Yes" : "No") + ")";
+      }
+
+      return {
+        topic: source.topicLabel,
+        prompt: isAdd
+          ? "Calculate the following  addition using 8-bit binary. Do not convert to denary and state if your answer causes an overflow."
+          : "Calculate the following binary multiplication. Show all of your working in binary.",
+        instruction: "",
+        answer: binaryArithmeticAnswer,
+        answerLayout: {
+          kind: "binaryArithmetic",
+          operation: isAdd ? "add" : "mul",
+          operator: isAdd ? "+" : "×",
+          topText: baq.leftOperand,
+          bottomText: baq.rightOperand,
+          lineCount: 2
+        },
+        promptBitBoxes: [],
+        promptTree: null,
+        promptBitmap: null,
+        promptBitmaps: []
+      };
+    }
+
     if (source.topicId === "compression" && source.subtypeId === "huffman") {
       var hq = generators.huffman.generate("mixed");
       if (hq.currentType === "type1") {
@@ -805,10 +843,14 @@
     var rleType1MaxChars = layoutMode === "normal" ? 40 : 30;
 
     var compressionSelection = selections.find(function (sel) { return sel.topicId === "compression"; }) || null;
+    var binaryArithmeticSelection = selections.find(function (sel) { return sel.topicId === "binaryArithmetic"; }) || null;
     var hasHuffman = !!(compressionSelection && compressionSelection.subtypeIds.indexOf("huffman") !== -1);
     var hasRle = !!(compressionSelection && compressionSelection.subtypeIds.indexOf("rle") !== -1);
+    var hasBinaryArithmetic = !!(binaryArithmeticSelection && Array.isArray(binaryArithmeticSelection.subtypeIds) && binaryArithmeticSelection.subtypeIds.length);
 
-    var otherSelections = selections.filter(function (sel) { return sel.topicId !== "compression"; });
+    var otherSelections = selections.filter(function (sel) {
+      return sel.topicId !== "compression" && sel.topicId !== "binaryArithmetic";
+    });
     if (hasRle) {
       otherSelections.push({
         topicId: "compression",
@@ -818,11 +860,14 @@
       });
     }
 
+    var binaryArithmeticCount = hasBinaryArithmetic ? Math.min(2, Math.max(0, count - (hasHuffman ? 1 : 0))) : 0;
+
     // Distribute count evenly across selected topics
     var nonHuffmanCount = hasHuffman ? Math.max(0, count - 1) : count;
+    var distributableCount = Math.max(0, nonHuffmanCount - binaryArithmeticCount);
     var numTopics = otherSelections.length;
-    var base = numTopics ? Math.floor(nonHuffmanCount / numTopics) : 0;
-    var remainder = numTopics ? (nonHuffmanCount % numTopics) : 0;
+    var base = numTopics ? Math.floor(distributableCount / numTopics) : 0;
+    var remainder = numTopics ? (distributableCount % numTopics) : 0;
 
     // Build source list: add exactly one Huffman question if selected,
     // then distribute remaining questions across other selected topics.
@@ -835,6 +880,19 @@
         subtypeId: "huffman",
         options: compressionSelection ? (compressionSelection.options || {}) : {}
       };
+    }
+
+    var binaryArithmeticSources = [];
+    if (hasBinaryArithmetic) {
+      for (var baIndex = 0; baIndex < binaryArithmeticCount; baIndex++) {
+        var baSubtype = pick(binaryArithmeticSelection.subtypeIds);
+        binaryArithmeticSources.push({
+          topicId: "binaryArithmetic",
+          topicLabel: binaryArithmeticSelection.topicLabel,
+          subtypeId: baSubtype,
+          options: binaryArithmeticSelection.options || {}
+        });
+      }
     }
 
     otherSelections.forEach(function (sel, i) {
@@ -850,13 +908,17 @@
       }
     });
 
+    var shuffledSources = binaryArithmeticSources.concat(otherSources);
+
     // Shuffle non-Huffman sources. If Huffman is selected, keep it fixed as Q1.
-    for (var i = otherSources.length - 1; i > 0; i--) {
+    for (var i = shuffledSources.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
-      var tmp = otherSources[i]; otherSources[i] = otherSources[j]; otherSources[j] = tmp;
+      var tmp = shuffledSources[i]; shuffledSources[i] = shuffledSources[j]; shuffledSources[j] = tmp;
     }
 
-    var sources = huffmanSource ? [huffmanSource].concat(otherSources) : otherSources;
+    var sources = huffmanSource
+      ? [huffmanSource].concat(shuffledSources)
+      : shuffledSources;
 
     // Generate questions
     var items = [];
@@ -1052,6 +1114,11 @@
     }
 
     function promptTextHeight(item, fontSize, promptLineH, maxWidth) {
+      function instructionHeight() {
+        if (!item.instruction) return 0;
+        return wrappedLines(item.instruction, fontSize, false, maxWidth).length * promptLineH + 4;
+      }
+
       var lineStep = promptLineH + (fontSize <= 9.5 ? PROMPT_BOX_LINE_LEAD_COMPACT : 0);
       if (Array.isArray(item.promptBlocks) && item.promptBlocks.length) {
         var total = 0;
@@ -1087,11 +1154,11 @@
             total += fontSize <= 9.5 ? PROMPT_BITMAP_GAP_COMPACT : PROMPT_BITMAP_GAP_NORMAL;
           }
         });
-        return total;
+        return total + instructionHeight();
       }
 
       if (!hasPromptInlineBox(item)) {
-        return wrappedLines(item.prompt, fontSize, false, maxWidth).length * promptLineH;
+        return wrappedLines(item.prompt, fontSize, false, maxWidth).length * promptLineH + instructionHeight();
       }
 
       doc.setFont("helvetica", "normal");
@@ -1114,10 +1181,20 @@
         suffixLines = doc.splitTextToSize(prefix + " " + suffix, maxWidth);
         firstLineHeight = lineStep;
       }
-      return firstLineHeight + (suffixLines.length * lineStep);
+      return firstLineHeight + (suffixLines.length * lineStep) + instructionHeight();
     }
 
     function renderPromptText(item, x, maxWidth, fontSize, promptLineH) {
+      function renderInstruction() {
+        if (!item.instruction) return;
+        var lines = wrappedLines(item.instruction, fontSize, false, maxWidth);
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(fontSize);
+        doc.setTextColor(0);
+        doc.text(lines, x, y);
+        y += lines.length * promptLineH + 4;
+      }
+
       if (Array.isArray(item.promptBlocks) && item.promptBlocks.length) {
         var compactMode = fontSize <= 9.5;
         var partsGap = compactMode ? PROMPT_PARTS_LINE_GAP_COMPACT : PROMPT_PARTS_LINE_GAP;
@@ -1161,6 +1238,7 @@
             y += compactMode ? PROMPT_BITMAP_GAP_COMPACT : PROMPT_BITMAP_GAP_NORMAL;
           }
         });
+        renderInstruction();
         return;
       }
 
@@ -1171,6 +1249,7 @@
         doc.setTextColor(0);
         doc.text(lines, x, y);
         y += lines.length * promptLineH;
+        renderInstruction();
         return;
       }
 
@@ -1247,6 +1326,7 @@
         doc.text(suffixLines, x, y);
         y += suffixLines.length * lineStep;
         renderInlineSymbolTokens();
+        renderInstruction();
         return;
       }
 
@@ -1255,6 +1335,7 @@
       doc.text(fallbackLines, x, y);
       y += fallbackLines.length * lineStep;
       renderInlineSymbolTokens();
+      renderInstruction();
     }
 
     function writeCentred(text, fontSize, isBold) {
@@ -1569,11 +1650,73 @@
       return used;
     }
 
+    function binaryArithmeticLayoutHeight(layout, maxWidth, compactMode) {
+      var fontSize = compactMode ? 12 : 14;
+      var rowGap = compactMode ? 8 : 10;
+      var isMul = layout.operation === "mul";
+      var answerTopGap = compactMode ? 8 : (isMul ? 14 : 12);
+      var lineGap = compactMode ? 10 : (isMul ? 18 : 14);
+      var labelGap = compactMode ? 4 : 6;
+      var bottomPad = compactMode ? 8 : (isMul ? 20 : 14);
+      var lineCount = compactMode
+        ? Math.max(1, layout.lineCount || 2)
+        : (isMul ? 4 : Math.max(2, layout.lineCount || 2));
+
+      return labelGap + fontSize + rowGap + fontSize + answerTopGap + ((lineCount - 1) * lineGap) + bottomPad;
+    }
+
+    function drawBinaryArithmeticLayout(x, yStart, layout, maxWidth, compactMode) {
+      var width = maxWidth || (pageW - margin * 2);
+      var fontSize = compactMode ? 12 : 14;
+      var rowGap = compactMode ? 8 : 10;
+      var isMul = layout.operation === "mul";
+      var answerTopGap = compactMode ? 8 : (isMul ? 14 : 12);
+      var lineGap = compactMode ? 10 : (isMul ? 18 : 14);
+      var lineCount = compactMode
+        ? Math.max(1, layout.lineCount || 2)
+        : (isMul ? 4 : Math.max(2, layout.lineCount || 2));
+      var operator = String(layout.operator || "+");
+      var topText = String(layout.topText || "");
+      var bottomText = String(layout.bottomText || "");
+
+      doc.setFont("courier", "bold");
+      doc.setFontSize(fontSize);
+      doc.setTextColor(0);
+
+      var topWidth = doc.getTextWidth(topText);
+      var bottomWidth = doc.getTextWidth(bottomText);
+      var opWidth = doc.getTextWidth(operator) + 10;
+      var contentWidth = Math.min(width, Math.max(topWidth, bottomWidth) + opWidth + 10);
+      var rightX = x + Math.min(width, contentWidth);
+      var numberRightX = rightX;
+      var opX = rightX - Math.max(topWidth, bottomWidth) - opWidth;
+      var yTop = yStart + fontSize;
+      var yBottom = yTop + rowGap + fontSize;
+
+      doc.text(topText, numberRightX, yTop, { align: "right" });
+      doc.text(operator, opX, yBottom, { align: "left" });
+      doc.text(bottomText, numberRightX, yBottom, { align: "right" });
+
+      var firstLineY = yBottom + answerTopGap;
+      var lineStart = opX;
+      var lineEnd = rightX;
+      doc.setLineWidth(0.9);
+      for (var lineIndex = 0; lineIndex < lineCount; lineIndex++) {
+        var yy = firstLineY + lineIndex * lineGap;
+        doc.line(lineStart, yy, lineEnd, yy);
+      }
+
+      return binaryArithmeticLayoutHeight(layout, maxWidth, compactMode);
+    }
+
     function answerAreaHeight(item) {
       var layout = item.answerLayout;
       if (!layout) return 2 * lineH + 12;
       if (layout.kind === "binaryBoxes") {
         return lineH + 8 + 16;
+      }
+      if (layout.kind === "binaryArithmetic") {
+        return binaryArithmeticLayoutHeight(layout, pageW - margin * 2, false);
       }
       if (layout.kind === "bitmapGrid") {
         return lineH + bitmapGridHeight(layout, pageW - margin * 2, false) + 14;
@@ -1608,6 +1751,12 @@
 
       if (layout.kind === "binaryBoxes") {
         y += drawSegmentedBinaryBoxes(margin, y, layout.bits, "Answer:", layout.pointIndex);
+        y += 6;
+        return;
+      }
+
+      if (layout.kind === "binaryArithmetic") {
+        y += drawBinaryArithmeticLayout(margin, y, layout, pageW - margin * 2, false);
         y += 6;
         return;
       }
@@ -1723,6 +1872,8 @@
           var compactRleType2TailGap = isRleType2CompactSpacingCase(item) ? 4 : 0;
           var compactBitmapAnswerH = item.answerLayout && item.answerLayout.kind === "bitmapGrid"
             ? bitmapGridHeight(item.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
+            : item.answerLayout && item.answerLayout.kind === "binaryArithmetic"
+            ? binaryArithmeticLayoutHeight(item.answerLayout, columnWidth, true) + 4
             : 0;
           var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
           var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
@@ -1760,6 +1911,9 @@
           if (item.answerLayout && item.answerLayout.kind === "bitmapGrid") {
             y += drawBitmapGrid(x, y, item.answerLayout, columnWidth, true, false);
             y += PROMPT_BITMAP_GAP_COMPACT;
+          } else if (item.answerLayout && item.answerLayout.kind === "binaryArithmetic") {
+            y += drawBinaryArithmeticLayout(x, y, item.answerLayout, columnWidth, true);
+            y += 4;
           }
           y += compactRleType2TailGap;
           y += compactGapAfterBlock;
@@ -1785,6 +1939,8 @@
           var compactRleType2TailGap = isRleType2CompactSpacingCase(item) ? 4 : 0;
           var compactBitmapAnswerH = item.answerLayout && item.answerLayout.kind === "bitmapGrid"
             ? bitmapGridHeight(item.answerLayout, columnWidth, true) + PROMPT_BITMAP_GAP_COMPACT
+            : item.answerLayout && item.answerLayout.kind === "binaryArithmetic"
+            ? binaryArithmeticLayoutHeight(item.answerLayout, columnWidth, true) + 4
             : 0;
           var qLines = wrappedLines("Q" + item.number, compactQFont, true, columnWidth);
           var pTextH = promptTextHeight(item, compactPFont, compactPLineH, columnWidth);
@@ -1821,6 +1977,9 @@
           if (item.answerLayout && item.answerLayout.kind === "bitmapGrid") {
             y += drawBitmapGrid(x, y, item.answerLayout, columnWidth, true, false);
             y += PROMPT_BITMAP_GAP_COMPACT;
+          } else if (item.answerLayout && item.answerLayout.kind === "binaryArithmetic") {
+            y += drawBinaryArithmeticLayout(x, y, item.answerLayout, columnWidth, true);
+            y += 4;
           }
           y += compactRleType2TailGap;
           y += compactGapAfterBlock;
