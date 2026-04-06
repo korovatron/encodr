@@ -634,6 +634,96 @@
     };
   }
 
+  function joinBulbNumbers(nums) {
+    var labels = nums.map(function (n) { return String(n); });
+    if (labels.length === 1) return 'bulb ' + labels[0];
+    if (labels.length === 2) return 'bulbs ' + labels[0] + ' and ' + labels[1];
+    return 'bulbs ' + labels.slice(0, -1).join(', ') + ' and ' + labels[labels.length - 1];
+  }
+
+  function pickDistinct(arr, count) {
+    var pool = arr.slice();
+    var chosen = [];
+    while (pool.length && chosen.length < count) {
+      var idx = randInt(0, pool.length - 1);
+      chosen.push(pool.splice(idx, 1)[0]);
+    }
+    return chosen;
+  }
+
+  function bitManipulationShiftQuestion() {
+    var value = randInt(0, 255);
+    var op = Math.random() < 0.5 ? 'lshift' : 'rshift';
+    var amount = randInt(1, 4);
+    var expected = op === 'lshift'
+      ? ((value << amount) & 255)
+      : (value >>> amount);
+
+    return {
+      currentType: 'shift',
+      prompt: 'Apply the shift shown to the 8-bit value below.',
+      formatHint: 'Enter the 8-bit binary result.',
+      valueBits: fmtBin(value, 8),
+      shiftLabel: (op === 'lshift' ? 'Left shift ' : 'Right shift ') + amount,
+      shiftAmount: amount,
+      shiftOp: op,
+      expectedBits: fmtBin(expected, 8)
+    };
+  }
+
+  function bitManipulationMaskQuestion() {
+    for (var tries = 0; tries < 250; tries++) {
+      var initialBits = randomBits(8);
+      var actionType = pick(['set', 'clear', 'toggle']);
+      var candidates = [];
+
+      for (var i = 0; i < initialBits.length; i++) {
+        if (actionType === 'set' && initialBits[i] === 0) candidates.push(i);
+        if (actionType === 'clear' && initialBits[i] === 1) candidates.push(i);
+        if (actionType === 'toggle') candidates.push(i);
+      }
+
+      if (!candidates.length) continue;
+
+      var count = randInt(1, Math.min(3, candidates.length));
+      var selected = pickDistinct(candidates, count).sort(function (a, b) { return a - b; });
+      var targetBits = initialBits.slice();
+
+      for (var si = 0; si < selected.length; si++) {
+        var idx = selected[si];
+        if (actionType === 'set') targetBits[idx] = 1;
+        else if (actionType === 'clear') targetBits[idx] = 0;
+        else targetBits[idx] = targetBits[idx] ? 0 : 1;
+      }
+
+      var bulbNums = selected.map(function (idx) { return idx + 1; });
+      var actionText = actionType === 'set'
+        ? 'Turn on ' + joinBulbNumbers(bulbNums) + ' without changing any other bulbs.'
+        : actionType === 'clear'
+          ? 'Turn off ' + joinBulbNumbers(bulbNums) + ' without changing any other bulbs.'
+          : 'Toggle ' + joinBulbNumbers(bulbNums) + ' without changing any other bulbs.';
+      var prompt = 'The bits in an 8-bit register represent the states of 8 bulbs, where 0 means off and 1 means on. Use one bitwise operation and one mask to change the bulbs shown. ' + actionText;
+
+      return {
+        currentType: 'mask',
+        prompt: prompt,
+        formatHint: 'Choose AND, OR, or XOR, then enter an 8-bit mask.',
+        initialBits: initialBits.join(''),
+        targetBits: targetBits.join(''),
+        actionText: actionText
+      };
+    }
+
+    return {
+      currentType: 'mask',
+      prompt: 'The bits in an 8-bit register represent the states of 8 bulbs, where 0 means off and 1 means on. Use one bitwise operation and one mask to change the bulbs shown. Toggle bulbs 6, 7 and 8 without changing any other bulbs.',
+      formatHint: 'Choose AND, OR, or XOR, then enter an 8-bit mask.',
+      initialBits: '10110000',
+      targetBits: '10110111',
+      actionText: 'Toggle bulbs 6, 7 and 8 without changing any other bulbs.'
+    };
+  }
+
   window.EncodrQuizGenerators = {
     unsigned: {
       generate: function (questionType) {
@@ -1401,6 +1491,17 @@
         return Math.random() < 0.5
           ? binaryArithmeticAdditionQuestion()
           : binaryArithmeticMultiplicationQuestion();
+      }
+    },
+
+    bitManipulation: {
+      generate: function (questionType) {
+        var mode = questionType === 'shift' || questionType === 'mask' ? questionType : 'mixed';
+        if (mode === 'shift') return bitManipulationShiftQuestion();
+        if (mode === 'mask') return bitManipulationMaskQuestion();
+        return Math.random() < 0.5
+          ? bitManipulationShiftQuestion()
+          : bitManipulationMaskQuestion();
       }
     },
 

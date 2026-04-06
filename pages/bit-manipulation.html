@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <title>Encodr - Bit Manipulation</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/quiz-generators.js" defer></script>
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+  <style>
+    .intro-disclosure {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: rgba(255, 255, 255, 0.05);
+      overflow: clip;
+    }
+    .intro-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+    .intro-disclosure summary::after {
+      content: '+';
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ml);
+    }
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+    .intro-disclosure .intro {
+      margin: 0;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .op-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .op-btn {
+      padding: 6px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 100px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      cursor: pointer;
+      transition: background .12s, color .12s, border-color .12s;
+    }
+
+    .op-btn:hover {
+      background: rgba(255,255,255,.09);
+      color: var(--text);
+    }
+
+    .op-btn.active {
+      background: rgba(232,232,0,.13);
+      border-color: rgba(232,232,0,.60);
+      color: var(--ml);
+      box-shadow: 0 0 8px rgba(255,255,0,.30);
+    }
+
+    .chip[hidden],
+    .result-card[hidden],
+    .labelled-grid-row[hidden] {
+      display: none !important;
+    }
+
+    .res-summary {
+      font-size: 22px;
+      color: var(--muted);
+      font-family: 'Consolas', monospace;
+      text-align: center;
+      line-height: 1.5;
+      margin: 0;
+      word-break: break-word;
+    }
+
+    .res-summary .vm { color: var(--ml); }
+    .res-summary .ve { color: var(--exl); }
+
+    .res-meta {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    .q-visual-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .q-visual-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .q-visual-lbl {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #fff;
+      font-weight: 700;
+      background: #000;
+      padding: 3px 10px;
+      border-radius: 100px;
+      box-shadow: 0 0 0 2px #fff;
+      align-self: flex-start;
+    }
+
+    .q-op-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(232,232,0,.13);
+      border: 1px solid rgba(232,232,0,.6);
+      color: var(--ml);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: .4px;
+      align-self: flex-start;
+    }
+
+    .bulb-grid {
+      display: inline-flex;
+      gap: 10px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .bulb-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 34px;
+    }
+
+    .bulb {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.45);
+      box-shadow: inset 0 0 10px rgba(0,0,0,.65);
+    }
+
+    .bulb.on {
+      background: radial-gradient(circle at 35% 35%, #fff7b1 0%, #ffea00 35%, #d6a300 68%, #4d3500 100%);
+      border-color: rgba(255,236,120,.95);
+      box-shadow: 0 0 12px rgba(255,223,0,.55), inset 0 0 4px rgba(255,255,255,.35);
+    }
+
+    .bulb.off {
+      background: radial-gradient(circle at 35% 35%, #3b3b3b 0%, #171717 45%, #070707 100%);
+      border-color: rgba(255,255,255,.28);
+      box-shadow: inset 0 0 10px rgba(0,0,0,.8);
+    }
+
+    .bulb-num {
+      font-size: 11px;
+      font-family: 'Consolas', monospace;
+      color: var(--muted);
+    }
+
+    .q-choice-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .q-op-btn {
+      min-width: 74px;
+      justify-content: center;
+    }
+
+    @media (max-width: 640px) {
+      .res-summary {
+        font-size: 18px;
+      }
+
+      .res-meta {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
+  <span class="breadcrumb-sep">&rsaquo;</span>
+  <span class="hsub">Bit Manipulation</span>
+  <a class="home-btn" href="../index.html">Home</a>
+</header>
+
+<main>
+  <h1>Bit Manipulation</h1>
+  <div class="mode-tabs" role="tablist" aria-label="Bit manipulation modes">
+    <button class="mode-tab active" id="tab-explore" role="tab" aria-selected="true">Explore</button>
+    <button class="mode-tab" id="tab-quiz" role="tab" aria-selected="false">Test</button>
+  </div>
+
+  <section id="explore-section">
+    <details class="intro-disclosure">
+      <summary>More info</summary>
+      <p class="intro">Choose an operation, then toggle the value bits and (when needed) mask bits to see the result update live. Shift operations use a shift amount rather than a mask.</p>
+    </details>
+
+    <div class="controls">
+      <div class="chip chip-m">
+        <span class="chip-lbl chip-lbl-m">Operation</span>
+        <div class="op-group" id="op-group" aria-label="Operation selector"></div>
+      </div>
+
+      <div class="chip chip-e" id="shift-chip" hidden>
+        <span class="chip-lbl chip-lbl-e">Shift</span>
+        <button class="step" id="shift-minus" aria-label="Decrease shift amount">-</button>
+        <span class="step-val" id="shift-amount">1</span>
+        <button class="step" id="shift-plus" aria-label="Increase shift amount">+</button>
+        <span class="chip-lbl chip-lbl-u">(0-7)</span>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-m row-badge">Value</span>
+          <div class="grid-wrap">
+            <div class="bit-grid" id="value-grid"></div>
+          </div>
+          <div class="row-main">
+            <p class="res-summary res-meta" id="value-summary"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card" id="mask-card">
+      <div class="res-block">
+        <div class="labelled-grid-row" id="mask-row">
+          <span class="badge badge-e row-badge">Mask</span>
+          <div class="grid-wrap">
+            <div class="bit-grid" id="mask-grid"></div>
+          </div>
+          <div class="row-main">
+            <p class="res-summary res-meta" id="mask-summary"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="res-block">
+        <div class="labelled-grid-row">
+          <span class="badge badge-r row-badge">Result</span>
+          <div class="grid-wrap">
+            <div class="bit-grid" id="result-grid"></div>
+          </div>
+          <div class="row-main">
+            <div class="res-big" id="result-denary">0</div>
+            <p class="res-summary" id="result-summary"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz-section" hidden>
+    <div class="quiz-topbar">
+      <div class="qtype-group">
+        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
+        <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
+        <button class="qtype-btn" data-qt="shift"><span class="qt-long">Shifts</span><span class="qt-short">SHIFT</span></button>
+        <button class="qtype-btn" data-qt="mask"><span class="qt-long">Masking</span><span class="qt-short">MASK</span></button>
+      </div>
+      <div class="quiz-score-area">
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="q-reset-score">Reset score</button>
+      </div>
+    </div>
+
+    <div class="card quiz-q-card">
+      <div class="res-block">
+        <div class="quiz-q-header">
+          <span class="quiz-q-num" id="q-num">Question 1</span>
+          <span class="badge" id="q-type-badge"></span>
+        </div>
+        <div class="quiz-q-text" id="q-text"></div>
+        <p class="quiz-format-hint" id="q-format-hint"></p>
+
+        <div class="q-visual-stack" id="q-shift-visual" hidden>
+          <div class="q-visual-row">
+            <span class="q-visual-lbl">Value</span>
+            <div class="grid-wrap">
+              <div class="bit-grid" id="q-shift-grid"></div>
+            </div>
+          </div>
+          <div class="q-visual-row">
+            <span class="q-visual-lbl">Operation</span>
+            <div class="q-op-pill" id="q-shift-op"></div>
+          </div>
+        </div>
+
+        <div class="q-visual-stack" id="q-mask-visual" hidden>
+          <div class="q-visual-row">
+            <span class="q-visual-lbl">Current Bulbs</span>
+            <div class="bulb-grid" id="q-bulb-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="q-answer-card">
+      <div class="res-block">
+        <div class="q-answer-lbl" id="q-answer-lbl">Your Answer</div>
+        <input class="q-denary-input" type="text" id="q-input"
+               placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
+      </div>
+    </div>
+
+    <div class="card" id="q-mask-answer-card" hidden>
+      <div class="res-block">
+        <div class="q-answer-lbl">Your Answer</div>
+        <div class="q-err-lbl">Choose an operation</div>
+        <div class="q-choice-row" id="q-op-wrap">
+          <button class="qtype-btn q-op-btn" id="q-op-and" type="button" data-op="and">AND</button>
+          <button class="qtype-btn q-op-btn" id="q-op-or" type="button" data-op="or">OR</button>
+          <button class="qtype-btn q-op-btn" id="q-op-xor" type="button" data-op="xor">XOR</button>
+        </div>
+        <div class="q-err-lbl" style="margin-top:14px;">Enter an 8-bit mask</div>
+        <input class="q-denary-input" type="text" id="q-mask-input"
+               placeholder="e.g. 00100010" inputmode="numeric" autocomplete="off" spellcheck="false" />
+      </div>
+    </div>
+
+    <div class="quiz-actions">
+      <button class="btn btn-submit" id="q-submit">Check Answer</button>
+    </div>
+  </section>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
+
+<dialog id="q-modal" aria-labelledby="q-modal-feedback">
+  <div class="modal">
+    <div class="modal-feedback" id="q-modal-feedback"></div>
+    <div class="modal-footer">
+      <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const OPS = [
+    { key: 'and', label: 'AND' },
+    { key: 'or', label: 'OR' },
+    { key: 'xor', label: 'XOR' },
+    { key: 'not', label: 'NOT' },
+    { key: 'lshift', label: 'LShift' },
+    { key: 'rshift', label: 'RShift' }
+  ];
+
+  const S = {
+    operation: 'and',
+    valueBits: [1, 0, 1, 1, 0, 0, 1, 0],
+    maskBits: [0, 0, 0, 0, 1, 1, 0, 0],
+    shiftAmount: 1
+  };
+
+  function hasMask(op) {
+    return op === 'and' || op === 'or' || op === 'xor';
+  }
+
+  function hasShift(op) {
+    return op === 'lshift' || op === 'rshift';
+  }
+
+  function bitsToNumber(bits) {
+    return parseInt(bits.join('') || '0', 2);
+  }
+
+  function numberToBits(value, width) {
+    const mask = (1 << width) - 1;
+    const unsigned = value & mask;
+    return unsigned.toString(2).padStart(width, '0').split('').map(ch => Number(ch));
+  }
+
+  function binaryText(bits) {
+    return bits.join('').replace(/\B(?=(?:[01]{4})+(?![01]))/g, ' ');
+  }
+
+  function hexText(bits) {
+    return bitsToNumber(bits).toString(16).toUpperCase().padStart(2, '0');
+  }
+
+  function weightLabelHTML(exp) {
+    const wt = 2 ** exp;
+    return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
+  }
+
+  function fitGrid(gridId, n) {
+    const grid = document.getElementById(gridId);
+    if (!grid || !grid.parentElement) return;
+    const available = grid.parentElement.clientWidth;
+    if (!available) return;
+    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
+    grid.style.setProperty('--box-size', size + 'px');
+    grid.style.setProperty('--box-fs', Math.round(size * 26 / 56) + 'px');
+    grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
+  }
+
+  function renderBitGrid(gridId, bits, variant, interactive, onToggle) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+
+    bits.forEach((bit, i) => {
+      const exp = bits.length - 1 - i;
+      const col = document.createElement('div');
+      col.className = 'bit-col';
+
+      const wtEl = document.createElement('div');
+      wtEl.className = 'bit-wt';
+      wtEl.innerHTML = weightLabelHTML(exp);
+
+      const box = document.createElement('div');
+      box.className = `bit-box ${variant}${bit}` + (interactive ? '' : ' static');
+      box.textContent = String(bit);
+
+      if (interactive) {
+        box.setAttribute('role', 'button');
+        box.setAttribute('tabindex', '0');
+        box.setAttribute('aria-label', `Bit ${i + 1} of ${bits.length}, currently ${bit}`);
+
+        const toggle = () => onToggle(i);
+        box.addEventListener('click', toggle);
+        box.addEventListener('keydown', ev => {
+          if (ev.key === ' ' || ev.key === 'Enter') {
+            ev.preventDefault();
+            toggle();
+          }
+        });
+      }
+
+      col.append(wtEl, box);
+      grid.appendChild(col);
+    });
+
+    fitGrid(gridId, bits.length);
+  }
+
+  function operationSymbol(op) {
+    if (op === 'and') return '&';
+    if (op === 'or') return '|';
+    if (op === 'xor') return '^';
+    if (op === 'not') return '~';
+    if (op === 'lshift') return '<<';
+    return '>>';
+  }
+
+  function computeResultBits() {
+    const valueNum = bitsToNumber(S.valueBits);
+    const maskNum = bitsToNumber(S.maskBits);
+
+    if (S.operation === 'and') return numberToBits(valueNum & maskNum, 8);
+    if (S.operation === 'or') return numberToBits(valueNum | maskNum, 8);
+    if (S.operation === 'xor') return numberToBits(valueNum ^ maskNum, 8);
+    if (S.operation === 'not') return numberToBits((~valueNum) & 255, 8);
+    if (S.operation === 'lshift') return numberToBits((valueNum << S.shiftAmount) & 255, 8);
+    return numberToBits((valueNum >>> S.shiftAmount) & 255, 8);
+  }
+
+  function renderSummary(resultBits) {
+    const valueBin = binaryText(S.valueBits);
+    const maskBin = binaryText(S.maskBits);
+    const resultBin = binaryText(resultBits);
+
+    const valueHex = hexText(S.valueBits);
+    const maskHex = hexText(S.maskBits);
+    const resultHex = hexText(resultBits);
+
+    const opSym = operationSymbol(S.operation);
+    const resultNum = bitsToNumber(resultBits);
+
+    let line1;
+    let line2;
+
+    if (hasMask(S.operation)) {
+      line1 = `<span class="vm">${valueBin}</span> ${opSym} <span class="ve">${maskBin}</span> = <span class="vm">${resultBin}</span>`;
+      line2 = `0x${valueHex} ${opSym} 0x${maskHex} = 0x${resultHex}`;
+    } else if (S.operation === 'not') {
+      line1 = `${opSym}<span class="vm">${valueBin}</span> = <span class="vm">${resultBin}</span>`;
+      line2 = `NOT 0x${valueHex} = 0x${resultHex}`;
+    } else {
+      line1 = `<span class="vm">${valueBin}</span> ${opSym} ${S.shiftAmount} = <span class="vm">${resultBin}</span>`;
+      line2 = `0x${valueHex} ${opSym} ${S.shiftAmount} = 0x${resultHex}`;
+    }
+
+    document.getElementById('result-denary').textContent = resultNum.toString();
+    document.getElementById('result-summary').innerHTML = `${line1}<br>${line2}`;
+  }
+
+  function renderOperandSummaries() {
+    const valueNum = bitsToNumber(S.valueBits);
+    const maskNum = bitsToNumber(S.maskBits);
+
+    document.getElementById('value-summary').innerHTML = `Denary: <span class="vm">${valueNum}</span> | Hex: <span class="vm">0x${hexText(S.valueBits)}</span>`;
+    document.getElementById('mask-summary').innerHTML = `Denary: <span class="ve">${maskNum}</span> | Hex: <span class="ve">0x${hexText(S.maskBits)}</span>`;
+  }
+
+  function renderOperationButtons() {
+    const host = document.getElementById('op-group');
+    host.innerHTML = '';
+
+    OPS.forEach(op => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'op-btn' + (S.operation === op.key ? ' active' : '');
+      btn.textContent = op.label;
+      btn.setAttribute('aria-pressed', S.operation === op.key ? 'true' : 'false');
+      btn.addEventListener('click', () => {
+        S.operation = op.key;
+        renderAll();
+      });
+      host.appendChild(btn);
+    });
+  }
+
+  function renderAll() {
+    const usesMask = hasMask(S.operation);
+    const usesShift = hasShift(S.operation);
+
+    document.getElementById('mask-card').hidden = !usesMask;
+    document.getElementById('shift-chip').hidden = !usesShift;
+    document.getElementById('shift-amount').textContent = String(S.shiftAmount);
+
+    renderOperationButtons();
+
+    renderBitGrid('value-grid', S.valueBits, 'mb', true, i => {
+      S.valueBits[i] ^= 1;
+      renderAll();
+    });
+
+    renderOperandSummaries();
+
+    if (usesMask) {
+      renderBitGrid('mask-grid', S.maskBits, 'eb', true, i => {
+        S.maskBits[i] ^= 1;
+        renderAll();
+      });
+    }
+
+    const resultBits = computeResultBits();
+    renderBitGrid('result-grid', resultBits, 'mb', false, null);
+    renderSummary(resultBits);
+  }
+
+  function renderBulbGrid(gridId, bits) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '';
+
+    bits.forEach((bit, i) => {
+      const col = document.createElement('div');
+      col.className = 'bulb-col';
+
+      const bulb = document.createElement('div');
+      bulb.className = 'bulb ' + (bit ? 'on' : 'off');
+      bulb.setAttribute('aria-label', `Bulb ${i + 1} is ${bit ? 'on' : 'off'}`);
+
+      const label = document.createElement('div');
+      label.className = 'bulb-num';
+      label.textContent = String(i + 1);
+
+      col.append(bulb, label);
+      grid.appendChild(col);
+    });
+  }
+
+  function normalizeBinary(raw) {
+    if (!raw) return null;
+    let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
+    if (/^0b/i.test(s)) s = s.slice(2);
+    if (!/^[01]+$/.test(s)) return null;
+    if (s.length > 8) return null;
+    return s.padStart(8, '0');
+  }
+
+  function applyOperationToBits(op, valueBits, operandBits, shiftAmount) {
+    const valueNum = bitsToNumber(valueBits);
+    const operandNum = operandBits ? bitsToNumber(operandBits) : 0;
+
+    if (op === 'and') return numberToBits(valueNum & operandNum, 8);
+    if (op === 'or') return numberToBits(valueNum | operandNum, 8);
+    if (op === 'xor') return numberToBits(valueNum ^ operandNum, 8);
+    if (op === 'not') return numberToBits((~valueNum) & 255, 8);
+    if (op === 'lshift') return numberToBits((valueNum << shiftAmount) & 255, 8);
+    return numberToBits((valueNum >>> shiftAmount) & 255, 8);
+  }
+
+  const QS = {
+    questionType: 'mixed',
+    currentType: 'shift',
+    questionNum: 1,
+    correct: 0,
+    wrong: 0,
+    total: 0,
+    answered: false,
+    selectedOperation: null,
+    prompt: '',
+    formatHint: '',
+    valueBits: '00000000',
+    expectedBits: '00000000',
+    initialBits: '00000000',
+    targetBits: '00000000',
+    shiftLabel: '',
+    actionText: ''
+  };
+
+  const LS_SCORE_BIT_MANIP = 'encodr-bit-manip-score';
+
+  function loadScoreBitManip() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_SCORE_BIT_MANIP)) || { correct: 0, wrong: 0, total: 0 };
+    } catch {
+      return { correct: 0, wrong: 0, total: 0 };
+    }
+  }
+
+  function saveScoreBitManip() {
+    localStorage.setItem(LS_SCORE_BIT_MANIP, JSON.stringify({
+      correct: QS.correct,
+      wrong: QS.wrong,
+      total: QS.total
+    }));
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById('q-correct').textContent = QS.correct;
+    document.getElementById('q-wrong').textContent = QS.wrong;
+    document.getElementById('q-total').textContent = QS.total;
+  }
+
+  function openModal() {
+    const dlg = document.getElementById('q-modal');
+    if (!dlg.open) dlg.showModal();
+    document.documentElement.classList.add('modal-open');
+    document.body.classList.add('modal-open');
+  }
+
+  function closeModal() {
+    const dlg = document.getElementById('q-modal');
+    if (dlg.open) dlg.close();
+    document.documentElement.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
+  }
+
+  function setSelectedQuizOperation(op) {
+    QS.selectedOperation = op;
+    document.querySelectorAll('.q-op-btn').forEach(btn => {
+      const isActive = btn.dataset.op === op;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  }
+
+  function renderQuizVisuals() {
+    const isShift = QS.currentType === 'shift';
+    const shiftBits = QS.valueBits.split('').map(Number);
+    const maskBits = QS.initialBits.split('').map(Number);
+
+    document.getElementById('q-shift-visual').hidden = !isShift;
+    document.getElementById('q-mask-visual').hidden = isShift;
+    document.getElementById('q-answer-card').hidden = !isShift;
+    document.getElementById('q-mask-answer-card').hidden = isShift;
+
+    if (isShift) {
+      renderBitGrid('q-shift-grid', shiftBits, 'mb', false, null);
+      document.getElementById('q-shift-op').textContent = QS.shiftLabel;
+      return;
+    }
+
+    renderBulbGrid('q-bulb-grid', maskBits);
+  }
+
+  function generateQuizQuestion() {
+    const V = window.EncodrValidation;
+    const generated = window.EncodrQuizGenerators.bitManipulation.generate(QS.questionType);
+    Object.assign(QS, generated);
+    QS.answered = false;
+    QS.selectedOperation = null;
+
+    const isShift = QS.currentType === 'shift';
+    const badge = document.getElementById('q-type-badge');
+    badge.className = 'badge ' + (isShift ? 'badge-m' : 'badge-e');
+    badge.textContent = isShift ? 'SHIFT' : 'MASK';
+
+    document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
+    document.getElementById('q-text').textContent = QS.prompt;
+    document.getElementById('q-format-hint').textContent = QS.formatHint;
+
+    document.getElementById('q-input').value = '';
+    document.getElementById('q-mask-input').value = '';
+    document.getElementById('q-input').disabled = false;
+    document.getElementById('q-mask-input').disabled = false;
+    document.getElementById('q-submit').disabled = false;
+
+    V.clearInputError(document.getElementById('q-input'));
+    V.clearInputError(document.getElementById('q-mask-input'));
+    V.clearGroupError(document.getElementById('q-op-wrap'));
+    V.clearSummary('q-submit');
+
+    setSelectedQuizOperation(null);
+    closeModal();
+    document.getElementById('q-modal-feedback').innerHTML = '';
+    renderQuizVisuals();
+  }
+
+  function checkQuizAnswer() {
+    if (QS.answered) return;
+    const V = window.EncodrValidation;
+    const isShift = QS.currentType === 'shift';
+    const inputEl = document.getElementById('q-input');
+    const maskInputEl = document.getElementById('q-mask-input');
+    const opWrap = document.getElementById('q-op-wrap');
+
+    V.clearInputError(inputEl);
+    V.clearInputError(maskInputEl);
+    V.clearGroupError(opWrap);
+    V.clearSummary('q-submit');
+
+    let correct = false;
+    let feedbackHtml = '';
+
+    if (isShift) {
+      const normalized = normalizeBinary(inputEl.value || '');
+      if (!normalized) {
+        V.setInputError(inputEl, 'Enter a valid 8-bit binary answer using only 0 and 1.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        inputEl.focus();
+        return;
+      }
+
+      correct = normalized === QS.expectedBits;
+      feedbackHtml = correct
+        ? `✓ Correct! The result is <strong>${QS.expectedBits}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${normalized}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
+      inputEl.disabled = true;
+    } else {
+      const normalizedMask = normalizeBinary(maskInputEl.value || '');
+      if (QS.selectedOperation === null) {
+        V.setGroupError(opWrap, 'Choose AND, OR, or XOR.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        document.getElementById('q-op-and').focus();
+        return;
+      }
+      if (!normalizedMask) {
+        V.setInputError(maskInputEl, 'Enter a valid 8-bit binary mask using only 0 and 1.');
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+        maskInputEl.focus();
+        return;
+      }
+
+      const studentResult = applyOperationToBits(
+        QS.selectedOperation,
+        QS.initialBits.split('').map(Number),
+        normalizedMask.split('').map(Number),
+        0
+      ).join('');
+
+      correct = studentResult === QS.targetBits;
+      feedbackHtml = correct
+        ? `✓ Correct! ${QS.selectedOperation.toUpperCase()} ${normalizedMask} changes the bulbs to <strong>${QS.targetBits}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — ${QS.selectedOperation.toUpperCase()} ${normalizedMask} gives <strong>${studentResult}</strong>, not <strong>${QS.targetBits}</strong>.</span>`;
+      maskInputEl.disabled = true;
+    }
+
+    QS.answered = true;
+    QS.total++;
+    document.getElementById('q-submit').disabled = true;
+
+    if (correct) QS.correct++; else QS.wrong++;
+    updateScoreDisplay();
+    saveScoreBitManip();
+
+    const fbEl = document.getElementById('q-modal-feedback');
+    fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
+    fbEl.innerHTML = feedbackHtml;
+    if (document.activeElement) document.activeElement.blur();
+    openModal();
+  }
+
+  function switchMode(mode) {
+    const isExplore = mode === 'explore';
+    document.getElementById('explore-section').hidden = !isExplore;
+    document.getElementById('quiz-section').hidden = isExplore;
+
+    const exploreBtn = document.getElementById('tab-explore');
+    const quizBtn = document.getElementById('tab-quiz');
+
+    exploreBtn.classList.toggle('active', isExplore);
+    quizBtn.classList.toggle('active', !isExplore);
+    exploreBtn.setAttribute('aria-selected', isExplore ? 'true' : 'false');
+    quizBtn.setAttribute('aria-selected', isExplore ? 'false' : 'true');
+
+    if (isExplore) {
+      closeModal();
+      return;
+    }
+
+    QS.questionNum = 1;
+    updateScoreDisplay();
+    generateQuizQuestion();
+  }
+
+  document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
+  document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
+
+  document.getElementById('shift-minus').addEventListener('click', () => {
+    S.shiftAmount = Math.max(0, S.shiftAmount - 1);
+    renderAll();
+  });
+
+  document.getElementById('shift-plus').addEventListener('click', () => {
+    S.shiftAmount = Math.min(7, S.shiftAmount + 1);
+    renderAll();
+  });
+
+  document.querySelectorAll('.qtype-btn[data-qt]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('active')) return;
+      document.querySelectorAll('.qtype-btn[data-qt]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      QS.questionType = btn.dataset.qt;
+      closeModal();
+      QS.questionNum++;
+      generateQuizQuestion();
+    });
+  });
+
+  document.querySelectorAll('.q-op-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const V = window.EncodrValidation;
+      setSelectedQuizOperation(btn.dataset.op);
+      V.clearGroupError(document.getElementById('q-op-wrap'));
+      V.maybeClearSummary('q-submit');
+    });
+  });
+
+  document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
+  document.getElementById('q-input').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && !QS.answered) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      checkQuizAnswer();
+    }
+  });
+  document.getElementById('q-mask-input').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && !QS.answered) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      checkQuizAnswer();
+    }
+  });
+  document.getElementById('q-input').addEventListener('input', () => {
+    const V = window.EncodrValidation;
+    if (normalizeBinary(document.getElementById('q-input').value || '')) {
+      V.clearInputError(document.getElementById('q-input'));
+      V.maybeClearSummary('q-submit');
+    }
+  });
+  document.getElementById('q-mask-input').addEventListener('input', () => {
+    const V = window.EncodrValidation;
+    if (normalizeBinary(document.getElementById('q-mask-input').value || '')) {
+      V.clearInputError(document.getElementById('q-mask-input'));
+      V.maybeClearSummary('q-submit');
+    }
+  });
+  document.getElementById('q-next').addEventListener('click', () => {
+    closeModal();
+    QS.questionNum++;
+    generateQuizQuestion();
+  });
+  document.getElementById('q-reset-score').addEventListener('click', () => {
+    QS.correct = 0;
+    QS.wrong = 0;
+    QS.total = 0;
+    QS.questionNum = 1;
+    localStorage.removeItem(LS_SCORE_BIT_MANIP);
+    updateScoreDisplay();
+    if (!document.getElementById('quiz-section').hidden) {
+      generateQuizQuestion();
+    }
+  });
+
+  window.addEventListener('resize', renderAll);
+
+  const _score = loadScoreBitManip();
+  QS.correct = _score.correct;
+  QS.wrong = _score.wrong;
+  QS.total = _score.total;
+  updateScoreDisplay();
+
+  renderAll();
+  switchMode('explore');
+</script>
+
+</body>
+</html>

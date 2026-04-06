@@ -7,6 +7,10 @@
   --surface2:  #362879;
   --border:    rgba(255,255,255,.80);
 
+
+[hidden] {
+  display: none !important;
+}
   /* Golden amber — mantissa */
   --m:   #e8e800;
   --ml:  #ffff00;
