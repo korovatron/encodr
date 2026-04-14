@@ -946,6 +946,14 @@
     return String(n);
   }
 
+  function matchesAtInputPrecision(rawInput, given, expected) {
+    if (Math.abs(given - expected) < 1e-9) return true;
+    const decimalMatch = rawInput.match(/\.(\d+)/);
+    if (!decimalMatch) return false;
+    const dp = Math.min(decimalMatch[1].length, 6);
+    return Number(given.toFixed(dp)) === Number(expected.toFixed(dp));
+  }
+
   // ── Quiz state ────────────────────────────────────────────────────
   const LS_SCORE = 'encodr-bitmap-score';
   function loadScore() { try { return JSON.parse(localStorage.getItem(LS_SCORE)) || {correct:0,wrong:0,total:0}; } catch { return {correct:0,wrong:0,total:0}; } }
@@ -993,7 +1001,7 @@
       return;
     }
     bqTotal++;
-    const correct = Math.abs(given - bqQuestion.answerNum) < 1e-9;
+    const correct = matchesAtInputPrecision(raw, given, bqQuestion.answerNum);
     if (correct) bqCorrect++; else bqWrong++;
     updateScoreDisplay();
     saveScore();
