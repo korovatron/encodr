@@ -1169,6 +1169,19 @@
     document.getElementById('sq-input').focus();
   }
 
+  function formatQuizAnswer(value) {
+    if (Number.isInteger(value)) return value.toLocaleString();
+    return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+  }
+
+  function matchesAtInputPrecision(rawInput, given, expected) {
+    if (Math.abs(given - expected) < 1e-9) return true;
+    const decimalMatch = rawInput.match(/\.(\d+)/);
+    if (!decimalMatch) return false;
+    const dp = Math.min(decimalMatch[1].length, 6);
+    return Number(given.toFixed(dp)) === Number(expected.toFixed(dp));
+  }
+
   function checkAnswer() {
     const V = window.EncodrValidation;
     const inputEl = document.getElementById('sq-input');
@@ -1188,16 +1201,17 @@
     document.getElementById('sq-submit').disabled = true;
 
     sqTotal++;
-    const correct = Math.abs(given - sqQuestion.answerNum) < 1e-6;
+    const correct = matchesAtInputPrecision(raw, given, sqQuestion.answerNum);
     if (correct) sqCorrect++; else sqWrong++;
     updateSqDisplay();
     saveScoreSQ();
 
     const fb = document.getElementById('sq-modal-feedback');
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
+    const expectedText = formatQuizAnswer(sqQuestion.answerNum);
     fb.innerHTML = correct
-      ? `✓ <strong>Correct!</strong><br>The answer is <strong>${sqQuestion.answerNum.toLocaleString()} ${sqQuestion.unitLabel}</strong>.`
-      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${sqQuestion.answerNum.toLocaleString()} ${sqQuestion.unitLabel}</strong>.`;
+      ? `✓ <strong>Correct!</strong><br>The answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`
+      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`;
     document.getElementById('sq-modal').showModal();
   }
 
