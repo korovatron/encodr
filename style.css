@@ -512,7 +512,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   padding: 6px 16px;
   font-size: 14px; font-weight: 600;
   border: 1px solid rgba(255,255,255,.30);
-  border-radius: 100px;
+  border-radius: 0;
   background: #000000;
   color: var(--muted); cursor: pointer;
   transition: background .12s, color .12s, border-color .12s;
@@ -769,7 +769,7 @@ body:has(#save-dialog[open]) { overflow: hidden; }
   gap: 16px;
   background: linear-gradient(135deg, #31206f 0%, #45308f 50%, #5b43aa 100%);
   box-shadow: 0 0 0 1px var(--border), 0 4px 16px rgba(0,0,0,.40);
-  border-radius: var(--r);
+  border-radius: 0;
   padding: 18px 24px;
   text-decoration: none;
   color: var(--text);
@@ -874,7 +874,7 @@ body:has(#save-dialog[open]) { overflow: hidden; }
   position: relative;
   background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
   box-shadow: 0 0 0 1px var(--border), 0 4px 16px rgba(0,0,0,.40);
-  border-radius: var(--r);
+  border-radius: 0;
   padding: 20px 20px 18px;
   text-decoration: none;
   color: var(--text);
