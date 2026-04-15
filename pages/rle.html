@@ -41,7 +41,7 @@
       user-select: text;
       background: #000;
       color: var(--text);
-      border: none;
+      border: 1px solid rgba(255,255,255,.75);
       border-radius: 10px;
       box-shadow: 0 0 0 1.5px var(--border);
       padding: 10px 12px;
@@ -120,8 +120,9 @@
 
     .rle-run-block {
       flex-shrink: 0;
+      background: rgba(255,255,255,.04);
       min-width: 42px;
-      border: 1.5px solid transparent;
+      border: 1px solid rgba(255,255,255,.75);
       border-radius: 8px;
       padding: 10px 6px 8px;
       display: flex;
@@ -134,26 +135,27 @@
 
     .rle-run-sym {
       font-size: 24px;
-      font-weight: 800;
+      font-weight: 700;
       font-family: 'Consolas', 'Courier New', monospace;
       line-height: 1;
       background: #000;
-      color: #ffff00;
+      color: var(--ml);
       border-radius: 6px;
       padding: 2px 8px;
+      letter-spacing: .3px;
       box-shadow: 0 0 0 1px rgba(255,255,255,.35);
     }
 
     .rle-run-cnt {
       font-size: 18px;
-      color: var(--muted);
+      color: #ffffff;
       font-family: 'Consolas', 'Courier New', monospace;
       font-weight: 700;
     }
 
     .rle-run-pair {
       font-size: 15px;
-      color: rgba(255,255,255,.4);
+      color: #ffffff;
       font-family: 'Consolas', 'Courier New', monospace;
       white-space: nowrap;
     }
@@ -347,7 +349,7 @@
     .rle-pixel {
       aspect-ratio: 1;
       min-width: 0;
-      border: none;
+      border: 1px solid rgba(255,255,255,.75);
       border-radius: 3px;
       cursor: pointer;
       padding: 0;

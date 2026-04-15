@@ -13,12 +13,6 @@
     gridState: []
   };
 
-  var RUN_COLOURS = [
-    '#ff6b6b', '#ffd166', '#06d6a0', '#118ab2',
-    '#a78bfa', '#f97316', '#ec4899', '#14b8a6',
-    '#84cc16', '#f59e0b', '#6366f1', '#10b981'
-  ];
-
   function byId(id) { return document.getElementById(id); }
 
   function setText(id, value) {
@@ -131,13 +125,11 @@
       return;
     }
 
-    var html = runs.map(function (run, idx) {
-      var colour = RUN_COLOURS[idx % RUN_COLOURS.length];
-      var bg = colour + '1a';
+    var html = runs.map(function (run) {
       var displaySym = escapeHtml(symbolLabel(run.symbol));
       var pairText = '(' + escapeHtml(run.symbol === ' ' ? '\u00b7' : run.symbol) + ', ' + run.count + ')';
       return (
-        '<div class="rle-run-block" style="flex:' + run.count + ' 0 42px;border-color:' + colour + ';background:' + bg + '">' +
+        '<div class="rle-run-block" style="flex:' + run.count + ' 0 42px">' +
           '<span class="rle-run-sym">' + displaySym + '</span>' +
           '<span class="rle-run-cnt">&times;' + run.count + '</span>' +
           '<span class="rle-run-pair">' + pairText + '</span>' +
