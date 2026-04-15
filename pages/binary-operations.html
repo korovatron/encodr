@@ -208,7 +208,7 @@
     }
     .arith-digit-sum:not(.arith-digit-blank) {
       background: #000000;
-      border-radius: 6px;
+      border-radius: 0;
       box-shadow: 0 0 0 1px rgba(255,255,255,.35);
       height: calc(var(--box-size, 56px) * 0.5);
       font-size: var(--box-fs, 26px);
@@ -237,16 +237,17 @@
       opacity: 0.25;
     }
 
-    .arith-overflow-note {
+    .arith-overflow-note,
+    .mul-overflow-note {
       margin: 10px auto 0;
       font-size: 14px;
       line-height: 1.55;
-      color: #ff6b6b;
-      font-weight: 600;
+      color: #ff4444;
+      font-weight: 700;
       text-align: center;
-      background: rgba(120, 0, 0, .28);
-      border: 1px solid rgba(255, 90, 90, .75);
-      border-radius: 10px;
+      background: #000000;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.70);
+      border-radius: 0;
       padding: 8px 12px;
       max-width: fit-content;
     }
@@ -298,20 +299,6 @@
     [data-mul-partial] {
       visibility: inherit !important;
       display: grid !important;
-    }
-
-    .mul-overflow-note {
-      margin: 10px auto 0;
-      font-size: 14px;
-      line-height: 1.55;
-      color: #ff6b6b;
-      font-weight: 600;
-      text-align: center;
-      background: rgba(120, 0, 0, .28);
-      border: 1px solid rgba(255, 90, 90, .75);
-      border-radius: 10px;
-      padding: 8px 12px;
-      max-width: fit-content;
     }
 
     .arith-meta {

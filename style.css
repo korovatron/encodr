@@ -156,7 +156,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   background: #000000;
   border: none;
   box-shadow: 0 0 0 1.5px var(--border);
-  border-radius: 100px;
+  border-radius: 0;
   padding: 7px 14px;
   transform: translateZ(0);
 }
@@ -349,7 +349,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 
 .bit-box {
   width: var(--box-size, 56px); height: var(--box-size, 56px);
-  border-radius: var(--r-sm);
+  border-radius: 0;
   border: 2px solid;
   display: flex; align-items: center; justify-content: center;
   font-size: var(--box-fs, 26px); font-weight: 700;
@@ -513,7 +513,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   font-size: 14px; font-weight: 600;
   border: 1px solid rgba(255,255,255,.30);
   border-radius: 100px;
-  background: rgba(255,255,255,.04);
+  background: #000000;
   color: var(--muted); cursor: pointer;
   transition: background .12s, color .12s, border-color .12s;
 }
@@ -525,7 +525,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 }
 
 .qtype-btn.active {
-  background: rgba(232,232,0,.13);
+  background: #000000;
   border-color: rgba(232,232,0,.60);
   color: var(--ml);
   box-shadow: 0 0 8px rgba(255,255,0,.30);
@@ -636,13 +636,13 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
 .btn:hover { background: rgba(255,255,255,.12); }
 .btn-sm { padding: 5px 14px; font-size: 14px; }
 .btn-submit {
-  background: rgba(232,232,0,.13);
+  background: #000000;
   border-color: rgba(232,232,0,.50); color: var(--ml);
   box-shadow: 0 0 10px rgba(255,255,0,.20);
 }
 .btn-submit:hover { background: rgba(232,232,0,.22); box-shadow: 0 0 14px rgba(255,255,0,.35); }
 .btn-submit:disabled { opacity: .4; cursor: default; }
-.btn-submit:disabled:hover { background: rgba(232,232,0,.13); }
+.btn-submit:disabled:hover { background: #000000; }
 .btn-next {
   background: rgba(0,204,0,.10);
   border-color: rgba(0,204,0,.40); color: var(--exl);

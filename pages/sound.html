@@ -285,14 +285,17 @@
     .nyquist-warn {
       display: block;
       visibility: hidden;
-      background: rgba(0,0,0,.55);
-      border: 1.5px solid #ff6622;
-      box-shadow: 0 0 10px rgba(255,80,0,.30);
-      border-radius: var(--r-sm);
-      padding: 10px 14px;
-      font-size: 13px;
-      color: #ffaa55;
-      line-height: 1.6;
+      margin: 10px auto 0;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #ff4444;
+      font-weight: 700;
+      text-align: center;
+      background: #000000;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.70);
+      border-radius: 0;
+      padding: 8px 12px;
+      max-width: fit-content;
     }
     .nyquist-warn.visible { visibility: visible; }
 
@@ -608,7 +611,7 @@
           <button class="qtype-btn active" data-recon-mode="step" title="Stepped (sample-and-hold): each sample value is held until the next sample.">Stepped</button>
           <button class="qtype-btn" data-recon-mode="line" title="Joined (interpolated view): sample points are connected with straight lines.">Joined</button>
         </div>
-        <div class="nyquist-warn" id="nyquist-warn" style="margin:6px 0 0;">
+        <div class="nyquist-warn" id="nyquist-warn">
           <strong>Below Nyquist threshold</strong> — the sample rate must be at least
           <strong>twice</strong> the highest frequency in the signal (<strong id="nyquist-min"></strong>).
           At this rate the reconstructed wave is incorrect (aliasing).
