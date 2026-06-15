@@ -690,32 +690,22 @@
       var targetBits = String(bmq.targetBits || "");
       var maskBits = "";
       var opName = "XOR";
-      var allSet = true;
-      var allClear = true;
+      var actionTextRaw = String(bmq.actionText || "").toLowerCase();
+      var requestedAction = "toggle";
+      if (actionTextRaw.indexOf("turn on") === 0) requestedAction = "set";
+      else if (actionTextRaw.indexOf("turn off") === 0) requestedAction = "clear";
 
       for (var mb = 0; mb < 8; mb++) {
-        var fromBit = initialBits.charAt(mb);
-        var toBit = targetBits.charAt(mb);
-        if (fromBit !== toBit) {
-          if (!(fromBit === "0" && toBit === "1")) allSet = false;
-          if (!(fromBit === "1" && toBit === "0")) allClear = false;
-        }
-      }
-
-      if (allSet) {
-        opName = "OR";
-        for (var ms = 0; ms < 8; ms++) {
-          maskBits += initialBits.charAt(ms) !== targetBits.charAt(ms) ? "1" : "0";
-        }
-      } else if (allClear) {
-        opName = "AND";
-        for (var mc = 0; mc < 8; mc++) {
-          maskBits += initialBits.charAt(mc) !== targetBits.charAt(mc) ? "0" : "1";
-        }
-      } else {
-        opName = "XOR";
-        for (var mx = 0; mx < 8; mx++) {
-          maskBits += initialBits.charAt(mx) !== targetBits.charAt(mx) ? "1" : "0";
+        var changed = initialBits.charAt(mb) !== targetBits.charAt(mb);
+        if (requestedAction === "set") {
+          opName = "OR";
+          maskBits += changed ? "1" : "0";
+        } else if (requestedAction === "clear") {
+          opName = "AND";
+          maskBits += changed ? "0" : "1";
+        } else {
+          opName = "XOR";
+          maskBits += changed ? "1" : "0";
         }
       }
 

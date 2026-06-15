@@ -1085,10 +1085,28 @@
         0
       ).join('');
 
-      correct = studentResult === QS.targetBits;
+      const actionLower = String(QS.actionText || '').toLowerCase();
+      let expectedOperation = 'xor';
+      if (actionLower.startsWith('turn on')) expectedOperation = 'or';
+      else if (actionLower.startsWith('turn off')) expectedOperation = 'and';
+
+      let expectedMask = '';
+      for (let i = 0; i < 8; i++) {
+        const changed = QS.initialBits.charAt(i) !== QS.targetBits.charAt(i);
+        if (expectedOperation === 'and') {
+          expectedMask += changed ? '0' : '1';
+        } else {
+          expectedMask += changed ? '1' : '0';
+        }
+      }
+
+      const opMatches = QS.selectedOperation === expectedOperation;
+      const maskMatches = normalizedMask === expectedMask;
+
+      correct = opMatches && maskMatches;
       feedbackHtml = correct
-        ? `✓ Correct! ${QS.selectedOperation.toUpperCase()} ${normalizedMask} changes the bulbs to <strong>${QS.targetBits}</strong>.`
-        : `<span class="fb-wrong">✗ Incorrect — ${QS.selectedOperation.toUpperCase()} ${normalizedMask} gives <strong>${studentResult}</strong>, not <strong>${QS.targetBits}</strong>.</span>`;
+        ? `✓ Correct! Answer: <strong>${expectedOperation.toUpperCase()} ${expectedMask}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect - expected answer is <strong>${expectedOperation.toUpperCase()} ${expectedMask}</strong>. Your answer <strong>${QS.selectedOperation.toUpperCase()} ${normalizedMask}</strong> gives <strong>${studentResult}</strong>.</span>`;
       maskInputEl.disabled = true;
     }
 
