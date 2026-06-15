@@ -108,7 +108,6 @@
       font-weight: 700;
     }
 
-    .worksheet-link:hover,
     .worksheet-link:focus-visible {
       color: var(--text);
       text-decoration-color: var(--ml);
@@ -165,7 +164,6 @@
       font-weight: 700;
       line-height: 1;
     }
-    .colour-swatch:hover { border-color: rgba(255,255,255,.9); }
     .colour-picker {
       position: relative;
       width: 32px;
@@ -236,7 +234,6 @@
       transition: border-color .15s;
       position: relative;
     }
-    .sprite-thumb:hover  { border-color: rgba(255,255,255,.4); }
     .sprite-thumb.selected { border-color: var(--ml); }
     .sprite-thumb canvas { display: block; image-rendering: pixelated; }
     .sprite-thumb span {
@@ -261,7 +258,18 @@
       opacity: 0;
       transition: opacity .15s;
     }
-    .sprite-thumb:hover .thumb-delete { opacity: 1; }
+
+    @media (hover: hover) and (pointer: fine) {
+      .worksheet-link:hover {
+        color: var(--text);
+        text-decoration-color: var(--ml);
+      }
+
+      .colour-swatch:hover { border-color: rgba(255,255,255,.9); }
+
+      .sprite-thumb:hover  { border-color: rgba(255,255,255,.4); }
+      .sprite-thumb:hover .thumb-delete { opacity: 1; }
+    }
 
     /* ── Narrow: gallery moves below, horizontal ─── */
     @media (max-width: 1248px) {

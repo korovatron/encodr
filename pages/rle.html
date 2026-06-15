@@ -291,15 +291,17 @@
       min-width: 150px;
     }
 
-    .rle-toggle-btn:hover {
-      border-color: rgba(255,255,255,.45);
-    }
-
     .rle-toggle-btn.active {
       border-color: rgba(232,232,0,.60);
       background: rgba(232,232,0,.13);
       color: var(--ml);
       box-shadow: 0 0 8px rgba(255,255,0,.30);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .rle-toggle-btn:hover {
+        border-color: rgba(255,255,255,.45);
+      }
     }
 
     .rle-quiz-note {

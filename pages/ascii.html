@@ -61,7 +61,6 @@
       background: transparent; color: var(--muted);
       cursor: pointer; transition: border-color .12s, color .12s, background .12s;
     }
-    .enc-btn:hover { border-color: rgba(255,255,255,.50); color: var(--text); }
     .enc-btn.active {
       background: #000; color: var(--ml);
       border-color: var(--ml);
@@ -82,8 +81,12 @@
       outline: 2px solid transparent; outline-offset: 0;
       touch-action: manipulation;
     }
-    .cc:hover { filter: brightness(1.7); transform: scale(1.1); z-index: 2; }
     .cc.sel   { outline-color: var(--text); }
+
+    @media (hover: hover) and (pointer: fine) {
+      .enc-btn:hover { border-color: rgba(255,255,255,.50); color: var(--text); }
+      .cc:hover { filter: brightness(1.7); transform: scale(1.1); z-index: 2; }
+    }
 
     .cc-top { display: none; }
     .cc-dec, .cc-hex {

@@ -71,16 +71,18 @@
       transition: background .12s, color .12s, border-color .12s;
     }
 
-    .op-btn:hover {
-      background: rgba(255,255,255,.09);
-      color: var(--text);
-    }
-
     .op-btn.active {
       background: #000000;
       border-color: rgba(232,232,0,.60);
       color: var(--ml);
       box-shadow: 0 0 8px rgba(255,255,0,.30);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .op-btn:hover {
+        background: rgba(255,255,255,.09);
+        color: var(--text);
+      }
     }
 
     .chip[hidden],

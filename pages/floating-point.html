@@ -77,11 +77,6 @@
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.28);
       transition: background .12s ease, border-color .12s ease, transform .08s ease;
     }
-    .denary-open-btn:hover {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.95);
-      transform: translateY(-1px);
-    }
     .denary-open-btn:active { transform: translateY(0); }
     .denary-open-btn:focus-visible {
       outline: 2px solid rgba(255, 255, 255, 0.9);
@@ -147,10 +142,6 @@
       cursor: pointer;
       transition: background .12s ease, border-color .12s ease;
     }
-    .denary-sign-btn:hover {
-      background: rgba(255, 255, 255, 0.16);
-      border-color: rgba(255, 255, 255, 0.85);
-    }
     .denary-sign-btn:focus-visible {
       outline: 2px solid rgba(255, 255, 255, 0.9);
       outline-offset: 2px;
@@ -159,6 +150,19 @@
     .denary-modal-input:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .denary-open-btn:hover {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.95);
+        transform: translateY(-1px);
+      }
+
+      .denary-sign-btn:hover {
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.85);
+      }
     }
     .denary-modal-feedback {
       min-height: 62px;

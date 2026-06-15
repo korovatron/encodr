@@ -160,7 +160,6 @@
       transition: opacity .12s, background .12s;
       flex-shrink: 0;
     }
-    .comp-toggle:hover { opacity: .80; }
     .comp-toggle.inactive {
       background: transparent;
       color: var(--comp-col, #fff);
@@ -171,6 +170,10 @@
       font-family: 'Consolas', monospace;
       color: var(--comp-col, #fff);
       min-width: 44px; text-align: center;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .comp-toggle:hover { opacity: .80; }
     }
     .comp-pill-a { --comp-col: #c0a0ff; }
     .comp-pill-b { --comp-col: #ff9944; }
