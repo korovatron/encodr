@@ -79,6 +79,18 @@
     return d === -1 ? 0 : s.length - d - 1;
   }
 
+  function binaryFractionLength(value, maxBits) {
+    var frac = Math.abs(value - Math.trunc(value));
+    if (frac < 1e-12) return 0;
+    for (var i = 1; i <= maxBits; i++) {
+      frac *= 2;
+      frac = frac - Math.floor(frac);
+      if (Math.abs(frac - 1) < 1e-10) frac = 0;
+      if (frac < 1e-10) return i;
+    }
+    return Infinity;
+  }
+
   const E_LENS = [4, 4, 4, 5, 5, 6];
 
   function minBitsForColours(n) {
@@ -1051,27 +1063,63 @@
         };
 
         if (currentType === '1' || currentType === '2') {
-          let mb, eb, mv, ev, val, tries = 0;
-          do {
-            mb = randomBits(mLen);
-            eb = randomBits(eLen);
-            mv = floatingMVal(mb);
-            ev = floatingEVal(eb);
-            val = mv === 0 ? 0 : mv * 2 ** ev;
-            tries++;
-          } while ((mb[0] === mb[1] || val === 0 || !isFinite(val) || dpCount(val) > 6) && tries < 500);
-          result.mBits = mb;
-          result.eBits = eb;
-          result.storedValue = val;
-          result.targetDenary = val;
-          if (currentType === '2') {
-            result.isInexact = Math.random() < 0.5;
-            if (result.isInexact) {
-              const uls = 2 ** (floatingEVal(eb) - mLen + 1);
-              const offset = uls * (0.10 + Math.random() * 0.35);
-              result.targetDenary = parseFloat((val > 0 ? val + offset : val - offset).toFixed(6));
+          var found = false;
+          for (var attempts = 0; attempts < 1200; attempts++) {
+            var mb = randomBits(mLen);
+            var eb = randomBits(eLen);
+            var mv = floatingMVal(mb);
+            var ev = floatingEVal(eb);
+            var val = mv === 0 ? 0 : mv * 2 ** ev;
+
+            if (mb[0] === mb[1] || val === 0 || !isFinite(val) || dpCount(val) > 6) continue;
+
+            var isInexact = currentType === '2' && Math.random() < 0.5;
+            var target = val;
+
+            if (currentType === '2' && isInexact) {
+              var uls = 2 ** (ev - mLen + 1);
+              var offset = uls * (0.10 + Math.random() * 0.35);
+              target = parseFloat((val > 0 ? val + offset : val - offset).toFixed(6));
+
+              // For negative inexact questions, keep targets exam-style:
+              // finite binary fractions that terminate within 6 places.
+              if (target < 0 && !isFinite(target)) continue;
+              if (target < 0 && binaryFractionLength(target, 6) === Infinity) {
+                var dyadicSteps = [4, 6, 8, 10, 12];
+                var rebuilt = false;
+                for (var ds = 0; ds < dyadicSteps.length; ds++) {
+                  var step = dyadicSteps[ds];
+                  var dyadicOffset = uls / (2 ** step);
+                  var candidate = val - dyadicOffset;
+                  if (candidate >= val) continue;
+                  if (Math.abs(candidate - val) >= (uls * 0.5)) continue;
+                  if (binaryFractionLength(candidate, 6) !== Infinity) {
+                    target = candidate;
+                    rebuilt = true;
+                    break;
+                  }
+                }
+                if (!rebuilt) continue;
+              }
             }
+
+            result.mBits = mb;
+            result.eBits = eb;
+            result.storedValue = val;
+            result.targetDenary = target;
+            result.isInexact = !!isInexact;
+            found = true;
+            break;
           }
+
+          if (!found) {
+            result.mBits = [0, 1].concat(Array(mLen - 2).fill(0));
+            result.eBits = Array(eLen).fill(0);
+            result.storedValue = 0.5;
+            result.targetDenary = currentType === '2' ? 0.59375 : 0.5;
+            result.isInexact = currentType === '2';
+          }
+
           return result;
         }
 
