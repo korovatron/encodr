@@ -1,1077 +1,1079 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="theme-color" content="#050505" />
-  <meta name="description" content="Build bitmap pixel grids and explore how resolution and colour depth affect file size for clear GCSE and A Level Data Representation practice." />
-  <title>Encodr – Bitmapped Images</title>
-  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
-  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
-  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
-  <link rel="manifest" href="../site.webmanifest" />
-  <link rel="stylesheet" href="../style.css" />
-  <script src="../scripts/app.js" defer></script>
-  <script src="../scripts/quiz-generators.js" defer></script>
-  <!-- Cloudflare Web Analytics -->
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Build bitmap pixel grids and explore how resolution and colour depth affect file size for clear GCSE and A Level Data Representation practice." />
+  <title>Encodr – Bitmapped Images</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/quiz-generators.js" defer></script>
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
   <!-- End Cloudflare Web Analytics -->
-  <style>
-    /* ── Unified bitmap grid ────────────────────────────────────────
-       4 columns: [pixel strip 1fr] [byte1 auto] [byte2 auto] [byte3 auto]
-       align-items:stretch → each row height is set by the tallest item
-       (the input). Pixel strip fills that height, so rows align exactly. */
-    .bitmap-grid {
-      display: grid;
-      grid-template-columns: 1fr auto auto auto;
-      gap: 2px 10px;
-      align-items: stretch;
-    }
-    /* Single panel spanning all 21 rows in col 1 — gray bg fills row gaps too */
-    .pixel-panel {
-      grid-column: 1;
-      grid-row: 1 / span 21;
-      background: #1a1a1a;
-      display: flex;
-      flex-direction: column;
-      border-radius: 2px;
-    }
-    /* ── Pixel strip (one per row) ───────────────── */
-    .pixel-strip {
-      display: grid;
-      grid-template-columns: repeat(24, 1fr);
-      gap: 1px;
-      background: #1a1a1a;
-      flex: 1;
-      min-height: 0;
-      border-bottom: 1px solid #1a1a1a;
-    }
-    .pixel-strip.mc { grid-template-columns: repeat(12, 1fr); }
-    .pixel-strip.mc .pixel:nth-child(even) { display: none; }
-    .pixel-strip:last-child { border-bottom: none; }
-    .pixel {
-      border-radius: 1px;
-      background: #444;
-      transition: background .07s;
-      min-width: 0;
-      min-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 11px;
-      font-weight: 700;
-      user-select: none;
-    }
-    /* .pixel.on removed — colours set via inline style in renderPixels */
-
-    /* ── Byte inputs ─────────────────────────────── */
-    .byte-inp {
-      width: 56px;
-      background: #0a0a0a;
-      border: 1.5px solid rgba(255,255,255,.25);
-      border-radius: var(--r-sm);
-      color: var(--text);
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 15px;
-      text-align: center;
-      padding: 2px 4px;
-      -webkit-user-select: text;
-      user-select: text;
-      transition: border-color .15s, box-shadow .15s;
-      appearance: textfield;
-      -moz-appearance: textfield;
-    }
-    .byte-inp::-webkit-outer-spin-button,
-    .byte-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
-    .byte-inp:focus {
-      outline: none;
-      border-color: rgba(255,255,255,.25);
-      box-shadow: 0 0 0 1.5px var(--ml);
-    }
-    .byte-inp.err  { border-color: #ff5555; color: #ff5555; }
-
-    /* ── Controls bar ────────────────────────────── */
-    .bitmap-controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .worksheet-link {
-      color: var(--muted);
-      text-decoration: underline;
-      text-decoration-color: rgba(255,255,0,.45);
-      text-underline-offset: 3px;
-      font-weight: 700;
-    }
-
-    .worksheet-link:focus-visible {
-      color: var(--text);
-      text-decoration-color: var(--ml);
-    }
-
-    .intro-disclosure {
-      margin-bottom: 20px;
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      background: rgba(255, 255, 255, 0.05);
-      overflow: clip;
-    }
-    .intro-disclosure summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 10px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: rgba(0, 0, 0, 0.2);
-    }
-    .intro-disclosure summary::-webkit-details-marker { display: none; }
-    .intro-disclosure summary::after {
-      content: '+';
-      font-size: 20px;
-      line-height: 1;
-      color: var(--ml);
-    }
-    .intro-disclosure[open] summary::after { content: '\2212'; }
-    .intro-disclosure .intro {
-      margin: 0;
-      padding: 12px 14px 14px;
-      font-size: 15px;
-      line-height: 1.6;
-    }
-    .colour-swatch {
-      width: 32px;
-      height: 32px;
-      border-radius: var(--r-sm);
-      border: 2px solid rgba(255,255,255,.45);
-      cursor: pointer;
-      padding: 0;
-      flex-shrink: 0;
-      transition: border-color .15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 10px;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .colour-picker {
-      position: relative;
-      width: 32px;
-      height: 32px;
-      flex-shrink: 0;
-    }
-    .colour-picker .colour-swatch {
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-    .colour-input-overlay {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      border: none;
-      padding: 0;
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    .swatch-group { display: flex; gap: 6px; align-items: center; }
-    .mc-only { display: none; }
-    .mc .mc-only { display: block; }
-    .seg-btn .dim { color: rgba(255,255,255,.3); }
-    /* ── Outer layout: CSS grid, 2 cols, 2 rows ───
-       col 1: [controls row 1] [card row 2]
-       col 2: [gallery spans rows 1+2]
-       Gallery is always exactly as tall as controls + card. */
-    .bitmap-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 880px) 1fr;
-      grid-template-rows: auto 1fr;
-      gap: 10px 20px;
-      align-items: start;
-    }
-    .bitmap-controls { grid-column: 1; grid-row: 1; }
-    .card.bitmap-card { grid-column: 1; grid-row: 2; max-width: 880px; }
-
-    /* ── Sprite gallery ──────────────────────────── */
-    .sprite-gallery {
-      grid-column: 2;
-      grid-row: 2;            /* card row only */
-      align-self: stretch;    /* fill card height exactly */
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: safe center;
-      gap: 8px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 2px;
-    }
-    .sprite-thumb {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      background: var(--surface);
-      border: 2px solid var(--border);
-      border-radius: var(--r-sm);
-      padding: 6px;
-      cursor: pointer;
-      transition: border-color .15s;
-      position: relative;
-    }
-    .sprite-thumb.selected { border-color: var(--ml); }
-    .sprite-thumb canvas { display: block; image-rendering: pixelated; }
-    .sprite-thumb span {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #ffffff;
-    }
-    .thumb-delete {
-      position: absolute;
-      top: 2px; right: 2px;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255,80,80,.85);
-      color: #fff;
-      font-size: 10px;
-      line-height: 1;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      padding: 0;
-      opacity: 0;
-      transition: opacity .15s;
-    }
-
-    @media (hover: hover) and (pointer: fine) {
-      .worksheet-link:hover {
-        color: var(--text);
-        text-decoration-color: var(--ml);
-      }
-
-      .colour-swatch:hover { border-color: rgba(255,255,255,.9); }
-
-      .sprite-thumb:hover  { border-color: rgba(255,255,255,.4); }
-      .sprite-thumb:hover .thumb-delete { opacity: 1; }
-    }
-
-    /* ── Narrow: gallery moves below, horizontal ─── */
-    @media (max-width: 1248px) {
-      .bitmap-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto;
-        max-width: 880px;
-        margin: 0 auto;
-      }
-      .bitmap-controls { grid-column: 1; grid-row: 1; }
-      .card.bitmap-card { grid-column: 1; grid-row: 2; }
-      .sprite-gallery {
-        grid-column: 1;
-        grid-row: 3;
-        flex-direction: row;
-        overflow-y: visible;
-        overflow-x: auto;
-        align-self: auto;
-        max-width: unset;
-        width: 100%;
-        margin: 0;
-      }
-    }
-    /* ── Mobile landscape: horizontal scroll if needed ── */
-    @media (max-width: 680px) and (orientation: landscape) {
-      .card.bitmap-card { overflow-x: auto; }
-      .bitmap-grid { min-width: 520px; }
-    }
-  </style>
-</head>
-<body>
-
-<header>
-  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
-  <span class="breadcrumb-sep">›</span>
-  <span class="hsub">Bitmapped Images</span>
-  <a class="home-btn" href="../index.html">Home</a>
-</header>
-
-<main>
-  <h1>Bitmapped Images</h1>
-  <div class="mode-tabs" role="tablist">
-    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
-    <button class="mode-tab"        id="tab-test"    role="tab">Test</button>
-  </div>
-
-  <div id="explore-section">
-  <details class="intro-disclosure">
-    <summary>More info</summary>
-    <p class="intro">
-      <strong>Bitmap</strong> images are stored as a grid of <strong>pixels</strong>. Image size in pixels is width x height, while <strong>resolution</strong> is measured in dots (pixels) per inch (dpi).
-      <strong>Colour depth</strong> is the number of bits used to store each pixel.<br><br>
-      Recreate a gallery image by entering denary values (0-255) into each byte field. In 1-bit mode each byte controls 8 pixels, and in 2-bit mode each byte controls 4 double-width pixels.
-      Three bytes fill one row of 24 pixels. Or make your own image using <a class="worksheet-link" href="../worksheets/spritedesign.pdf" target="_blank" rel="noopener" download>this worksheet</a> to help you.
-    </p>
-  </details>
-
-  <div class="bitmap-layout">
-
-    <div class="bitmap-controls">
-      <button class="btn" id="btn-clear">Clear</button>
-      <button class="btn" id="btn-invert">Invert</button>
-      <button class="btn" id="btn-save">Save</button>
-      <button class="btn seg-btn" id="btn-mode"><span id="mode-1bit">1-bit</span> | <span id="mode-2bit">2-bit</span></button>
-      <button class="btn seg-btn" id="btn-labels">Labels <span id="lbl-on">on</span> | <span id="lbl-off">off</span></button>
-      <div class="swatch-group">
-        <div class="colour-picker">
-          <button class="colour-swatch" id="btn-c0" title="Background colour"></button>
-          <input class="colour-input-overlay" type="color" id="inp-c0" aria-label="Background colour">
-        </div>
-        <div class="colour-picker">
-          <button class="colour-swatch" id="btn-c1" title="Foreground colour"></button>
-          <input class="colour-input-overlay" type="color" id="inp-c1" aria-label="Foreground colour">
-        </div>
-        <div class="colour-picker mc-only">
-          <button class="colour-swatch mc-only" id="btn-c2" title="Multicolour 2 (bit pair 10)"></button>
-          <input class="colour-input-overlay mc-only" type="color" id="inp-c2" aria-label="Multicolour 2">
-        </div>
-        <div class="colour-picker mc-only">
-          <button class="colour-swatch mc-only" id="btn-c3" title="Multicolour 3 (bit pair 11)"></button>
-          <input class="colour-input-overlay mc-only" type="color" id="inp-c3" aria-label="Multicolour 3">
-        </div>
-      </div>
-    </div>
-
-    <div class="card bitmap-card">
-      <div class="res-block">
-        <div class="card-head">
-          <span class="badge badge-m">Image (24 &times; 21)</span>
-          <span style="margin-left:auto;display:flex;gap:8px">
-            <span class="badge badge-e">Byte values (denary)</span>
-          </span>
-        </div>
-        <div class="bitmap-grid" id="bitmap-grid"></div>
-      </div>
-    </div>
-
-    <div class="sprite-gallery" id="sprite-gallery"></div>
-
-  </div><!-- /.bitmap-layout -->
-  </div><!-- /#explore-section -->
-
-  <!-- ── Test section ─────────────────────────────────────────────── -->
-  <div id="test-section" hidden>
-
-    <div class="quiz-topbar">
-      <div class="qtype-group">
-        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Units:</span>
-        <button class="qtype-btn active" data-units="mix">Mix</button>
-        <button class="qtype-btn" data-units="si">kB / MB…</button>
-        <button class="qtype-btn" data-units="iec">kiB / MiB…</button>
-      </div>
-      <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="bq-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="bq-wrong">0</span>&ensp;(<span id="bq-total">0</span> attempted)</span>
-        <button class="btn btn-sm" id="bq-reset">Reset score</button>
-      </div>
-    </div>
-
-    <div class="card quiz-q-card">
-      <div class="res-block">
-        <div class="quiz-q-header">
-          <span class="quiz-q-num" id="bq-num">Question 1</span>
-          <span class="badge" id="bq-type-badge"></span>
-        </div>
-        <div class="quiz-q-text" id="bq-text"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="res-block">
-        <div class="q-answer-lbl">Your answer</div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <input class="q-denary-input" type="text" id="bq-input"
-                 placeholder="Enter your answer" autocomplete="off" spellcheck="false"
-                 inputmode="decimal" style="flex:1;min-width:0;" />
-          <span id="bq-unit-label" style="color:var(--text);font-size:15px;white-space:nowrap;"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="quiz-actions">
-      <button class="btn btn-submit" id="bq-submit">Check Answer</button>
-    </div>
-
-  </div><!-- /#test-section -->
-
-  <!-- ── Name dialog ──────────────────────────────────────────────── -->
-  <dialog id="save-dialog">
-    <div class="modal">
-      <div class="modal-feedback" style="font-size:15px;margin-bottom:12px;">Name this sprite:</div>
-      <input type="text" id="save-name-inp" class="q-denary-input"
-             style="width:100%;margin-bottom:16px;" maxlength="24"
-             placeholder="e.g. My Rocket" autocomplete="off" spellcheck="false" />
-      <div class="modal-footer" style="gap:8px;">
-        <button class="btn" id="save-cancel">Cancel</button>
-        <button class="btn btn-submit" id="save-confirm">Save</button>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog id="sprite-tip-dialog" aria-labelledby="sprite-tip-text">
-    <div class="modal">
-      <div class="modal-feedback" id="sprite-tip-text">
-        Recreate this image by entering denary values (0-255) into each byte field.
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-next" id="sprite-tip-ok">Got it</button>
-      </div>
-    </div>
-  </dialog>
-
-  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
-</main>
-
-<!-- Feedback modal -->
-<dialog id="bq-modal" aria-labelledby="bq-modal-feedback">
-  <div class="modal">
-    <div class="modal-feedback" id="bq-modal-feedback"></div>
-    <div class="modal-footer">
-      <button class="btn btn-next" id="bq-next">Next Question &rarr;</button>
-    </div>
-  </div>
-</dialog>
-
-<script>
-  const ROWS = 21, COLS = 24, BYTES_PER_ROW = 3, BITS_PER_BYTE = 8;
-  const TOTAL_BYTES = ROWS * BYTES_PER_ROW; // 63
-
-  // ── Colour mode ───────────────────────────────────────────────────
-  let multicolour = false;
-  let showLabels  = true;
-  const colours = ['#444444', '#ffff00', '#ff4466', '#44aaff'];
-  const SWATCH_IDS = ['btn-c0','btn-c1','btn-c2','btn-c3'];
-  const LABELS_1BIT = ['0','1','',''];
-  const LABELS_2BIT = ['00','01','10','11'];
-
-  function contrastColour(hex) {
-    const r = parseInt(hex.slice(1,3), 16);
-    const g = parseInt(hex.slice(3,5), 16);
-    const b = parseInt(hex.slice(5,7), 16);
-    return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? '#000000' : '#ffffff';
-  }
-
-  // Slightly lighter or darker version of the same colour — used for pixel labels
-  function subtleContrast(hex) {
-    const r = parseInt(hex.slice(1,3), 16);
-    const g = parseInt(hex.slice(3,5), 16);
-    const b = parseInt(hex.slice(5,7), 16);
-    const lum = (r * 299 + g * 587 + b * 114) / 1000;
-    const shift = lum > 128 ? -70 : 80;
-    const c = v => Math.max(0, Math.min(255, v + shift));
-    return `rgb(${c(r)},${c(g)},${c(b)})`;
-  }
-
-  function updateSwatchLabels() {
-    const labels = multicolour ? LABELS_2BIT : LABELS_1BIT;
-    SWATCH_IDS.forEach((id, i) => {
-      const btn = document.getElementById(id);
-      btn.textContent = labels[i];
-      btn.style.color = contrastColour(colours[i]);
-    });
-  }
-
-  function setupSwatch(btnId, inpId, index) {
-    const btn = document.getElementById(btnId);
-    const inp = document.getElementById(inpId);
-    btn.style.background = colours[index];
-    inp.value = colours[index];
-    inp.addEventListener('input', () => {
-      colours[index] = inp.value;
-      btn.style.background = inp.value;
-      btn.style.color = contrastColour(inp.value);
-      renderPixels();
-    });
-  }
-  setupSwatch('btn-c0', 'inp-c0', 0);
-  setupSwatch('btn-c1', 'inp-c1', 1);
-  setupSwatch('btn-c2', 'inp-c2', 2);
-  setupSwatch('btn-c3', 'inp-c3', 3);
-  updateSwatchLabels(); // init labels
-
-  function updateModeBtn() {
-    document.getElementById('mode-1bit').className = multicolour ? 'dim' : '';
-    document.getElementById('mode-2bit').className = multicolour ? '' : 'dim';
-    document.querySelectorAll('.pixel-strip').forEach(s => s.classList.toggle('mc', multicolour));
-  }
-  function updateLabelsBtn() {
-    document.getElementById('lbl-on').className  = showLabels ? '' : 'dim';
-    document.getElementById('lbl-off').className = showLabels ? 'dim' : '';
-  }
-
-  document.getElementById('btn-mode').addEventListener('click', () => {
-    multicolour = !multicolour;
-    updateModeBtn();
-    document.documentElement.classList.toggle('mc', multicolour);
-    updateSwatchLabels();
-    renderPixels();
-  });
-
-  document.getElementById('btn-labels').addEventListener('click', () => {
-    showLabels = !showLabels;
-    updateLabelsBtn();
-    renderPixels();
-  });
-
-  updateModeBtn();
-  updateLabelsBtn();
-
-  // ── State ─────────────────────────────────────────────────────────
-  // Pre-loaded with the classic Commodore balloon sprite
-  const state = new Uint8Array([
-      0,127,  0,  1,255,192,  3,255,224,  3,231,224,
-      7,217,240,  7,223,240,  7,217,240,  3,231,224,
-      3,255,224,  3,255,224,  2,255,160,  1,127, 64,
-      1, 62, 64,  0,156,128,  0,156,128,  0, 73,  0,
-      0, 73,  0,  0, 62,  0,  0, 62,  0,  0, 62,  0,
-      0, 28,  0,
-  ]);
-
-  // ── Build unified grid ────────────────────────────────────────────
-  // .pixel-panel spans all 21 grid rows in col 1; inputs auto-place into cols 2-4
-  const bitmapGrid = document.getElementById('bitmap-grid');
-  const pixels = [];  // 441 pixel divs, row-major
-  const inputs = [];  // 63 inputs, row-major
-
-  // Build pixel panel (all 21 strips inside one container)
-  const pixelPanel = document.createElement('div');
-  pixelPanel.className = 'pixel-panel';
-  for (let row = 0; row < ROWS; row++) {
-    const strip = document.createElement('div');
-    strip.className = 'pixel-strip';
-    for (let col = 0; col < COLS; col++) {
-      const px = document.createElement('div');
-      px.className = 'pixel';
-      strip.appendChild(px);
-      pixels.push(px);
-    }
-    pixelPanel.appendChild(strip);
-  }
-  bitmapGrid.appendChild(pixelPanel);
-
-  // Build inputs — auto-place into cols 2-4, rows 1-21
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < BYTES_PER_ROW; col++) {
-      const idx = row * BYTES_PER_ROW + col;
-      const inp = document.createElement('input');
-      inp.type = 'text';
-      inp.className = 'byte-inp';
-      inp.placeholder = '0';
-      inp.autocomplete = 'off';
-      inp.inputMode = 'numeric';
-      inp.pattern = '[0-9]*';
-      inp.setAttribute('enterkeyhint', 'next');
-      inp.setAttribute('spellcheck', 'false');
-      inp.setAttribute('aria-label', `Row ${row + 1}, byte ${col + 1}`);
-      inp.addEventListener('input', () => handleInput(inp, idx));
-      inp.addEventListener('keydown', (e) => {
-        let next = null;
-        if (e.key === 'Enter' || e.key === 'ArrowDown')  next = inputs[idx + BYTES_PER_ROW] ?? null;
-        else if (e.key === 'ArrowUp')                    next = inputs[idx - BYTES_PER_ROW] ?? null;
-        else if (e.key === 'ArrowRight' && inp.selectionStart === inp.value.length) next = inputs[idx + 1] ?? null;
-        else if (e.key === 'ArrowLeft'  && inp.selectionStart === 0)               next = inputs[idx - 1] ?? null;
-        if (next) { e.preventDefault(); next.focus(); next.select(); }
-      });
-      bitmapGrid.appendChild(inp);
-      inputs.push(inp);
-    }
-  }
-
-  // ── Input handler ─────────────────────────────────────────────────
-  function handleInput(inp, idx) {
-    const raw = parseInt(inp.value, 10);
-    if (inp.value === '' || (Number.isInteger(raw) && raw >= 0 && raw <= 255)) {
-      inp.classList.remove('err');
-      state[idx] = (inp.value === '' || isNaN(raw)) ? 0 : raw;
-    } else {
-      inp.classList.add('err');
-    }
-    renderPixels();
-  }
-
-  // ── Render pixel grid from state ──────────────────────────────────
-  function renderPixels() {
-    for (let byteIdx = 0; byteIdx < TOTAL_BYTES; byteIdx++) {
-      const val       = state[byteIdx];
-      const row       = Math.floor(byteIdx / BYTES_PER_ROW);
-      const byteInRow = byteIdx % BYTES_PER_ROW;
-      if (multicolour) {
-        // 2-bit: 4 pairs per byte → 4 visible double-width pixels per byte
-        for (let pair = 0; pair < 4; pair++) {
-          const ci      = (val >> (6 - pair * 2)) & 0b11;
-          const baseCol = byteInRow * BITS_PER_BYTE + pair * 2;
-          const bg      = colours[ci];
-          const fg      = subtleContrast(bg);
-          const px0 = pixels[row * COLS + baseCol];
-          px0.style.background = bg;
-          px0.style.color = fg;
-          px0.textContent = showLabels ? ['00','01','10','11'][ci] : '';
-          // odd pixel is hidden via CSS; still set its colour for consistency
-          pixels[row * COLS + baseCol + 1].style.background = bg;
-        }
-      } else {
-        // 1-bit: each bit → one pixel
-        for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
-          const on = (val >> (7 - bit)) & 1;
-          const bg = colours[on];
-          const px = pixels[row * COLS + byteInRow * BITS_PER_BYTE + bit];
-          px.style.background = bg;
-          px.style.color = subtleContrast(bg);
-          px.textContent = showLabels ? on : '';
-        }
-      }
-    }
-  }
-
-  // ── Controls ──────────────────────────────────────────────────────
-  document.getElementById('btn-clear').addEventListener('click', () => {
-    state.fill(0);
-    inputs.forEach(inp => { inp.value = ''; inp.classList.remove('err'); });
-    renderPixels();
-  });
-
-  document.getElementById('btn-invert').addEventListener('click', () => {
-    for (let i = 0; i < TOTAL_BYTES; i++) {
-      state[i] = (~state[i]) & 0xFF;
-      inputs[i].value = state[i] === 0 ? '' : state[i];
-      inputs[i].classList.remove('err');
-    }
-    renderPixels();
-  });
-
-  // ── Sprite library ────────────────────────────────────────────────
-  const SPRITES = [
-    {
-      name: 'Manic Miner',
-      color: '#ffffff',
-      data: [
-        0,0,0,      0,0,0,      0,0,0,      0,12,0,     0,124,0,
-        0,248,0,    0,104,0,    0,124,0,    0,120,0,    0,48,0,
-        0,120,0,    0,252,0,    0,252,0,    1,238,0,    1,246,0,
-        0,120,0,    0,236,0,    0,220,0,    0,238,0,    0,0,0,
-        0,0,0,
-      ],
-    },
-    {
-      name: 'Alien',
-      multicolour: true,
-      colours: ['#444444', '#ffffff', '#00ffff', '#000000'],
-      data: [
-        0,0,0,      0,0,0,      0,0,0,      0,0,0,      0,170,0,
-        2,105,128,  9,235,96,   9,235,96,   14,170,176, 15,255,240,
-        3,255,192,  0,255,0,    0,255,0,    12,195,48,  15,195,240,
-        12,195,48,  12,0,48,    60,0,60,    12,0,48,    0,0,0,
-        0,0,0,
-      ],
-    },
-    {
-      name: 'Frog',
-      multicolour: true,
-      colours: ['#444444', '#ffffff', '#00ff00', '#000000'],
-      data: [
-        0,0,0,      4,0,0,      21,0,0,     29,0,64,    29,1,208,
-        21,1,208,   55,171,112, 14,106,192, 2,106,0,    14,170,192,
-        14,170,192, 0,168,0,    8,252,128,  10,170,128, 14,170,192,
-        15,255,192, 3,255,0,    0,204,0,    0,204,48,   60,204,240,
-        63,207,192,
-      ],
-    },
-    {
-      name: 'Yin Yang',
-      color: '#ffffff',
-      colours: ['#000000', '#ffffff'],
-      data: [
-        0,0,0,      0,0,0,      0,0,0,      0,126,0,    1,255,128,
-        3,255,192,  7,255,224,  7,252,224,  12,56,112,  8,28,208,
-        9,143,208,  9,135,144,  8,0,16,     4,0,32,     4,0,32,
-        2,0,64,     1,129,128,  0,126,0,    0,0,0,      0,0,0,
-        0,0,0,
-      ],
-    },
-  ];
-
-  // ── Build sprite gallery ───────────────────────────────────────────
-  // Canvas size derives from the gallery column's rendered width so there
-  // is never a horizontal scrollbar regardless of zoom or column width.
-  // Overhead per thumb: padding 6px×2 + border 2px×2 + gallery padding 2px×2 = 20px
-  const gallery = document.getElementById('sprite-gallery');
-  const thumbEntries = []; // { canvas, sprite }
-
-  function drawThumb(canvas, sprite, px) {
-    canvas.width  = COLS * px;
-    canvas.height = ROWS * px;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for (let byteIdx = 0; byteIdx < TOTAL_BYTES; byteIdx++) {
-      const val       = sprite.data[byteIdx];
-      const row       = Math.floor(byteIdx / BYTES_PER_ROW);
-      const byteInRow = byteIdx % BYTES_PER_ROW;
-      if (sprite.multicolour) {
-        for (let pair = 0; pair < 4; pair++) {
-          const ci = (val >> (6 - pair * 2)) & 0b11;
-          const col = byteInRow * BITS_PER_BYTE + pair * 2;
-          ctx.fillStyle = sprite.colours[ci];
-          ctx.fillRect(col * px, row * px, px * 2 - 1, px - 1);
-        }
-      } else {
-        const offColour = sprite.colours ? sprite.colours[0] : '#444';
-        const onColour = sprite.colours ? sprite.colours[1] : sprite.color;
-        for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
-          const col = byteInRow * BITS_PER_BYTE + bit;
-          const on  = (val >> (7 - bit)) & 1;
-          ctx.fillStyle = on ? onColour : offColour;
-          ctx.fillRect(col * px, row * px, px - 1, px - 1);
-        }
-      }
-    }
-  }
-
-  const narrowMQ = window.matchMedia('(max-width: 1248px)');
-
-  function resizeGallery() {
-    // In horizontal (narrow) mode the gallery spans the full width, so we use
-    // a fixed thumb width (~160px) instead of filling the gallery width.
-    const available = narrowMQ.matches ? 160 : gallery.clientWidth - 20;
-    const px = Math.max(1, Math.floor(available / COLS));
-    thumbEntries.forEach(({ canvas, sprite }) => drawThumb(canvas, sprite, px));
-  }
-
-  narrowMQ.addEventListener('change', resizeGallery);
-
-  function loadSprite(data) {
-    data.forEach((v, i) => {
-      state[i] = v;
-      inputs[i].value = v === 0 ? '' : v;
-      inputs[i].classList.remove('err');
-    });
-    renderPixels();
-  }
-
-  function applySprite(sprite) {
-    if (sprite.colours) {
-      sprite.colours.forEach((hex, i) => {
-        colours[i] = hex;
-        const swBtn = document.getElementById(`btn-c${i}`);
-        const swInp = document.getElementById(`inp-c${i}`);
-        swBtn.style.background = hex;
-        swInp.value = hex;
-      });
-    }
-    multicolour = !!sprite.multicolour;
-    document.documentElement.classList.toggle('mc', multicolour);
-    updateModeBtn();
-    updateSwatchLabels();
-    loadSprite(sprite.data);
-  }
-
-  const spriteTipDialog = document.getElementById('sprite-tip-dialog');
-  const spriteTipOk = document.getElementById('sprite-tip-ok');
-  function showSpriteRecreateTip() {
-    spriteTipDialog.showModal();
-  }
-  spriteTipOk.addEventListener('click', () => spriteTipDialog.close());
-
-  SPRITES.forEach((sprite) => {
-    const btn = document.createElement('button');
-    btn.className = 'sprite-thumb';
-    btn.title = sprite.name;
-
-    const canvas = document.createElement('canvas');
-    thumbEntries.push({ canvas, sprite });
-
-    const label = document.createElement('span');
-    label.textContent = sprite.name;
-
-    btn.appendChild(canvas);
-    btn.appendChild(label);
-
-    btn.addEventListener('click', () => {
-      gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      showSpriteRecreateTip();
-    });
-
-    gallery.appendChild(btn);
-  });
-
-  // ── User sprites (localStorage) ───────────────────────────────────
-  const LS_KEY = 'encodr-user-sprites';
-
-  function loadUserSprites() {
-    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
-    catch { return []; }
-  }
-
-  function saveUserSprites(list) {
-    localStorage.setItem(LS_KEY, JSON.stringify(list));
-  }
-
-  function addUserThumb(sprite, index) {
-    const btn = document.createElement('button');
-    btn.className = 'sprite-thumb';
-    btn.title = sprite.name;
-    btn.dataset.userIdx = index;
-
-    const canvas = document.createElement('canvas');
-    // Use the sprite's own colours for the thumbnail
-    const thumbSprite = {
-      data: sprite.data,
-      multicolour: !!sprite.multicolour,
-      colours: [...sprite.colours],
-      color: sprite.colours[1],
-    };
-    thumbEntries.push({ canvas, sprite: thumbSprite });
-
-    const label = document.createElement('span');
-    label.textContent = sprite.name;
-
-    const del = document.createElement('button');
-    del.className = 'thumb-delete';
-    del.title = 'Delete';
-    del.textContent = '×';
-    del.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const list = loadUserSprites();
-      list.splice(index, 1);
-      saveUserSprites(list);
-      // Remove from thumbEntries
-      const ti = thumbEntries.findIndex(t => t.canvas === canvas);
-      if (ti !== -1) thumbEntries.splice(ti, 1);
-      btn.remove();
-      // Re-index remaining user thumbs
-      gallery.querySelectorAll('[data-user-idx]').forEach((b, i) => { b.dataset.userIdx = i; });
-      resizeGallery();
-    });
-
-    btn.appendChild(del);
-    btn.appendChild(canvas);
-    btn.appendChild(label);
-
-    btn.addEventListener('click', () => {
-      gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      applySprite(sprite);
-    });
-
-    // Insert before the first non-user thumb
-    const firstBuiltin = gallery.querySelector('.sprite-thumb:not([data-user-idx])');
-    gallery.insertBefore(btn, firstBuiltin);
-    return btn;
-  }
-
-  // Populate gallery with saved sprites on load (newest first)
-  const _initSprites = loadUserSprites();
-  for (let i = _initSprites.length - 1; i >= 0; i--) addUserThumb(_initSprites[i], i);
-
-  // ── Save button & dialog ──────────────────────────────────────────
-  const saveDialog  = document.getElementById('save-dialog');
-  const saveNameInp = document.getElementById('save-name-inp');
-
-  document.getElementById('btn-save').addEventListener('click', () => {
-    saveNameInp.value = '';
-    saveDialog.showModal();
-    saveNameInp.focus();
-  });
-  document.getElementById('save-cancel').addEventListener('click', () => saveDialog.close());
-  saveNameInp.addEventListener('keydown', e => { if (e.key === 'Enter') confirmSave(); });
-  document.getElementById('save-confirm').addEventListener('click', confirmSave);
-
-  function confirmSave() {
-    const name = saveNameInp.value.trim() || 'Untitled';
-    saveDialog.close();
-    const list = loadUserSprites();
-    const entry = {
-      name,
-      data: Array.from(state),
-      colours: [...colours],
-      multicolour,
-    };
-    list.push(entry);
-    saveUserSprites(list);
-    const newBtn = addUserThumb(entry, list.length - 1);
-    const firstUser = gallery.querySelector('.sprite-thumb[data-user-idx]');
-    if (firstUser && firstUser !== newBtn) gallery.insertBefore(newBtn, firstUser);
-    resizeGallery();
-  }
-
-  // ── Dismiss keyboard when tapping outside inputs ──────────────────
-  document.addEventListener('touchstart', (e) => {
-    if (e.target.tagName !== 'INPUT') document.activeElement?.blur();
-  }, { passive: true });
-
-  // ── Keep gallery height = card height & canvases sized to column ──
-  const bitmapCard = document.querySelector('.bitmap-card');
-  const ro = new ResizeObserver(() => {
-    gallery.style.maxHeight = bitmapCard.offsetHeight + 'px';
-  });
-  ro.observe(bitmapCard);
-  new ResizeObserver(resizeGallery).observe(gallery);
-
-  // ── Section tabs ──────────────────────────────────────────────────
-  function switchSection(which) {
-    const isExplore = which === 'explore';
-    document.getElementById('explore-section').hidden = !isExplore;
-    document.getElementById('test-section').hidden    =  isExplore;
-    document.getElementById('tab-explore').classList.toggle('active',  isExplore);
-    document.getElementById('tab-test'   ).classList.toggle('active', !isExplore);
-  }
-  document.getElementById('tab-explore').addEventListener('click', () => switchSection('explore'));
-  document.getElementById('tab-test'   ).addEventListener('click', () => switchSection('test'));
-
-  // ══ Bitmap Quiz Engine ════════════════════════════════════════════
-  // Units mode: 'mix' | 'si' | 'iec'
-  let unitsMode = 'mix';
-
-  // Format a number: whole numbers as integer, else as fraction string
-  function fmtAnswer(n) {
-    const frac = n - Math.floor(n);
-    if (frac === 0)   return String(n);
-    if (frac === 0.5) return n < 1 ? '0.5' : `${Math.floor(n)}.5`;
-    if (frac === 0.25) return n < 1 ? '0.25' : `${Math.floor(n)}.25`;
-    if (frac === 0.75) return n < 1 ? '0.75' : `${Math.floor(n)}.75`;
-    return String(n);
-  }
-
-  function matchesAtInputPrecision(rawInput, given, expected) {
-    if (Math.abs(given - expected) < 1e-9) return true;
-    const decimalMatch = rawInput.match(/\.(\d+)/);
-    if (!decimalMatch) return false;
-    const dp = Math.min(decimalMatch[1].length, 6);
-    return Number(given.toFixed(dp)) === Number(expected.toFixed(dp));
-  }
-
-  // ── Quiz state ────────────────────────────────────────────────────
-  const LS_SCORE = 'encodr-bitmap-score';
-  function loadScore() { try { return JSON.parse(localStorage.getItem(LS_SCORE)) || {correct:0,wrong:0,total:0}; } catch { return {correct:0,wrong:0,total:0}; } }
-  function saveScore() { localStorage.setItem(LS_SCORE, JSON.stringify({correct:bqCorrect,wrong:bqWrong,total:bqTotal})); }
-  function updateScoreDisplay() {
-    document.getElementById('bq-correct').textContent = bqCorrect;
-    document.getElementById('bq-wrong').textContent   = bqWrong;
-    document.getElementById('bq-total').textContent   = bqTotal;
-  }
-  const _sc = loadScore();
-  let bqCorrect = _sc.correct, bqWrong = _sc.wrong, bqTotal = _sc.total;
-  let bqQuestion = null, bqCount = 1;
-  updateScoreDisplay();
-
-  function genQuestion() {
-    return window.EncodrQuizGenerators.bitmap.generate(unitsMode);
-  }
-
-  function nextQuestion() {
-    const V = window.EncodrValidation;
-    bqQuestion = genQuestion();
-    document.getElementById('bq-num').textContent = `Question ${bqCount++}`;
-    document.getElementById('bq-type-badge').textContent = bqQuestion.badge;
-    document.getElementById('bq-type-badge').className   = 'badge badge-m';
-    document.getElementById('bq-text').innerHTML = bqQuestion.text.replace(/\n\n/g, '<br><br>');
-    document.getElementById('bq-unit-label').textContent = bqQuestion.unitLabel;
-    document.getElementById('bq-input').value = '';
-    V.clearInputError(document.getElementById('bq-input'));
-    V.clearSummary('bq-submit');
-    document.getElementById('bq-input').focus();
-  }
-
-  function checkAnswer() {
-    const V = window.EncodrValidation;
-    const inputEl = document.getElementById('bq-input');
-    V.clearInputError(inputEl);
-    V.clearSummary('bq-submit');
-
-    const raw = inputEl.value.trim().replace(/,/g, '');
-    const given = parseFloat(raw);
-    if (isNaN(given)) {
-      V.setInputError(inputEl, 'Enter a valid numeric answer.');
-      V.setSummary('bq-submit', 'Please fix the highlighted field.');
-      inputEl.focus();
-      return;
-    }
-    bqTotal++;
-    const correct = matchesAtInputPrecision(raw, given, bqQuestion.answerNum);
-    if (correct) bqCorrect++; else bqWrong++;
-    updateScoreDisplay();
-    saveScore();
-
-    const fb = document.getElementById('bq-modal-feedback');
-    fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
-    fb.innerHTML = correct
-      ? `✓ <strong>Correct!</strong><br>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}`
-      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}</strong>.`;
-    document.getElementById('bq-modal').showModal();
-  }
-
-  document.getElementById('bq-submit').addEventListener('click', checkAnswer);
-  document.getElementById('bq-submit').addEventListener('touchend', (e) => { e.preventDefault(); checkAnswer(); });
-  document.getElementById('bq-input').addEventListener('input', () => {
-    const V = window.EncodrValidation;
-    const inputEl = document.getElementById('bq-input');
-    const raw = inputEl.value.trim().replace(/,/g, '');
-    if (raw && !isNaN(parseFloat(raw))) {
-      V.clearInputError(inputEl);
-      V.maybeClearSummary('bq-submit');
-    }
-  });
-  document.getElementById('bq-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      e.stopPropagation();
-      checkAnswer();
-    }
-  });
-  document.getElementById('bq-next').addEventListener('click', () => {
-    document.getElementById('bq-modal').close();
-    nextQuestion();
-  });
-  document.getElementById('bq-reset').addEventListener('click', () => {
-    bqCorrect = bqWrong = bqTotal = 0; bqCount = 1;
-    localStorage.removeItem(LS_SCORE);
-    updateScoreDisplay();
-    nextQuestion();
-  });
-
-  // Units toggle
-  document.querySelectorAll('[data-units]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-units]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      unitsMode = btn.dataset.units;
-      nextQuestion();
-    });
-  });
-
-  // First question generated when user switches to Test tab
-  document.getElementById('tab-test').addEventListener('click', () => {
-    if (!bqQuestion) nextQuestion();
-  }, { once: true });
-
-  // ── Init ──────────────────────────────────────────────────────────
-  // Populate inputs from the pre-loaded state
-  state.forEach((v, i) => { inputs[i].value = v === 0 ? '' : v; });
-  renderPixels();
-</script>
-
-</body>
-</html>
+  <script data-goatcounter="https://korovatron.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+  <style>
+    /* ── Unified bitmap grid ────────────────────────────────────────
+       4 columns: [pixel strip 1fr] [byte1 auto] [byte2 auto] [byte3 auto]
+       align-items:stretch → each row height is set by the tallest item
+       (the input). Pixel strip fills that height, so rows align exactly. */
+    .bitmap-grid {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 2px 10px;
+      align-items: stretch;
+    }
+    /* Single panel spanning all 21 rows in col 1 — gray bg fills row gaps too */
+    .pixel-panel {
+      grid-column: 1;
+      grid-row: 1 / span 21;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      border-radius: 2px;
+    }
+    /* ── Pixel strip (one per row) ───────────────── */
+    .pixel-strip {
+      display: grid;
+      grid-template-columns: repeat(24, 1fr);
+      gap: 1px;
+      background: #1a1a1a;
+      flex: 1;
+      min-height: 0;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .pixel-strip.mc { grid-template-columns: repeat(12, 1fr); }
+    .pixel-strip.mc .pixel:nth-child(even) { display: none; }
+    .pixel-strip:last-child { border-bottom: none; }
+    .pixel {
+      border-radius: 1px;
+      background: #444;
+      transition: background .07s;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      user-select: none;
+    }
+    /* .pixel.on removed — colours set via inline style in renderPixels */
+
+    /* ── Byte inputs ─────────────────────────────── */
+    .byte-inp {
+      width: 56px;
+      background: #0a0a0a;
+      border: 1.5px solid rgba(255,255,255,.25);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 15px;
+      text-align: center;
+      padding: 2px 4px;
+      -webkit-user-select: text;
+      user-select: text;
+      transition: border-color .15s, box-shadow .15s;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+    .byte-inp::-webkit-outer-spin-button,
+    .byte-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .byte-inp:focus {
+      outline: none;
+      border-color: rgba(255,255,255,.25);
+      box-shadow: 0 0 0 1.5px var(--ml);
+    }
+    .byte-inp.err  { border-color: #ff5555; color: #ff5555; }
+
+    /* ── Controls bar ────────────────────────────── */
+    .bitmap-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .worksheet-link {
+      color: var(--muted);
+      text-decoration: underline;
+      text-decoration-color: rgba(255,255,0,.45);
+      text-underline-offset: 3px;
+      font-weight: 700;
+    }
+
+    .worksheet-link:focus-visible {
+      color: var(--text);
+      text-decoration-color: var(--ml);
+    }
+
+    .intro-disclosure {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      background: rgba(255, 255, 255, 0.05);
+      overflow: clip;
+    }
+    .intro-disclosure summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+    .intro-disclosure summary::after {
+      content: '+';
+      font-size: 20px;
+      line-height: 1;
+      color: var(--ml);
+    }
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+    .intro-disclosure .intro {
+      margin: 0;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .colour-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--r-sm);
+      border: 2px solid rgba(255,255,255,.45);
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: border-color .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .colour-picker {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+    .colour-picker .colour-swatch {
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .colour-input-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .swatch-group { display: flex; gap: 6px; align-items: center; }
+    .mc-only { display: none; }
+    .mc .mc-only { display: block; }
+    .seg-btn .dim { color: rgba(255,255,255,.3); }
+    /* ── Outer layout: CSS grid, 2 cols, 2 rows ───
+       col 1: [controls row 1] [card row 2]
+       col 2: [gallery spans rows 1+2]
+       Gallery is always exactly as tall as controls + card. */
+    .bitmap-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 880px) 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 10px 20px;
+      align-items: start;
+    }
+    .bitmap-controls { grid-column: 1; grid-row: 1; }
+    .card.bitmap-card { grid-column: 1; grid-row: 2; max-width: 880px; }
+
+    /* ── Sprite gallery ──────────────────────────── */
+    .sprite-gallery {
+      grid-column: 2;
+      grid-row: 2;            /* card row only */
+      align-self: stretch;    /* fill card height exactly */
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: safe center;
+      gap: 8px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 2px;
+    }
+    .sprite-thumb {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 6px;
+      cursor: pointer;
+      transition: border-color .15s;
+      position: relative;
+    }
+    .sprite-thumb.selected { border-color: var(--ml); }
+    .sprite-thumb canvas { display: block; image-rendering: pixelated; }
+    .sprite-thumb span {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #ffffff;
+    }
+    .thumb-delete {
+      position: absolute;
+      top: 2px; right: 2px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,80,80,.85);
+      color: #fff;
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .worksheet-link:hover {
+        color: var(--text);
+        text-decoration-color: var(--ml);
+      }
+
+      .colour-swatch:hover { border-color: rgba(255,255,255,.9); }
+
+      .sprite-thumb:hover  { border-color: rgba(255,255,255,.4); }
+      .sprite-thumb:hover .thumb-delete { opacity: 1; }
+    }
+
+    /* ── Narrow: gallery moves below, horizontal ─── */
+    @media (max-width: 1248px) {
+      .bitmap-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        max-width: 880px;
+        margin: 0 auto;
+      }
+      .bitmap-controls { grid-column: 1; grid-row: 1; }
+      .card.bitmap-card { grid-column: 1; grid-row: 2; }
+      .sprite-gallery {
+        grid-column: 1;
+        grid-row: 3;
+        flex-direction: row;
+        overflow-y: visible;
+        overflow-x: auto;
+        align-self: auto;
+        max-width: unset;
+        width: 100%;
+        margin: 0;
+      }
+    }
+    /* ── Mobile landscape: horizontal scroll if needed ── */
+    @media (max-width: 680px) and (orientation: landscape) {
+      .card.bitmap-card { overflow-x: auto; }
+      .bitmap-grid { min-width: 520px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
+  <span class="breadcrumb-sep">›</span>
+  <span class="hsub">Bitmapped Images</span>
+  <a class="home-btn" href="../index.html">Home</a>
+</header>
+
+<main>
+  <h1>Bitmapped Images</h1>
+  <div class="mode-tabs" role="tablist">
+    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
+    <button class="mode-tab"        id="tab-test"    role="tab">Test</button>
+  </div>
+
+  <div id="explore-section">
+  <details class="intro-disclosure">
+    <summary>More info</summary>
+    <p class="intro">
+      <strong>Bitmap</strong> images are stored as a grid of <strong>pixels</strong>. Image size in pixels is width x height, while <strong>resolution</strong> is measured in dots (pixels) per inch (dpi).
+      <strong>Colour depth</strong> is the number of bits used to store each pixel.<br><br>
+      Recreate a gallery image by entering denary values (0-255) into each byte field. In 1-bit mode each byte controls 8 pixels, and in 2-bit mode each byte controls 4 double-width pixels.
+      Three bytes fill one row of 24 pixels. Or make your own image using <a class="worksheet-link" href="../worksheets/spritedesign.pdf" target="_blank" rel="noopener" download>this worksheet</a> to help you.
+    </p>
+  </details>
+
+  <div class="bitmap-layout">
+
+    <div class="bitmap-controls">
+      <button class="btn" id="btn-clear">Clear</button>
+      <button class="btn" id="btn-invert">Invert</button>
+      <button class="btn" id="btn-save">Save</button>
+      <button class="btn seg-btn" id="btn-mode"><span id="mode-1bit">1-bit</span> | <span id="mode-2bit">2-bit</span></button>
+      <button class="btn seg-btn" id="btn-labels">Labels <span id="lbl-on">on</span> | <span id="lbl-off">off</span></button>
+      <div class="swatch-group">
+        <div class="colour-picker">
+          <button class="colour-swatch" id="btn-c0" title="Background colour"></button>
+          <input class="colour-input-overlay" type="color" id="inp-c0" aria-label="Background colour">
+        </div>
+        <div class="colour-picker">
+          <button class="colour-swatch" id="btn-c1" title="Foreground colour"></button>
+          <input class="colour-input-overlay" type="color" id="inp-c1" aria-label="Foreground colour">
+        </div>
+        <div class="colour-picker mc-only">
+          <button class="colour-swatch mc-only" id="btn-c2" title="Multicolour 2 (bit pair 10)"></button>
+          <input class="colour-input-overlay mc-only" type="color" id="inp-c2" aria-label="Multicolour 2">
+        </div>
+        <div class="colour-picker mc-only">
+          <button class="colour-swatch mc-only" id="btn-c3" title="Multicolour 3 (bit pair 11)"></button>
+          <input class="colour-input-overlay mc-only" type="color" id="inp-c3" aria-label="Multicolour 3">
+        </div>
+      </div>
+    </div>
+
+    <div class="card bitmap-card">
+      <div class="res-block">
+        <div class="card-head">
+          <span class="badge badge-m">Image (24 &times; 21)</span>
+          <span style="margin-left:auto;display:flex;gap:8px">
+            <span class="badge badge-e">Byte values (denary)</span>
+          </span>
+        </div>
+        <div class="bitmap-grid" id="bitmap-grid"></div>
+      </div>
+    </div>
+
+    <div class="sprite-gallery" id="sprite-gallery"></div>
+
+  </div><!-- /.bitmap-layout -->
+  </div><!-- /#explore-section -->
+
+  <!-- ── Test section ─────────────────────────────────────────────── -->
+  <div id="test-section" hidden>
+
+    <div class="quiz-topbar">
+      <div class="qtype-group">
+        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Units:</span>
+        <button class="qtype-btn active" data-units="mix">Mix</button>
+        <button class="qtype-btn" data-units="si">kB / MB…</button>
+        <button class="qtype-btn" data-units="iec">kiB / MiB…</button>
+      </div>
+      <div class="quiz-score-area">
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="bq-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="bq-wrong">0</span>&ensp;(<span id="bq-total">0</span> attempted)</span>
+        <button class="btn btn-sm" id="bq-reset">Reset score</button>
+      </div>
+    </div>
+
+    <div class="card quiz-q-card">
+      <div class="res-block">
+        <div class="quiz-q-header">
+          <span class="quiz-q-num" id="bq-num">Question 1</span>
+          <span class="badge" id="bq-type-badge"></span>
+        </div>
+        <div class="quiz-q-text" id="bq-text"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="res-block">
+        <div class="q-answer-lbl">Your answer</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input class="q-denary-input" type="text" id="bq-input"
+                 placeholder="Enter your answer" autocomplete="off" spellcheck="false"
+                 inputmode="decimal" style="flex:1;min-width:0;" />
+          <span id="bq-unit-label" style="color:var(--text);font-size:15px;white-space:nowrap;"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-actions">
+      <button class="btn btn-submit" id="bq-submit">Check Answer</button>
+    </div>
+
+  </div><!-- /#test-section -->
+
+  <!-- ── Name dialog ──────────────────────────────────────────────── -->
+  <dialog id="save-dialog">
+    <div class="modal">
+      <div class="modal-feedback" style="font-size:15px;margin-bottom:12px;">Name this sprite:</div>
+      <input type="text" id="save-name-inp" class="q-denary-input"
+             style="width:100%;margin-bottom:16px;" maxlength="24"
+             placeholder="e.g. My Rocket" autocomplete="off" spellcheck="false" />
+      <div class="modal-footer" style="gap:8px;">
+        <button class="btn" id="save-cancel">Cancel</button>
+        <button class="btn btn-submit" id="save-confirm">Save</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="sprite-tip-dialog" aria-labelledby="sprite-tip-text">
+    <div class="modal">
+      <div class="modal-feedback" id="sprite-tip-text">
+        Recreate this image by entering denary values (0-255) into each byte field.
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-next" id="sprite-tip-ok">Got it</button>
+      </div>
+    </div>
+  </dialog>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
+
+<!-- Feedback modal -->
+<dialog id="bq-modal" aria-labelledby="bq-modal-feedback">
+  <div class="modal">
+    <div class="modal-feedback" id="bq-modal-feedback"></div>
+    <div class="modal-footer">
+      <button class="btn btn-next" id="bq-next">Next Question &rarr;</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const ROWS = 21, COLS = 24, BYTES_PER_ROW = 3, BITS_PER_BYTE = 8;
+  const TOTAL_BYTES = ROWS * BYTES_PER_ROW; // 63
+
+  // ── Colour mode ───────────────────────────────────────────────────
+  let multicolour = false;
+  let showLabels  = true;
+  const colours = ['#444444', '#ffff00', '#ff4466', '#44aaff'];
+  const SWATCH_IDS = ['btn-c0','btn-c1','btn-c2','btn-c3'];
+  const LABELS_1BIT = ['0','1','',''];
+  const LABELS_2BIT = ['00','01','10','11'];
+
+  function contrastColour(hex) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? '#000000' : '#ffffff';
+  }
+
+  // Slightly lighter or darker version of the same colour — used for pixel labels
+  function subtleContrast(hex) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    const lum = (r * 299 + g * 587 + b * 114) / 1000;
+    const shift = lum > 128 ? -70 : 80;
+    const c = v => Math.max(0, Math.min(255, v + shift));
+    return `rgb(${c(r)},${c(g)},${c(b)})`;
+  }
+
+  function updateSwatchLabels() {
+    const labels = multicolour ? LABELS_2BIT : LABELS_1BIT;
+    SWATCH_IDS.forEach((id, i) => {
+      const btn = document.getElementById(id);
+      btn.textContent = labels[i];
+      btn.style.color = contrastColour(colours[i]);
+    });
+  }
+
+  function setupSwatch(btnId, inpId, index) {
+    const btn = document.getElementById(btnId);
+    const inp = document.getElementById(inpId);
+    btn.style.background = colours[index];
+    inp.value = colours[index];
+    inp.addEventListener('input', () => {
+      colours[index] = inp.value;
+      btn.style.background = inp.value;
+      btn.style.color = contrastColour(inp.value);
+      renderPixels();
+    });
+  }
+  setupSwatch('btn-c0', 'inp-c0', 0);
+  setupSwatch('btn-c1', 'inp-c1', 1);
+  setupSwatch('btn-c2', 'inp-c2', 2);
+  setupSwatch('btn-c3', 'inp-c3', 3);
+  updateSwatchLabels(); // init labels
+
+  function updateModeBtn() {
+    document.getElementById('mode-1bit').className = multicolour ? 'dim' : '';
+    document.getElementById('mode-2bit').className = multicolour ? '' : 'dim';
+    document.querySelectorAll('.pixel-strip').forEach(s => s.classList.toggle('mc', multicolour));
+  }
+  function updateLabelsBtn() {
+    document.getElementById('lbl-on').className  = showLabels ? '' : 'dim';
+    document.getElementById('lbl-off').className = showLabels ? 'dim' : '';
+  }
+
+  document.getElementById('btn-mode').addEventListener('click', () => {
+    multicolour = !multicolour;
+    updateModeBtn();
+    document.documentElement.classList.toggle('mc', multicolour);
+    updateSwatchLabels();
+    renderPixels();
+  });
+
+  document.getElementById('btn-labels').addEventListener('click', () => {
+    showLabels = !showLabels;
+    updateLabelsBtn();
+    renderPixels();
+  });
+
+  updateModeBtn();
+  updateLabelsBtn();
+
+  // ── State ─────────────────────────────────────────────────────────
+  // Pre-loaded with the classic Commodore balloon sprite
+  const state = new Uint8Array([
+      0,127,  0,  1,255,192,  3,255,224,  3,231,224,
+      7,217,240,  7,223,240,  7,217,240,  3,231,224,
+      3,255,224,  3,255,224,  2,255,160,  1,127, 64,
+      1, 62, 64,  0,156,128,  0,156,128,  0, 73,  0,
+      0, 73,  0,  0, 62,  0,  0, 62,  0,  0, 62,  0,
+      0, 28,  0,
+  ]);
+
+  // ── Build unified grid ────────────────────────────────────────────
+  // .pixel-panel spans all 21 grid rows in col 1; inputs auto-place into cols 2-4
+  const bitmapGrid = document.getElementById('bitmap-grid');
+  const pixels = [];  // 441 pixel divs, row-major
+  const inputs = [];  // 63 inputs, row-major
+
+  // Build pixel panel (all 21 strips inside one container)
+  const pixelPanel = document.createElement('div');
+  pixelPanel.className = 'pixel-panel';
+  for (let row = 0; row < ROWS; row++) {
+    const strip = document.createElement('div');
+    strip.className = 'pixel-strip';
+    for (let col = 0; col < COLS; col++) {
+      const px = document.createElement('div');
+      px.className = 'pixel';
+      strip.appendChild(px);
+      pixels.push(px);
+    }
+    pixelPanel.appendChild(strip);
+  }
+  bitmapGrid.appendChild(pixelPanel);
+
+  // Build inputs — auto-place into cols 2-4, rows 1-21
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < BYTES_PER_ROW; col++) {
+      const idx = row * BYTES_PER_ROW + col;
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'byte-inp';
+      inp.placeholder = '0';
+      inp.autocomplete = 'off';
+      inp.inputMode = 'numeric';
+      inp.pattern = '[0-9]*';
+      inp.setAttribute('enterkeyhint', 'next');
+      inp.setAttribute('spellcheck', 'false');
+      inp.setAttribute('aria-label', `Row ${row + 1}, byte ${col + 1}`);
+      inp.addEventListener('input', () => handleInput(inp, idx));
+      inp.addEventListener('keydown', (e) => {
+        let next = null;
+        if (e.key === 'Enter' || e.key === 'ArrowDown')  next = inputs[idx + BYTES_PER_ROW] ?? null;
+        else if (e.key === 'ArrowUp')                    next = inputs[idx - BYTES_PER_ROW] ?? null;
+        else if (e.key === 'ArrowRight' && inp.selectionStart === inp.value.length) next = inputs[idx + 1] ?? null;
+        else if (e.key === 'ArrowLeft'  && inp.selectionStart === 0)               next = inputs[idx - 1] ?? null;
+        if (next) { e.preventDefault(); next.focus(); next.select(); }
+      });
+      bitmapGrid.appendChild(inp);
+      inputs.push(inp);
+    }
+  }
+
+  // ── Input handler ─────────────────────────────────────────────────
+  function handleInput(inp, idx) {
+    const raw = parseInt(inp.value, 10);
+    if (inp.value === '' || (Number.isInteger(raw) && raw >= 0 && raw <= 255)) {
+      inp.classList.remove('err');
+      state[idx] = (inp.value === '' || isNaN(raw)) ? 0 : raw;
+    } else {
+      inp.classList.add('err');
+    }
+    renderPixels();
+  }
+
+  // ── Render pixel grid from state ──────────────────────────────────
+  function renderPixels() {
+    for (let byteIdx = 0; byteIdx < TOTAL_BYTES; byteIdx++) {
+      const val       = state[byteIdx];
+      const row       = Math.floor(byteIdx / BYTES_PER_ROW);
+      const byteInRow = byteIdx % BYTES_PER_ROW;
+      if (multicolour) {
+        // 2-bit: 4 pairs per byte → 4 visible double-width pixels per byte
+        for (let pair = 0; pair < 4; pair++) {
+          const ci      = (val >> (6 - pair * 2)) & 0b11;
+          const baseCol = byteInRow * BITS_PER_BYTE + pair * 2;
+          const bg      = colours[ci];
+          const fg      = subtleContrast(bg);
+          const px0 = pixels[row * COLS + baseCol];
+          px0.style.background = bg;
+          px0.style.color = fg;
+          px0.textContent = showLabels ? ['00','01','10','11'][ci] : '';
+          // odd pixel is hidden via CSS; still set its colour for consistency
+          pixels[row * COLS + baseCol + 1].style.background = bg;
+        }
+      } else {
+        // 1-bit: each bit → one pixel
+        for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
+          const on = (val >> (7 - bit)) & 1;
+          const bg = colours[on];
+          const px = pixels[row * COLS + byteInRow * BITS_PER_BYTE + bit];
+          px.style.background = bg;
+          px.style.color = subtleContrast(bg);
+          px.textContent = showLabels ? on : '';
+        }
+      }
+    }
+  }
+
+  // ── Controls ──────────────────────────────────────────────────────
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    state.fill(0);
+    inputs.forEach(inp => { inp.value = ''; inp.classList.remove('err'); });
+    renderPixels();
+  });
+
+  document.getElementById('btn-invert').addEventListener('click', () => {
+    for (let i = 0; i < TOTAL_BYTES; i++) {
+      state[i] = (~state[i]) & 0xFF;
+      inputs[i].value = state[i] === 0 ? '' : state[i];
+      inputs[i].classList.remove('err');
+    }
+    renderPixels();
+  });
+
+  // ── Sprite library ────────────────────────────────────────────────
+  const SPRITES = [
+    {
+      name: 'Manic Miner',
+      color: '#ffffff',
+      data: [
+        0,0,0,      0,0,0,      0,0,0,      0,12,0,     0,124,0,
+        0,248,0,    0,104,0,    0,124,0,    0,120,0,    0,48,0,
+        0,120,0,    0,252,0,    0,252,0,    1,238,0,    1,246,0,
+        0,120,0,    0,236,0,    0,220,0,    0,238,0,    0,0,0,
+        0,0,0,
+      ],
+    },
+    {
+      name: 'Alien',
+      multicolour: true,
+      colours: ['#444444', '#ffffff', '#00ffff', '#000000'],
+      data: [
+        0,0,0,      0,0,0,      0,0,0,      0,0,0,      0,170,0,
+        2,105,128,  9,235,96,   9,235,96,   14,170,176, 15,255,240,
+        3,255,192,  0,255,0,    0,255,0,    12,195,48,  15,195,240,
+        12,195,48,  12,0,48,    60,0,60,    12,0,48,    0,0,0,
+        0,0,0,
+      ],
+    },
+    {
+      name: 'Frog',
+      multicolour: true,
+      colours: ['#444444', '#ffffff', '#00ff00', '#000000'],
+      data: [
+        0,0,0,      4,0,0,      21,0,0,     29,0,64,    29,1,208,
+        21,1,208,   55,171,112, 14,106,192, 2,106,0,    14,170,192,
+        14,170,192, 0,168,0,    8,252,128,  10,170,128, 14,170,192,
+        15,255,192, 3,255,0,    0,204,0,    0,204,48,   60,204,240,
+        63,207,192,
+      ],
+    },
+    {
+      name: 'Yin Yang',
+      color: '#ffffff',
+      colours: ['#000000', '#ffffff'],
+      data: [
+        0,0,0,      0,0,0,      0,0,0,      0,126,0,    1,255,128,
+        3,255,192,  7,255,224,  7,252,224,  12,56,112,  8,28,208,
+        9,143,208,  9,135,144,  8,0,16,     4,0,32,     4,0,32,
+        2,0,64,     1,129,128,  0,126,0,    0,0,0,      0,0,0,
+        0,0,0,
+      ],
+    },
+  ];
+
+  // ── Build sprite gallery ───────────────────────────────────────────
+  // Canvas size derives from the gallery column's rendered width so there
+  // is never a horizontal scrollbar regardless of zoom or column width.
+  // Overhead per thumb: padding 6px×2 + border 2px×2 + gallery padding 2px×2 = 20px
+  const gallery = document.getElementById('sprite-gallery');
+  const thumbEntries = []; // { canvas, sprite }
+
+  function drawThumb(canvas, sprite, px) {
+    canvas.width  = COLS * px;
+    canvas.height = ROWS * px;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let byteIdx = 0; byteIdx < TOTAL_BYTES; byteIdx++) {
+      const val       = sprite.data[byteIdx];
+      const row       = Math.floor(byteIdx / BYTES_PER_ROW);
+      const byteInRow = byteIdx % BYTES_PER_ROW;
+      if (sprite.multicolour) {
+        for (let pair = 0; pair < 4; pair++) {
+          const ci = (val >> (6 - pair * 2)) & 0b11;
+          const col = byteInRow * BITS_PER_BYTE + pair * 2;
+          ctx.fillStyle = sprite.colours[ci];
+          ctx.fillRect(col * px, row * px, px * 2 - 1, px - 1);
+        }
+      } else {
+        const offColour = sprite.colours ? sprite.colours[0] : '#444';
+        const onColour = sprite.colours ? sprite.colours[1] : sprite.color;
+        for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
+          const col = byteInRow * BITS_PER_BYTE + bit;
+          const on  = (val >> (7 - bit)) & 1;
+          ctx.fillStyle = on ? onColour : offColour;
+          ctx.fillRect(col * px, row * px, px - 1, px - 1);
+        }
+      }
+    }
+  }
+
+  const narrowMQ = window.matchMedia('(max-width: 1248px)');
+
+  function resizeGallery() {
+    // In horizontal (narrow) mode the gallery spans the full width, so we use
+    // a fixed thumb width (~160px) instead of filling the gallery width.
+    const available = narrowMQ.matches ? 160 : gallery.clientWidth - 20;
+    const px = Math.max(1, Math.floor(available / COLS));
+    thumbEntries.forEach(({ canvas, sprite }) => drawThumb(canvas, sprite, px));
+  }
+
+  narrowMQ.addEventListener('change', resizeGallery);
+
+  function loadSprite(data) {
+    data.forEach((v, i) => {
+      state[i] = v;
+      inputs[i].value = v === 0 ? '' : v;
+      inputs[i].classList.remove('err');
+    });
+    renderPixels();
+  }
+
+  function applySprite(sprite) {
+    if (sprite.colours) {
+      sprite.colours.forEach((hex, i) => {
+        colours[i] = hex;
+        const swBtn = document.getElementById(`btn-c${i}`);
+        const swInp = document.getElementById(`inp-c${i}`);
+        swBtn.style.background = hex;
+        swInp.value = hex;
+      });
+    }
+    multicolour = !!sprite.multicolour;
+    document.documentElement.classList.toggle('mc', multicolour);
+    updateModeBtn();
+    updateSwatchLabels();
+    loadSprite(sprite.data);
+  }
+
+  const spriteTipDialog = document.getElementById('sprite-tip-dialog');
+  const spriteTipOk = document.getElementById('sprite-tip-ok');
+  function showSpriteRecreateTip() {
+    spriteTipDialog.showModal();
+  }
+  spriteTipOk.addEventListener('click', () => spriteTipDialog.close());
+
+  SPRITES.forEach((sprite) => {
+    const btn = document.createElement('button');
+    btn.className = 'sprite-thumb';
+    btn.title = sprite.name;
+
+    const canvas = document.createElement('canvas');
+    thumbEntries.push({ canvas, sprite });
+
+    const label = document.createElement('span');
+    label.textContent = sprite.name;
+
+    btn.appendChild(canvas);
+    btn.appendChild(label);
+
+    btn.addEventListener('click', () => {
+      gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      showSpriteRecreateTip();
+    });
+
+    gallery.appendChild(btn);
+  });
+
+  // ── User sprites (localStorage) ───────────────────────────────────
+  const LS_KEY = 'encodr-user-sprites';
+
+  function loadUserSprites() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+    catch { return []; }
+  }
+
+  function saveUserSprites(list) {
+    localStorage.setItem(LS_KEY, JSON.stringify(list));
+  }
+
+  function addUserThumb(sprite, index) {
+    const btn = document.createElement('button');
+    btn.className = 'sprite-thumb';
+    btn.title = sprite.name;
+    btn.dataset.userIdx = index;
+
+    const canvas = document.createElement('canvas');
+    // Use the sprite's own colours for the thumbnail
+    const thumbSprite = {
+      data: sprite.data,
+      multicolour: !!sprite.multicolour,
+      colours: [...sprite.colours],
+      color: sprite.colours[1],
+    };
+    thumbEntries.push({ canvas, sprite: thumbSprite });
+
+    const label = document.createElement('span');
+    label.textContent = sprite.name;
+
+    const del = document.createElement('button');
+    del.className = 'thumb-delete';
+    del.title = 'Delete';
+    del.textContent = '×';
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const list = loadUserSprites();
+      list.splice(index, 1);
+      saveUserSprites(list);
+      // Remove from thumbEntries
+      const ti = thumbEntries.findIndex(t => t.canvas === canvas);
+      if (ti !== -1) thumbEntries.splice(ti, 1);
+      btn.remove();
+      // Re-index remaining user thumbs
+      gallery.querySelectorAll('[data-user-idx]').forEach((b, i) => { b.dataset.userIdx = i; });
+      resizeGallery();
+    });
+
+    btn.appendChild(del);
+    btn.appendChild(canvas);
+    btn.appendChild(label);
+
+    btn.addEventListener('click', () => {
+      gallery.querySelectorAll('.sprite-thumb').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      applySprite(sprite);
+    });
+
+    // Insert before the first non-user thumb
+    const firstBuiltin = gallery.querySelector('.sprite-thumb:not([data-user-idx])');
+    gallery.insertBefore(btn, firstBuiltin);
+    return btn;
+  }
+
+  // Populate gallery with saved sprites on load (newest first)
+  const _initSprites = loadUserSprites();
+  for (let i = _initSprites.length - 1; i >= 0; i--) addUserThumb(_initSprites[i], i);
+
+  // ── Save button & dialog ──────────────────────────────────────────
+  const saveDialog  = document.getElementById('save-dialog');
+  const saveNameInp = document.getElementById('save-name-inp');
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    saveNameInp.value = '';
+    saveDialog.showModal();
+    saveNameInp.focus();
+  });
+  document.getElementById('save-cancel').addEventListener('click', () => saveDialog.close());
+  saveNameInp.addEventListener('keydown', e => { if (e.key === 'Enter') confirmSave(); });
+  document.getElementById('save-confirm').addEventListener('click', confirmSave);
+
+  function confirmSave() {
+    const name = saveNameInp.value.trim() || 'Untitled';
+    saveDialog.close();
+    const list = loadUserSprites();
+    const entry = {
+      name,
+      data: Array.from(state),
+      colours: [...colours],
+      multicolour,
+    };
+    list.push(entry);
+    saveUserSprites(list);
+    const newBtn = addUserThumb(entry, list.length - 1);
+    const firstUser = gallery.querySelector('.sprite-thumb[data-user-idx]');
+    if (firstUser && firstUser !== newBtn) gallery.insertBefore(newBtn, firstUser);
+    resizeGallery();
+  }
+
+  // ── Dismiss keyboard when tapping outside inputs ──────────────────
+  document.addEventListener('touchstart', (e) => {
+    if (e.target.tagName !== 'INPUT') document.activeElement?.blur();
+  }, { passive: true });
+
+  // ── Keep gallery height = card height & canvases sized to column ──
+  const bitmapCard = document.querySelector('.bitmap-card');
+  const ro = new ResizeObserver(() => {
+    gallery.style.maxHeight = bitmapCard.offsetHeight + 'px';
+  });
+  ro.observe(bitmapCard);
+  new ResizeObserver(resizeGallery).observe(gallery);
+
+  // ── Section tabs ──────────────────────────────────────────────────
+  function switchSection(which) {
+    const isExplore = which === 'explore';
+    document.getElementById('explore-section').hidden = !isExplore;
+    document.getElementById('test-section').hidden    =  isExplore;
+    document.getElementById('tab-explore').classList.toggle('active',  isExplore);
+    document.getElementById('tab-test'   ).classList.toggle('active', !isExplore);
+  }
+  document.getElementById('tab-explore').addEventListener('click', () => switchSection('explore'));
+  document.getElementById('tab-test'   ).addEventListener('click', () => switchSection('test'));
+
+  // ══ Bitmap Quiz Engine ════════════════════════════════════════════
+  // Units mode: 'mix' | 'si' | 'iec'
+  let unitsMode = 'mix';
+
+  // Format a number: whole numbers as integer, else as fraction string
+  function fmtAnswer(n) {
+    const frac = n - Math.floor(n);
+    if (frac === 0)   return String(n);
+    if (frac === 0.5) return n < 1 ? '0.5' : `${Math.floor(n)}.5`;
+    if (frac === 0.25) return n < 1 ? '0.25' : `${Math.floor(n)}.25`;
+    if (frac === 0.75) return n < 1 ? '0.75' : `${Math.floor(n)}.75`;
+    return String(n);
+  }
+
+  function matchesAtInputPrecision(rawInput, given, expected) {
+    if (Math.abs(given - expected) < 1e-9) return true;
+    const decimalMatch = rawInput.match(/\.(\d+)/);
+    if (!decimalMatch) return false;
+    const dp = Math.min(decimalMatch[1].length, 6);
+    return Number(given.toFixed(dp)) === Number(expected.toFixed(dp));
+  }
+
+  // ── Quiz state ────────────────────────────────────────────────────
+  const LS_SCORE = 'encodr-bitmap-score';
+  function loadScore() { try { return JSON.parse(localStorage.getItem(LS_SCORE)) || {correct:0,wrong:0,total:0}; } catch { return {correct:0,wrong:0,total:0}; } }
+  function saveScore() { localStorage.setItem(LS_SCORE, JSON.stringify({correct:bqCorrect,wrong:bqWrong,total:bqTotal})); }
+  function updateScoreDisplay() {
+    document.getElementById('bq-correct').textContent = bqCorrect;
+    document.getElementById('bq-wrong').textContent   = bqWrong;
+    document.getElementById('bq-total').textContent   = bqTotal;
+  }
+  const _sc = loadScore();
+  let bqCorrect = _sc.correct, bqWrong = _sc.wrong, bqTotal = _sc.total;
+  let bqQuestion = null, bqCount = 1;
+  updateScoreDisplay();
+
+  function genQuestion() {
+    return window.EncodrQuizGenerators.bitmap.generate(unitsMode);
+  }
+
+  function nextQuestion() {
+    const V = window.EncodrValidation;
+    bqQuestion = genQuestion();
+    document.getElementById('bq-num').textContent = `Question ${bqCount++}`;
+    document.getElementById('bq-type-badge').textContent = bqQuestion.badge;
+    document.getElementById('bq-type-badge').className   = 'badge badge-m';
+    document.getElementById('bq-text').innerHTML = bqQuestion.text.replace(/\n\n/g, '<br><br>');
+    document.getElementById('bq-unit-label').textContent = bqQuestion.unitLabel;
+    document.getElementById('bq-input').value = '';
+    V.clearInputError(document.getElementById('bq-input'));
+    V.clearSummary('bq-submit');
+    document.getElementById('bq-input').focus();
+  }
+
+  function checkAnswer() {
+    const V = window.EncodrValidation;
+    const inputEl = document.getElementById('bq-input');
+    V.clearInputError(inputEl);
+    V.clearSummary('bq-submit');
+
+    const raw = inputEl.value.trim().replace(/,/g, '');
+    const given = parseFloat(raw);
+    if (isNaN(given)) {
+      V.setInputError(inputEl, 'Enter a valid numeric answer.');
+      V.setSummary('bq-submit', 'Please fix the highlighted field.');
+      inputEl.focus();
+      return;
+    }
+    bqTotal++;
+    const correct = matchesAtInputPrecision(raw, given, bqQuestion.answerNum);
+    if (correct) bqCorrect++; else bqWrong++;
+    updateScoreDisplay();
+    saveScore();
+
+    const fb = document.getElementById('bq-modal-feedback');
+    fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
+    fb.innerHTML = correct
+      ? `✓ <strong>Correct!</strong><br>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}`
+      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}</strong>.`;
+    document.getElementById('bq-modal').showModal();
+  }
+
+  document.getElementById('bq-submit').addEventListener('click', checkAnswer);
+  document.getElementById('bq-submit').addEventListener('touchend', (e) => { e.preventDefault(); checkAnswer(); });
+  document.getElementById('bq-input').addEventListener('input', () => {
+    const V = window.EncodrValidation;
+    const inputEl = document.getElementById('bq-input');
+    const raw = inputEl.value.trim().replace(/,/g, '');
+    if (raw && !isNaN(parseFloat(raw))) {
+      V.clearInputError(inputEl);
+      V.maybeClearSummary('bq-submit');
+    }
+  });
+  document.getElementById('bq-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      checkAnswer();
+    }
+  });
+  document.getElementById('bq-next').addEventListener('click', () => {
+    document.getElementById('bq-modal').close();
+    nextQuestion();
+  });
+  document.getElementById('bq-reset').addEventListener('click', () => {
+    bqCorrect = bqWrong = bqTotal = 0; bqCount = 1;
+    localStorage.removeItem(LS_SCORE);
+    updateScoreDisplay();
+    nextQuestion();
+  });
+
+  // Units toggle
+  document.querySelectorAll('[data-units]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-units]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      unitsMode = btn.dataset.units;
+      nextQuestion();
+    });
+  });
+
+  // First question generated when user switches to Test tab
+  document.getElementById('tab-test').addEventListener('click', () => {
+    if (!bqQuestion) nextQuestion();
+  }, { once: true });
+
+  // ── Init ──────────────────────────────────────────────────────────
+  // Populate inputs from the pre-loaded state
+  state.forEach((v, i) => { inputs[i].value = v === 0 ? '' : v; });
+  renderPixels();
+</script>
+
+</body>
+</html>

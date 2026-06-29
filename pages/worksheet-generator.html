@@ -1,318 +1,320 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="theme-color" content="#050505" />
-  <meta name="description" content="Generate Data Representation worksheets by selecting topics, question counts and an optional compact layout for lower ink use in GCSE and A Level classes." />
-  <title>Encodr Worksheet Generator</title>
-  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
-  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
-  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
-  <link rel="manifest" href="../site.webmanifest" />
-  <link rel="stylesheet" href="../style.css" />
-  <script src="../scripts/app.js" defer></script>
-  <script src="../scripts/quiz-generators.js" defer></script>
-  <script src="../vendor/jspdf.umd.min.js" defer></script>
-  <script src="../scripts/worksheet-generator.js" defer></script>
-  <!-- Cloudflare Web Analytics -->
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Generate Data Representation worksheets by selecting topics, question counts and an optional compact layout for lower ink use in GCSE and A Level classes." />
+  <title>Encodr Worksheet Generator</title>
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="stylesheet" href="../style.css" />
+  <script src="../scripts/app.js" defer></script>
+  <script src="../scripts/quiz-generators.js" defer></script>
+  <script src="../vendor/jspdf.umd.min.js" defer></script>
+  <script src="../scripts/worksheet-generator.js" defer></script>
+  <!-- Cloudflare Web Analytics -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
   <!-- End Cloudflare Web Analytics -->
-  <style>
-    .ws-layout {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
-    .ws-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .ws-label {
-      font-size: 14px;
-      color: var(--muted);
-      min-width: 150px;
-    }
-
-    .ws-text,
-    .ws-num,
-    .ws-select {
-      background: #000;
-      color: var(--text);
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0 0 0 1.5px var(--border);
-      padding: 10px 12px;
-      font-family: inherit;
-      font-size: 15px;
-    }
-
-    .ws-text { min-width: 280px; flex: 1 1 320px; }
-    .ws-num { width: 110px; }
-
-    .ws-topics {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    .ws-topic {
-      background: rgba(0, 0, 0, 0.35);
-      border-radius: 10px;
-      padding: 12px;
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
-    }
-
-    .ws-topic-head {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    .ws-subtypes {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 6px;
-      margin: 8px 0;
-      padding: 8px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .ws-subtypes.is-disabled,
-    .ws-radio-group.is-disabled {
-      opacity: 0.42;
-      filter: saturate(0.7);
-    }
-
-    .ws-subtypes.is-disabled .ws-cb,
-    .ws-radio-group.is-disabled .ws-cb {
-      pointer-events: none;
-    }
-
-    .ws-cb {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      color: var(--text);
-    }
-
-    .ws-cb input[type="checkbox"],
-    .ws-topic-head input[type="checkbox"] {
-      width: 15px;
-      height: 15px;
-      appearance: none;
-      -webkit-appearance: none;
-      margin: 0;
-      border: 1.5px solid #ffff00;
-      border-radius: 3px;
-      background: #000;
-      display: inline-grid;
-      place-content: center;
-      flex: 0 0 auto;
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.85);
-    }
-
-    .ws-cb input[type="checkbox"]::before,
-    .ws-topic-head input[type="checkbox"]::before {
-      content: "";
-      width: 9px;
-      height: 9px;
-      transform: scale(0);
-      transition: transform 0.12s ease;
-      clip-path: polygon(14% 44%, 0 59%, 42% 100%, 100% 19%, 84% 4%, 42% 68%);
-      background: #000;
-    }
-
-    .ws-cb input[type="checkbox"]:checked,
-    .ws-topic-head input[type="checkbox"]:checked {
-      background: #ffff00;
-    }
-
-    .ws-cb input[type="checkbox"]:checked::before,
-    .ws-topic-head input[type="checkbox"]:checked::before {
-      transform: scale(1);
-    }
-
-    .ws-cb input[type="checkbox"]:focus-visible,
-    .ws-topic-head input[type="checkbox"]:focus-visible {
-      outline: 2px solid rgba(255, 255, 255, 0.9);
-      outline-offset: 2px;
-    }
-
-    .ws-cb input[type="checkbox"]:disabled,
-    .ws-topic-head input[type="checkbox"]:disabled {
-      border-color: rgba(255, 255, 0, 0.45);
-      background: rgba(0, 0, 0, 0.55);
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
-      cursor: not-allowed;
-    }
-
-    .ws-cb input[type="checkbox"]:disabled::before,
-    .ws-topic-head input[type="checkbox"]:disabled::before {
-      background: rgba(0, 0, 0, 0.65);
-    }
-
-    .ws-cb input[type="radio"] {
-      width: 15px;
-      height: 15px;
-      appearance: none;
-      -webkit-appearance: none;
-      margin: 0;
-      border: 1.5px solid #ffff00;
-      border-radius: 50%;
-      background: #000;
-      display: inline-grid;
-      place-content: center;
-      flex: 0 0 auto;
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.85);
-    }
-
-    .ws-cb input[type="radio"]::before {
-      content: "";
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #000;
-      transform: scale(0);
-      transition: transform 0.12s ease;
-    }
-
-    .ws-cb input[type="radio"]:checked {
-      background: #ffff00;
-    }
-
-    .ws-cb input[type="radio"]:checked::before {
-      transform: scale(1);
-    }
-
-    .ws-cb input[type="radio"]:focus-visible {
-      outline: 2px solid rgba(255, 255, 255, 0.9);
-      outline-offset: 2px;
-    }
-
-    .ws-cb input[type="radio"]:disabled {
-      border-color: rgba(255, 255, 0, 0.45);
-      background: rgba(0, 0, 0, 0.55);
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
-      cursor: not-allowed;
-    }
-
-    .ws-cb input[type="radio"]:disabled::before {
-      background: rgba(0, 0, 0, 0.65);
-    }
-
-    .ws-radio-group {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 6px;
-    }
-
-    .ws-radio-title {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
-
-    .ws-topic-head input[type="checkbox"] {
-      width: 15px;
-      height: 15px;
-    }
-
-    .ws-options {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .ws-select:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .ws-status {
-      font-size: 14px;
-      color: var(--muted);
-      min-height: 22px;
-      margin-top: 4px;
-    }
-
-    .ws-status.error { color: #ff8f8f; }
-    .ws-status.success { color: #7dff7d; }
-
-    @media (max-width: 700px) {
-      .ws-label { min-width: 100%; }
-      .ws-text { min-width: 100%; }
-    }
-  </style>
-</head>
-<body>
-<header>
-  <a class="logo" href="../index.html" aria-label="Encodr home">Enc<em>o</em>dr</a>
-  <span class="breadcrumb-sep" aria-hidden="true">&rsaquo;</span>
-  <span class="hsub">Worksheet Generator</span>
-  <a class="home-btn" href="../index.html">Home</a>
-</header>
-
-<main>
-  <h1>Worksheet Generator</h1>
-  <p class="intro">Choose topics and sub-topic question types, then generate a PDF worksheet. Answers are placed on separate pages at the end.</p>
-
-  <section class="card">
-    <div class="card-head"><span class="badge badge-r">Config</span></div>
-    <div class="ws-layout">
-      <div class="ws-row">
-        <label for="ws-title" class="ws-label">Worksheet title</label>
-        <input id="ws-title" class="ws-text" type="text" value="Encodr Worksheet" maxlength="120" />
-      </div>
-      <div class="ws-row">
-        <label for="ws-count" class="ws-label">Number of questions</label>
-        <input id="ws-count" class="ws-num" type="number" min="1" max="100" value="20" />
-      </div>
-      <div class="ws-row">
-        <span class="ws-label">Worksheet layout</span>
-        <div class="ws-radio-group" role="radiogroup" aria-label="Worksheet layout mode">
-          <label class="ws-cb" for="ws-layout-normal">
-            <input id="ws-layout-normal" type="radio" name="ws-layout-mode" value="normal" checked />
-                  <span>Normal</span>
-          </label>
-          <label class="ws-cb" for="ws-layout-compact">
-            <input id="ws-layout-compact" type="radio" name="ws-layout-mode" value="compact" />
-                  <span>Compact (save ink and paper)</span>
-          </label>
-          <label class="ws-cb" for="ws-layout-both">
-            <input id="ws-layout-both" type="radio" name="ws-layout-mode" value="both" />
-            <span>Both in one file (normal, then compact, then answers)</span>
-          </label>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="card-head"><span class="badge badge-r">Topics</span></div>
-    <p class="card-sub">Tick topics and subtypes to include.</p>
-    <div id="ws-topics" class="ws-topics"></div>
-  </section>
-
-  <section class="card">
-    <div class="ws-row">
-      <button id="ws-generate" class="btn btn-submit" type="button">Download <span class="ws-banner-cta-pdf"><span class="ws-banner-cta-pdf-icon" aria-hidden="true"></span>PDF</span></button>
-    </div>
-    <p id="ws-status" class="ws-status" aria-live="polite"></p>
-  </section>
-
-  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
-</main>
-</body>
-</html>
+  <script data-goatcounter="https://korovatron.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+  <style>
+    .ws-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .ws-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .ws-label {
+      font-size: 14px;
+      color: var(--muted);
+      min-width: 150px;
+    }
+
+    .ws-text,
+    .ws-num,
+    .ws-select {
+      background: #000;
+      color: var(--text);
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1.5px var(--border);
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 15px;
+    }
+
+    .ws-text { min-width: 280px; flex: 1 1 320px; }
+    .ws-num { width: 110px; }
+
+    .ws-topics {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .ws-topic {
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    }
+
+    .ws-topic-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .ws-subtypes {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin: 8px 0;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .ws-subtypes.is-disabled,
+    .ws-radio-group.is-disabled {
+      opacity: 0.42;
+      filter: saturate(0.7);
+    }
+
+    .ws-subtypes.is-disabled .ws-cb,
+    .ws-radio-group.is-disabled .ws-cb {
+      pointer-events: none;
+    }
+
+    .ws-cb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .ws-cb input[type="checkbox"],
+    .ws-topic-head input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      appearance: none;
+      -webkit-appearance: none;
+      margin: 0;
+      border: 1.5px solid #ffff00;
+      border-radius: 3px;
+      background: #000;
+      display: inline-grid;
+      place-content: center;
+      flex: 0 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.85);
+    }
+
+    .ws-cb input[type="checkbox"]::before,
+    .ws-topic-head input[type="checkbox"]::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      transform: scale(0);
+      transition: transform 0.12s ease;
+      clip-path: polygon(14% 44%, 0 59%, 42% 100%, 100% 19%, 84% 4%, 42% 68%);
+      background: #000;
+    }
+
+    .ws-cb input[type="checkbox"]:checked,
+    .ws-topic-head input[type="checkbox"]:checked {
+      background: #ffff00;
+    }
+
+    .ws-cb input[type="checkbox"]:checked::before,
+    .ws-topic-head input[type="checkbox"]:checked::before {
+      transform: scale(1);
+    }
+
+    .ws-cb input[type="checkbox"]:focus-visible,
+    .ws-topic-head input[type="checkbox"]:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 2px;
+    }
+
+    .ws-cb input[type="checkbox"]:disabled,
+    .ws-topic-head input[type="checkbox"]:disabled {
+      border-color: rgba(255, 255, 0, 0.45);
+      background: rgba(0, 0, 0, 0.55);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+      cursor: not-allowed;
+    }
+
+    .ws-cb input[type="checkbox"]:disabled::before,
+    .ws-topic-head input[type="checkbox"]:disabled::before {
+      background: rgba(0, 0, 0, 0.65);
+    }
+
+    .ws-cb input[type="radio"] {
+      width: 15px;
+      height: 15px;
+      appearance: none;
+      -webkit-appearance: none;
+      margin: 0;
+      border: 1.5px solid #ffff00;
+      border-radius: 50%;
+      background: #000;
+      display: inline-grid;
+      place-content: center;
+      flex: 0 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.85);
+    }
+
+    .ws-cb input[type="radio"]::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #000;
+      transform: scale(0);
+      transition: transform 0.12s ease;
+    }
+
+    .ws-cb input[type="radio"]:checked {
+      background: #ffff00;
+    }
+
+    .ws-cb input[type="radio"]:checked::before {
+      transform: scale(1);
+    }
+
+    .ws-cb input[type="radio"]:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 2px;
+    }
+
+    .ws-cb input[type="radio"]:disabled {
+      border-color: rgba(255, 255, 0, 0.45);
+      background: rgba(0, 0, 0, 0.55);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+      cursor: not-allowed;
+    }
+
+    .ws-cb input[type="radio"]:disabled::before {
+      background: rgba(0, 0, 0, 0.65);
+    }
+
+    .ws-radio-group {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .ws-radio-title {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .ws-topic-head input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+    }
+
+    .ws-options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .ws-select:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .ws-status {
+      font-size: 14px;
+      color: var(--muted);
+      min-height: 22px;
+      margin-top: 4px;
+    }
+
+    .ws-status.error { color: #ff8f8f; }
+    .ws-status.success { color: #7dff7d; }
+
+    @media (max-width: 700px) {
+      .ws-label { min-width: 100%; }
+      .ws-text { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <a class="logo" href="../index.html" aria-label="Encodr home">Enc<em>o</em>dr</a>
+  <span class="breadcrumb-sep" aria-hidden="true">&rsaquo;</span>
+  <span class="hsub">Worksheet Generator</span>
+  <a class="home-btn" href="../index.html">Home</a>
+</header>
+
+<main>
+  <h1>Worksheet Generator</h1>
+  <p class="intro">Choose topics and sub-topic question types, then generate a PDF worksheet. Answers are placed on separate pages at the end.</p>
+
+  <section class="card">
+    <div class="card-head"><span class="badge badge-r">Config</span></div>
+    <div class="ws-layout">
+      <div class="ws-row">
+        <label for="ws-title" class="ws-label">Worksheet title</label>
+        <input id="ws-title" class="ws-text" type="text" value="Encodr Worksheet" maxlength="120" />
+      </div>
+      <div class="ws-row">
+        <label for="ws-count" class="ws-label">Number of questions</label>
+        <input id="ws-count" class="ws-num" type="number" min="1" max="100" value="20" />
+      </div>
+      <div class="ws-row">
+        <span class="ws-label">Worksheet layout</span>
+        <div class="ws-radio-group" role="radiogroup" aria-label="Worksheet layout mode">
+          <label class="ws-cb" for="ws-layout-normal">
+            <input id="ws-layout-normal" type="radio" name="ws-layout-mode" value="normal" checked />
+                  <span>Normal</span>
+          </label>
+          <label class="ws-cb" for="ws-layout-compact">
+            <input id="ws-layout-compact" type="radio" name="ws-layout-mode" value="compact" />
+                  <span>Compact (save ink and paper)</span>
+          </label>
+          <label class="ws-cb" for="ws-layout-both">
+            <input id="ws-layout-both" type="radio" name="ws-layout-mode" value="both" />
+            <span>Both in one file (normal, then compact, then answers)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><span class="badge badge-r">Topics</span></div>
+    <p class="card-sub">Tick topics and subtypes to include.</p>
+    <div id="ws-topics" class="ws-topics"></div>
+  </section>
+
+  <section class="card">
+    <div class="ws-row">
+      <button id="ws-generate" class="btn btn-submit" type="button">Download <span class="ws-banner-cta-pdf"><span class="ws-banner-cta-pdf-icon" aria-hidden="true"></span>PDF</span></button>
+    </div>
+    <p id="ws-status" class="ws-status" aria-live="polite"></p>
+  </section>
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+</main>
+</body>
+</html>
