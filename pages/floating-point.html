@@ -1,1400 +1,2792 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="theme-color" content="#050505" />
-  <meta name="description" content="Explore floating point representation by adjusting mantissa and exponent bits, then investigate normalisation and rounding error in focused A Level practice." />
-  <title>Encodr – Floating Point Numbers</title>
-  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
-  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
-  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
-  <link rel="manifest" href="../site.webmanifest" />
-  <link rel="stylesheet" href="../style.css" />
-  <script src="../scripts/app.js" defer></script>
-  <script src="../scripts/quiz-generators.js" defer></script>
-  <!-- Cloudflare Web Analytics -->
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
-  <!-- End Cloudflare Web Analytics -->
-  <script data-goatcounter="https://korovatron.goatcounter.com/count"
-          async src="//gc.zgo.at/count.js"></script>
-  <style>
-    .intro-disclosure {
-      margin-bottom: 20px;
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      background: rgba(255, 255, 255, 0.05);
-      overflow: clip;
-    }
-    .intro-disclosure summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 10px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: rgba(0, 0, 0, 0.2);
-    }
-    .intro-disclosure summary::-webkit-details-marker { display: none; }
-    .intro-disclosure summary::after {
-      content: '+';
-      font-size: 20px;
-      line-height: 1;
-      color: var(--ml);
-    }
-    .intro-disclosure[open] summary::after { content: '\2212'; }
-    .intro-disclosure .intro {
-      margin: 0;
-      padding: 12px 14px 14px;
-      font-size: 15px;
-      line-height: 1.6;
-    }
-    .status-area {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .denary-action-row {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 8px;
-    }
-    .denary-open-btn {
-      border: 1px solid rgba(255, 255, 255, 0.68);
-      background: rgba(0, 0, 0, 0.34);
-      color: #ffffff;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      text-transform: none;
-      padding: 6px 12px;
-      cursor: pointer;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.28);
-      transition: background .12s ease, border-color .12s ease, transform .08s ease;
-    }
-    .denary-open-btn:active { transform: translateY(0); }
-    .denary-open-btn:focus-visible {
-      outline: 2px solid rgba(255, 255, 255, 0.9);
-      outline-offset: 2px;
-    }
-    #denary-modal {
-      border: none;
-      padding: 0;
-      background: transparent;
-      max-width: 100%;
-    }
-    #denary-modal[open] {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      max-height: 100%;
-      padding: 24px;
-      box-sizing: border-box;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #denary-modal::backdrop { background: rgba(0,0,0,.72); }
-    .denary-modal-note {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 14px;
-      line-height: 1.45;
-    }
-    .denary-modal-input-row {
-      display: flex;
-      gap: 10px;
-      align-items: stretch;
-      margin-bottom: 12px;
-    }
-    .denary-modal-input {
-      width: 100%;
-      flex: 1 1 auto;
-      font-size: 28px;
-      font-family: 'Consolas', monospace;
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      background: #000;
-      color: #fff;
-      padding: 10px 12px;
-    }
-    .denary-modal-input:focus {
-      outline: none;
-      border-color: var(--ml);
-    }
-    .denary-sign-btn {
-      flex: 0 0 auto;
-      min-width: 56px;
-      padding: 0 12px;
-      border: 1px solid rgba(255, 255, 255, 0.55);
-      border-radius: var(--r-sm);
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-      font-size: 24px;
-      font-weight: 700;
-      font-family: 'Consolas', monospace;
-      cursor: pointer;
-      transition: background .12s ease, border-color .12s ease;
-    }
-    .denary-sign-btn:focus-visible {
-      outline: 2px solid rgba(255, 255, 255, 0.9);
-      outline-offset: 2px;
-    }
-    .denary-sign-btn:disabled,
-    .denary-modal-input:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    @media (hover: hover) and (pointer: fine) {
-      .denary-open-btn:hover {
-        background: rgba(255, 255, 255, 0.14);
-        border-color: rgba(255, 255, 255, 0.95);
-        transform: translateY(-1px);
-      }
-
-      .denary-sign-btn:hover {
-        background: rgba(255, 255, 255, 0.16);
-        border-color: rgba(255, 255, 255, 0.85);
-      }
-    }
-    .denary-modal-feedback {
-      min-height: 62px;
-      font-size: 14px;
-      line-height: 1.6;
-      font-family: 'Consolas', monospace;
-      color: #fff;
-      margin-bottom: 14px;
-    }
-    .denary-stats {
-      display: grid;
-      gap: 2px;
-      justify-content: center;
-      margin-top: 4px;
-    }
-    .denary-stat-row {
-      display: grid;
-      grid-template-columns: 16ch 1ch auto;
-      column-gap: 8px;
-      align-items: baseline;
-      width: max-content;
-    }
-    .denary-stat-lbl { text-align: right; white-space: nowrap; }
-    .denary-stat-colon { text-align: center; }
-    .denary-stat-val { text-align: left; white-space: nowrap; }
-    .denary-modal-feedback .ok { color: #72ffa3; }
-    .denary-modal-feedback .warn { color: #ffd98f; }
-    .denary-modal-feedback .err { color: #ff8b8b; }
-    .denary-modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-  </style>
-</head>
-<body>
-
-<header>
-  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
-  <span class="breadcrumb-sep">›</span>
-  <span class="hsub">Floating Point Numbers</span>
-  <a class="home-btn" href="../index.html">Home</a>
-</header>
-
-<main>
-  <h1>Floating Point Numbers</h1>
-  <div class="mode-tabs" role="tablist">
-    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
-    <button class="mode-tab"        id="tab-quiz"    role="tab">Test</button>
-  </div>
-
-  <div id="explore-section">
-  <details class="intro-disclosure">
-    <summary>More info</summary>
-    <p class="intro">Click any bit to toggle it between&nbsp;0 and&nbsp;1. <br><br><strong>Normalisation</strong> (storing only one digit before the point) ensures each value has a <strong>unique representation</strong>, maximises <strong>precision</strong> by using all mantissa bits, and makes comparing numbers straightforward. A normalised number's mantissa starts with <strong>01</strong> or <strong>10</strong>.</p>
-    <p class="intro"><strong>Format used here:</strong> both the mantissa and exponent use <strong>two's complement</strong>, which is the format required by AQA. The value of the number is <em>mantissa &times; 2<sup>exponent</sup></em>, where the mantissa is treated as a two's complement binary fraction (bit&nbsp;0 has weight &minus;1, bit&nbsp;1 has weight 2<sup>&minus;1</sup>, and so on).<br><strong>Zero</strong> is a special case: it is stored as all mantissa and exponent bits set to&nbsp;0. This is the one value that cannot be normalised, and that is accepted convention rather than an error.</p>
-  </details>
-
-  <div class="controls">
-    <div class="chip chip-m">
-      <span class="chip-lbl chip-lbl-m">Mantissa</span>
-      <button class="step" id="m-minus" aria-label="Fewer mantissa bits">−</button>
-      <span class="step-val" id="m-count">8</span>
-      <button class="step" id="m-plus"  aria-label="More mantissa bits">+</button>
-      <span class="chip-lbl chip-lbl-u">bits</span>
-    </div>
-    <div class="chip chip-e">
-      <span class="chip-lbl chip-lbl-e">Exponent</span>
-      <button class="step" id="e-minus" aria-label="Fewer exponent bits">−</button>
-      <span class="step-val" id="e-count">4</span>
-      <button class="step" id="e-plus"  aria-label="More exponent bits">+</button>
-      <span class="chip-lbl chip-lbl-u">bits</span>
-    </div>
-  </div>
-
-  <!-- Mantissa -->
-  <div class="result-card">
-    <div class="res-block">
-      <div class="labelled-grid-row">
-        <span class="badge badge-m row-badge">Mantissa</span>
-        <div class="grid-wrap">
-          <div class="bit-grid" id="m-grid"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Exponent -->
-  <div class="result-card">
-    <div class="res-block">
-      <div class="labelled-grid-row">
-        <span class="badge badge-e row-badge">Exponent</span>
-        <div class="grid-wrap">
-          <div class="bit-grid" id="e-grid"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Result -->
-  <div class="result-card">
-    <div class="res-block">
-      <div class="labelled-grid-row">
-        <div class="result-badge-row">
-          <span class="badge badge-r row-badge">Denary value</span>
-          <div class="status-area">
-            <div id="norm-area" class="norm-area"></div>
-          </div>
-        </div>
-        <div class="row-main">
-          <div class="res-big" id="res-big">0</div>
-          <div class="res-eq-row">
-            <div class="res-eq" id="res-eq"></div>
-          </div>
-          <div class="denary-action-row">
-            <button class="denary-open-btn" id="denary-open-btn" type="button" title="Edit the denary value and convert it to the closest representable floating-point value for the current mantissa and exponent sizes." aria-label="Edit denary value and convert to floating point">Edit denary</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div><!-- /.result-card -->
-
-  <div class="result-card">
-    <div class="res-block">
-      <div class="labelled-grid-row">
-        <span class="badge badge-o row-badge">Range</span>
-        <div class="row-main">
-          <div class="res-eq" id="res-range-fl">Range: &minus;128 to 127</div>
-        </div>
-      </div>
-    </div>
-  </div><!-- /.result-card -->
-  </div><!-- /#explore-section -->
-
-  <!-- ── Quiz section ──────────────────────────────────────────────── -->
-  <div id="quiz-section" hidden>
-
-    <div class="quiz-topbar">
-      <div class="qtype-group">
-        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
-        <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
-        <button class="qtype-btn" data-qt="1"><span class="qt-long">Binary &rarr; Denary</span><span class="qt-short">BIN &rarr; DEN</span></button>
-        <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">DEN &rarr; BIN</span></button>
-        <button class="qtype-btn" data-qt="extrema"><span class="qt-long">Extrema</span><span class="qt-short">EXT</span></button>
-      </div>
-      <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
-        <button class="btn btn-sm" id="q-reset-score">Reset score</button>
-      </div>
-    </div>
-
-    <div class="card quiz-q-card">
-      <div class="res-block">
-        <div class="quiz-q-header">
-          <span class="quiz-q-num" id="q-num">Question 1</span>
-          <span class="badge" id="q-type-badge"></span>
-        </div>
-        <div class="quiz-q-text" id="q-text"></div>
-        <div id="q-target-wrap" hidden>
-          <div class="quiz-denary-target" id="q-denary-target"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="q-m-card">
-      <div class="res-block">
-        <div class="labelled-grid-row">
-          <span class="badge badge-m row-badge">Mantissa</span>
-          <div class="grid-wrap">
-            <div class="bit-grid" id="q-m-grid"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="q-e-card">
-      <div class="res-block">
-        <div class="labelled-grid-row">
-          <span class="badge badge-e row-badge">Exponent</span>
-          <div class="grid-wrap">
-            <div class="bit-grid" id="q-e-grid"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="q-t1-area" hidden>
-      <div class="res-block">
-        <div class="q-answer-lbl" id="q-answer-lbl">Your answer (denary)</div>
-        <div class="denary-modal-input-row">
-          <input class="q-denary-input" type="text" id="q-denary-input" inputmode="decimal"
-                 placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
-          <button class="denary-sign-btn" id="q-denary-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" id="q-err-area" hidden>
-      <div class="res-block">
-        <div class="q-err-notice" id="q-err-notice"></div>
-        <div class="err-grid">
-          <div>
-            <div class="q-err-lbl">Absolute error</div>
-            <input class="q-denary-input q-err-input" type="text" id="q-abs-err" inputmode="decimal"
-                   placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
-          </div>
-          <div>
-            <div class="q-err-lbl">Relative Error (%)</div>
-            <input class="q-denary-input q-err-input" type="text" id="q-rel-err" inputmode="decimal"
-                   placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="quiz-actions">
-      <button class="btn btn-submit" id="q-submit">Check Answer</button>
-    </div>
-
-  </div><!-- /#quiz-section -->
-
-  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
-
-</main>
-
-<!-- Feedback modal — native <dialog> renders in top layer, immune to scroll/overflow/z-index on iOS -->
-<dialog id="q-modal" aria-labelledby="q-modal-feedback">
-  <div class="modal">
-    <div class="modal-feedback" id="q-modal-feedback"></div>
-    <div class="modal-footer">
-      <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
-    </div>
-  </div>
-</dialog>
-
-<dialog id="denary-modal" aria-labelledby="denary-modal-title">
-  <div class="modal">
-    <div class="modal-feedback">
-      <div id="denary-modal-title" class="denary-modal-note">Enter a denary number</div>
-      <div class="denary-modal-input-row">
-        <input class="denary-modal-input" id="denary-modal-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" />
-        <button class="denary-sign-btn" id="denary-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
-      </div>
-      <div class="denary-modal-feedback" id="denary-modal-feedback"></div>
-      <div class="denary-modal-actions">
-        <button class="btn btn-sm" id="denary-cancel" type="button">Cancel</button>
-        <button class="btn btn-sm" id="denary-confirm" type="button" hidden>Use Closest</button>
-        <button class="btn btn-submit" id="denary-submit" type="button">Submit</button>
-      </div>
-    </div>
-  </div>
-</dialog>
-
-<script>
-  /* ── State ─────────────────────────────────────────────────────── */
-  const S = {
-    m: Array(8).fill(0),
-    e: Array(4).fill(0),
-  };
-
-  /* ── Maths ─────────────────────────────────────────────────────── */
-  function mVal(bits) {
-    // Two's complement binary fraction: bit 0 = −1, bit i = 2^−i (i ≥ 1)
-    let v = bits[0] ? -1 : 0;
-    for (let i = 1; i < bits.length; i++) if (bits[i]) v += 2 ** -i;
-    return v;
-  }
-
-  function eVal(bits) {
-    // Two's complement integer: bit 0 = −2^(n−1), bit i = 2^(n−1−i)
-    const n = bits.length;
-    let v = bits[0] ? -(2 ** (n - 1)) : 0;
-    for (let i = 1; i < n; i++) if (bits[i]) v += 2 ** (n - 1 - i);
-    return v;
-  }
-
-  /* ── Formatting ────────────────────────────────────────────────── */
-  function fmtNum(n) {
-    if (n === Infinity)  return '+∞';
-    if (n === -Infinity) return '−∞';
-    if (!isFinite(n))    return 'Undefined';
-    if (n === 0)         return '0';
-    const r = parseFloat(n.toPrecision(10));
-    if (Math.abs(r) >= 1e13 || (Math.abs(r) < 0.0001 && r !== 0))
-      return r.toExponential(4);
-    return r.toString();
-  }
-
-  // HTML weight label above each mantissa bit
-  function mWeightHTML(i) {
-    if (i === 0) return '&minus;1';
-    return `2<sup>&minus;${i}</sup>`;
-  }
-
-  // HTML weight label above each exponent bit
-  function eWeightHTML(i, n) {
-    const exp = n - 1 - i;
-    const mag = 2 ** exp;
-    if (i === 0) return mag <= 64 ? `&minus;${mag}` : `&minus;2<sup>${n - 1}</sup>`;
-    return mag <= 64 ? mag.toString() : `2<sup>${exp}</sup>`;
-  }
-
-  // Plain-text breakdown formulas (no HTML needed, just Unicode)
-  function toSuperscript(n) {
-    const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
-    return String(n).split('').map(ch => map[ch] || ch).join('');
-  }
-
-  function fracPower(i) {
-    return `2${toSuperscript(-i)}`;
-  }
-
-  function mFormula(bits) {
-    const parts = [];
-    if (bits[0]) parts.push('−1');
-    for (let i = 1; i < bits.length; i++) {
-      if (!bits[i]) continue;
-      parts.push(fracPower(i));
-    }
-    return parts.length ? parts.join(' + ') : '(all bits are 0)';
-  }
-
-  function eFormula(bits) {
-    const n = bits.length;
-    const parts = [];
-    if (bits[0]) parts.push(`−${2 ** (n - 1)}`);
-    for (let i = 1; i < n; i++) {
-      if (bits[i]) parts.push(String(2 ** (n - 1 - i)));
-    }
-    return parts.length ? parts.join(' + ') : '(all bits are 0)';
-  }
-
-  function signedIntToBits(v, n) {
-    const max = 2 ** n;
-    const u = v < 0 ? max + v : v;
-    return u.toString(2).padStart(n, '0').split('').map(ch => Number(ch));
-  }
-
-  function parseDenaryInput(raw) {
-    const text = raw.trim().replace(/,/g, '').replace(/\u2212/g, '-');
-    if (!text) return { empty: true };
-    const n = Number(text);
-    if (Number.isNaN(n)) return { invalid: true };
-    return { value: n };
-  }
-
-  function isMantissaNormalised(bits) {
-    if (bits.every(b => b === 0)) return false;
-    return bits.length < 2 || bits[0] !== bits[1];
-  }
-
-  function formatPercent(n) {
-    if (!isFinite(n)) return 'N/A';
-    return fmtNum(n) + ' %';
-  }
-
-  function isNumericallyExact(target, represented) {
-    if (represented === 0) return target === 0;
-    const tol = Number.EPSILON * 16 * Math.max(1, Math.abs(represented));
-    return Math.abs(target - represented) <= tol;
-  }
-
-  function encodeDenaryToFloat(x, mBits, eBits) {
-    const mScale = 2 ** (mBits - 1);
-    const minMInt = -(2 ** (mBits - 1));
-    const maxMInt = 2 ** (mBits - 1) - 1;
-    const minE = -(2 ** (eBits - 1));
-    const maxE = 2 ** (eBits - 1) - 1;
-    const maxRepresentable = (maxMInt / mScale) * (2 ** maxE);
-    const minRepresentable = -1 * (2 ** maxE);
-    const smallestPositive = 2 ** minE;
-    const smallestNegative = -(2 ** minE);
-
-    if (x === 0) {
-      return {
-        mBits: Array(mBits).fill(0),
-        eBits: Array(eBits).fill(0),
-        represented: 0,
-        status: 'exact',
-      };
-    }
-
-    if (!isFinite(x)) {
-      const maxMant = x < 0 ? minMInt : maxMInt;
-      return {
-        mBits: signedIntToBits(maxMant, mBits),
-        eBits: signedIntToBits(maxE, eBits),
-        represented: (maxMant / mScale) * (2 ** maxE),
-        status: 'overflow',
-      };
-    }
-
-    if (x > maxRepresentable) {
-      return {
-        mBits: signedIntToBits(maxMInt, mBits),
-        eBits: signedIntToBits(maxE, eBits),
-        represented: maxRepresentable,
-        status: 'overflow',
-      };
-    }
-
-    if (x < minRepresentable) {
-      return {
-        mBits: signedIntToBits(minMInt, mBits),
-        eBits: signedIntToBits(maxE, eBits),
-        represented: minRepresentable,
-        status: 'overflow',
-      };
-    }
-
-    if (x > 0 && Math.abs(x) < smallestPositive / 2) {
-      return {
-        mBits: Array(mBits).fill(0),
-        eBits: Array(eBits).fill(0),
-        represented: 0,
-        status: 'underflow',
-      };
-    }
-
-    if (x < 0 && Math.abs(x) < Math.abs(smallestNegative) / 2) {
-      return {
-        mBits: Array(mBits).fill(0),
-        eBits: Array(eBits).fill(0),
-        represented: 0,
-        status: 'underflow',
-      };
-    }
-
-    let best = null;
-    for (let E = minE; E <= maxE; E++) {
-      const scale = 2 ** E;
-      if (!isFinite(scale) || scale === 0) continue;
-
-      const scaled = (x / scale) * mScale;
-      if (!isFinite(scaled)) continue;
-
-      const rawCandidates = [Math.floor(scaled), Math.ceil(scaled), Math.round(scaled)];
-      const candidates = [...new Set(rawCandidates.map(v => Math.max(minMInt, Math.min(maxMInt, v))))];
-
-      for (const I of candidates) {
-        const represented = (I / mScale) * scale;
-        if (!isFinite(represented)) continue;
-
-        const err = Math.abs(represented - x);
-        const mArr = signedIntToBits(I, mBits);
-        const normalised = isMantissaNormalised(mArr);
-
-        if (!best || err < best.err || (err === best.err && normalised && !best.normalised)) {
-          best = { I, E, represented, err, normalised };
-          if (isNumericallyExact(x, represented) && normalised) break;
-        }
-      }
-
-      if (best && isNumericallyExact(x, best.represented) && best.normalised) break;
-    }
-
-    if (!best) {
-      return {
-        mBits: Array(mBits).fill(0),
-        eBits: Array(eBits).fill(0),
-        represented: 0,
-        status: 'underflow',
-      };
-    }
-
-    let status = 'inexact';
-    if (isNumericallyExact(x, best.represented)) {
-      status = 'exact';
-    } else if (best.represented === 0) {
-      status = 'underflow';
-    } else if ((x > 0 && best.I === maxMInt && best.E === maxE && best.represented < x) ||
-               (x < 0 && best.I === minMInt && best.E === maxE && best.represented > x)) {
-      status = 'overflow';
-    }
-
-    return {
-      mBits: signedIntToBits(best.I, mBits),
-      eBits: signedIntToBits(best.E, eBits),
-      represented: best.represented,
-      status,
-    };
-  }
-
-  function applyEncodedValue(enc) {
-    S.m = enc.mBits;
-    S.e = enc.eBits;
-    document.getElementById('m-count').textContent = S.m.length;
-    document.getElementById('e-count').textContent = S.e.length;
-    renderGrid('m');
-    renderGrid('e');
-    updateResult();
-  }
-
-  /* ── Rendering ─────────────────────────────────────────────────── */
-  function renderGrid(type) {
-    const bits = S[type];
-    const grid = document.getElementById(`${type}-grid`);
-    grid.innerHTML = '';
-    const n = bits.length;
-
-    bits.forEach((bit, i) => {
-      const isSign = i === 0;
-      const prefix = type === 'm' ? 'm' : 'e';
-      const cls = `${prefix}${isSign ? 's' : 'b'}${bit ? '1' : '0'}`;
-
-      const col = document.createElement('div');
-      col.className = 'bit-col';
-
-      const wt = document.createElement('div');
-      wt.className = 'bit-wt';
-      wt.innerHTML = type === 'm' ? mWeightHTML(i) : eWeightHTML(i, n);
-
-      const box = document.createElement('div');
-      box.className = `bit-box ${cls}`;
-      box.textContent = bit;
-      box.setAttribute('role', 'button');
-      box.setAttribute('tabindex', '0');
-      box.setAttribute('aria-label',
-        `${type === 'm' ? 'Mantissa' : 'Exponent'} bit ${i}, currently ${bit}`);
-      box.addEventListener('click', () => toggle(type, i));
-      box.addEventListener('keydown', ev => {
-        if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); toggle(type, i); }
-      });
-
-      col.append(wt, box);
-      grid.appendChild(col);
-    });
-    fitGrid(`${type}-grid`, n);
-  }
-
-  function fitGrid(gridId, n) {
-    const grid = document.getElementById(gridId);
-    if (!grid) return;
-    const available = grid.parentElement.clientWidth;
-    if (!available) return;
-    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
-    grid.style.setProperty('--box-size', size + 'px');
-    grid.style.setProperty('--box-fs',   Math.round(size * 26 / 56) + 'px');
-    grid.style.setProperty('--wt-fs',    Math.max(9, Math.round(size * 17 / 56)) + 'px');
-  }
-
-  function toggle(type, i) {
-    S[type][i] ^= 1;
-    renderGrid(type);
-    updateResult();
-  }
-
-  function updateResult() {
-    const m = mVal(S.m);
-    const e = eVal(S.e);
-    const r = m === 0 ? 0 : m * 2 ** e;
-    const mBits = S.m.length;
-    const eBits = S.e.length;
-    const eMax = 2 ** (eBits - 1) - 1;
-    const min = -(2 ** eMax);
-    const max = (1 - 2 ** (-(mBits - 1))) * (2 ** eMax);
-
-    // Big value
-    document.getElementById('res-big').textContent = fmtNum(r);
-
-    // Equation line (values are computed numbers — safe to inject via innerHTML)
-    document.getElementById('res-eq').innerHTML =
-      `<span class="vm">${fmtNum(m)}</span>&thinsp;&times;&thinsp;` +
-      `2<sup><span class="ve">${e}</span></sup>&ensp;=&ensp;${fmtNum(r)}`;
-    document.getElementById('res-range-fl').innerHTML = `Range: <span class="vm">${fmtNum(min)}</span> to <span class="vm">${fmtNum(max)}</span>`;
-
-    // Normalisation indicator
-    const bits = S.m;
-    const normEl = document.getElementById('norm-area');
-    let cls, txt;
-    if (bits.every(b => b === 0) && S.e.every(b => b === 0)) {
-      cls = 'norm norm-z'; txt = 'Zero';
-    } else if (bits.length < 2 || bits[0] !== bits[1]) {
-      cls = 'norm norm-y'; txt = '✓ Normalised';
-    } else {
-      cls = 'norm norm-n'; txt = 'Not Normalised';
-    }
-    normEl.innerHTML = `<span class="${cls}">${txt}</span>`;
-
-  }
-
-  /* ── Bit-count controls ────────────────────────────────────────── */
-  function changeBits(type, delta) {
-    const cur  = S[type].length;
-    const next = Math.max(2, Math.min(16, cur + delta));
-    if (next === cur) return;
-    if (next > cur) S[type].push(0);
-    else            S[type].pop();
-
-    document.getElementById(type === 'm' ? 'm-count' : 'e-count').textContent = S[type].length;
-    renderGrid(type);
-    updateResult();
-  }
-
-  document.getElementById('m-minus').addEventListener('click', () => changeBits('m', -1));
-  document.getElementById('m-plus' ).addEventListener('click', () => changeBits('m', +1));
-  document.getElementById('e-minus').addEventListener('click', () => changeBits('e', -1));
-  document.getElementById('e-plus' ).addEventListener('click', () => changeBits('e', +1));
-
-  /* ── Init ──────────────────────────────────────────────────────── */
-  renderGrid('m');
-  renderGrid('e');
-  updateResult();
-
-  const denaryModal = document.getElementById('denary-modal');
-  const denaryModalInput = document.getElementById('denary-modal-input');
-  const denarySignBtn = document.getElementById('denary-sign-btn');
-  const denaryModalFeedback = document.getElementById('denary-modal-feedback');
-  const denaryConfirmBtn = document.getElementById('denary-confirm');
-  const denarySubmitBtn = document.getElementById('denary-submit');
-  let denaryPending = null;
-
-  function toggleDenarySign() {
-    if (denaryModalInput.disabled) return;
-    const value = denaryModalInput.value.trim();
-    if (!value) {
-      denaryModalInput.value = '-';
-    } else if (value.startsWith('-')) {
-      denaryModalInput.value = value.slice(1);
-    } else {
-      denaryModalInput.value = '-' + value;
-    }
-    denaryModalInput.focus();
-  }
-
-  function toggleQuizDenarySign() {
-    const quizInput = document.getElementById('q-denary-input');
-    if (!quizInput || quizInput.disabled) return;
-    const value = quizInput.value.trim();
-    if (!value) {
-      quizInput.value = '-';
-    } else if (value.startsWith('-')) {
-      quizInput.value = value.slice(1);
-    } else {
-      quizInput.value = '-' + value;
-    }
-    quizInput.focus();
-  }
-
-  function openDenaryModal() {
-    denaryPending = null;
-    denaryModalInput.value = document.getElementById('res-big').textContent.trim();
-    denaryModalInput.disabled = false;
-    denarySignBtn.disabled = false;
-    denaryModalFeedback.innerHTML = '';
-    denaryConfirmBtn.hidden = true;
-    denarySubmitBtn.hidden = false;
-    document.documentElement.classList.add('modal-open');
-    document.body.classList.add('modal-open');
-    denaryModal.showModal();
-    setTimeout(() => denaryModalInput.focus(), 0);
-  }
-
-  function closeDenaryModal() {
-    denaryModal.close();
-    if (!document.querySelector('dialog[open]')) {
-      document.documentElement.classList.remove('modal-open');
-      document.body.classList.remove('modal-open');
-    }
-  }
-
-  function describeStatus(status) {
-    if (status === 'underflow') return 'Underflow: this value is too small for this format and will be stored as 0.';
-    if (status === 'overflow') return 'Overflow: this value is outside the range for this format and will be set to the nearest valid limit.';
-    return 'This value cannot be represented exactly in this format.';
-  }
-
-  function handleDenarySubmit() {
-    const parsed = parseDenaryInput(denaryModalInput.value);
-    if (parsed.empty || parsed.invalid) {
-      denaryPending = null;
-      denaryModalInput.disabled = false;
-      denarySignBtn.disabled = false;
-      denaryConfirmBtn.hidden = true;
-      denarySubmitBtn.hidden = false;
-      denaryModalFeedback.innerHTML = '<span class="err">Please enter a valid denary number.</span>';
-      return;
-    }
-
-    const enc = encodeDenaryToFloat(parsed.value, S.m.length, S.e.length);
-    const absErr = Math.abs(parsed.value - enc.represented);
-    const relErr = parsed.value === 0 ? (absErr === 0 ? 0 : Infinity) : (absErr / Math.abs(parsed.value)) * 100;
-
-    if (enc.status === 'exact' || isNumericallyExact(parsed.value, enc.represented)) {
-      applyEncodedValue(enc);
-      closeDenaryModal();
-      return;
-    }
-
-    denaryPending = enc;
-    denaryModalInput.disabled = true;
-  denarySignBtn.disabled = true;
-    denaryConfirmBtn.hidden = false;
-    denarySubmitBtn.hidden = true;
-    denaryModalFeedback.innerHTML =
-      `<div class="warn">${describeStatus(enc.status)}</div>` +
-      `<div class="denary-stats">` +
-      `<div class="denary-stat-row"><span class="denary-stat-lbl">Closest possible</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${fmtNum(enc.represented)}</span></div>` +
-      `<div class="denary-stat-row"><span class="denary-stat-lbl">Absolute error</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${fmtNum(absErr)}</span></div>` +
-      `<div class="denary-stat-row"><span class="denary-stat-lbl">Relative error</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${formatPercent(relErr)}</span></div>` +
-      `</div>`;
-  }
-
-  document.getElementById('denary-open-btn').addEventListener('click', openDenaryModal);
-  document.getElementById('denary-cancel').addEventListener('click', closeDenaryModal);
-  document.getElementById('denary-submit').addEventListener('click', handleDenarySubmit);
-  denarySignBtn.addEventListener('click', toggleDenarySign);
-  document.getElementById('q-denary-sign-btn').addEventListener('click', toggleQuizDenarySign);
-  document.getElementById('denary-confirm').addEventListener('click', () => {
-    if (!denaryPending) return;
-    applyEncodedValue(denaryPending);
-    closeDenaryModal();
-  });
-  denaryModalInput.addEventListener('keydown', ev => {
-    if (ev.key === 'Enter') {
-      ev.preventDefault();
-      handleDenarySubmit();
-    }
-    if (ev.key === 'Escape') {
-      ev.preventDefault();
-      closeDenaryModal();
-    }
-  });
-
-  let _rfTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(_rfTimer);
-    _rfTimer = setTimeout(() => {
-      fitGrid('m-grid', S.m.length);
-      fitGrid('e-grid', S.e.length);
-    }, 80);
-  });
-
-  /* ══════════════════════════════════════════════════════════════════
-     QUIZ MODE
-  ══════════════════════════════════════════════════════════════════ */
-
-  /* ── Modal open / close ───────────────────────────────────────
-     Native <dialog>.showModal() renders in the browser top layer —
-     above all content, unaffected by scroll position, overflow, or
-     z-index. Eliminates all iOS Safari position:fixed quirks. */
-  function openModal() {
-    // Add class synchronously BEFORE showModal() so overflow:hidden is
-    // applied immediately — :has() recalculates async and would leave a
-    // brief window where background scroll is still possible.
-    document.documentElement.classList.add('modal-open');
-    document.body.classList.add('modal-open');
-    document.getElementById('q-modal').showModal();
-  }
-  function closeModal() {
-    document.getElementById('q-modal').close();
-    document.documentElement.classList.remove('modal-open');
-    document.body.classList.remove('modal-open');
-  }
-
-  // Weighted bit-width pools matching AQA paper distribution
-  const M_LENS_T1 = [6, 7, 7, 8, 8, 9, 10]; // Binary→Denary: full range
-  const M_LENS_T2 = [6, 7, 7, 8, 8];         // Denary→Binary: max 8 bits
-  const E_LENS    = [4, 4, 4, 5, 5, 6];       // weighted toward 4
-
-  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-  function randomBits(n) { return Array.from({length: n}, () => Math.round(Math.random())); }
-  function dpCount(n) {
-    const s = parseFloat(n.toPrecision(10)).toString();
-    const d = s.indexOf('.');
-    return d === -1 ? 0 : s.length - d - 1;
-  }
-
-  const QS = {
-    questionType: 'mixed',   // 'mixed' | '1' | '2' | 'extrema'
-    currentType:  1,          // actual type for current question
-    questionNum:  1,
-    correct:      0,
-    wrong:        0,
-    total:        0,
-    answered:     false,
-    mLen:         8,
-    eLen:         4,
-    mBits:        [],
-    eBits:        [],
-    targetDenary: 0,
-    storedValue:  0,   // nearest representable value (= targetDenary for exact questions)
-    isInexact:    false,
-    studentM:     [],
-    studentE:     [],
-    extremaType:  null, // '3'|'4'|'5'|'6' for extrema questions
-  };
-
-  const LS_SCORE_FP = 'encodr-fp-score';
-  function loadScoreFP() { try { return JSON.parse(localStorage.getItem(LS_SCORE_FP)) || {correct:0,wrong:0,total:0}; } catch { return {correct:0,wrong:0,total:0}; } }
-  function saveScoreFP() { localStorage.setItem(LS_SCORE_FP, JSON.stringify({correct:QS.correct,wrong:QS.wrong,total:QS.total})); }
-  function updateScoreDisplay() {
-    document.getElementById('q-correct').textContent = QS.correct;
-    document.getElementById('q-wrong').textContent   = QS.wrong;
-    document.getElementById('q-total').textContent   = QS.total;
-  }
-  const _sc = loadScoreFP();
-  QS.correct = _sc.correct; QS.wrong = _sc.wrong; QS.total = _sc.total;
-
-  function generateQuizQuestion() {
-    Object.assign(QS, window.EncodrQuizGenerators.floatingPoint.generate(QS.questionType));
-
-    renderQuizQuestion();
-  }
-
-  function renderQuizQuestion() {
-    const V = window.EncodrValidation;
-    const t = QS.currentType;
-    document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
-
-    const badge   = document.getElementById('q-type-badge');
-    const errArea = document.getElementById('q-err-area');
-
-    if (t === '1') {
-      badge.className = 'badge badge-m';
-      badge.textContent = 'Binary \u2192 Denary';
-      document.getElementById('q-text').textContent =
-        'What is the denary value of this floating point number?';
-      document.getElementById('q-target-wrap').hidden = true;
-      document.getElementById('q-t1-area').hidden = false;
-      errArea.hidden = true;
-      document.getElementById('q-answer-lbl').textContent = 'Your answer (denary)';
-      const inp = document.getElementById('q-denary-input');
-      inp.value = ''; inp.disabled = false;
-      inp.inputMode = 'decimal';
-      document.getElementById('q-denary-sign-btn').disabled = false;
-      document.getElementById('q-denary-sign-btn').hidden = false;
-    } else if (t === '2') {
-      badge.className = 'badge badge-e';
-      badge.textContent = 'Denary \u2192 Binary';
-      document.getElementById('q-t1-area').hidden = true;
-      document.getElementById('q-target-wrap').hidden = false;
-      document.getElementById('q-denary-target').textContent = fmtNum(QS.targetDenary);
-
-      if (QS.isInexact) {
-        document.getElementById('q-text').textContent =
-          `This value cannot be represented exactly in a ${QS.mLen}-bit mantissa. ` +
-          `Toggle the bits to the closest approximation, then calculate the errors below.`;
-        document.getElementById('q-err-notice').textContent =
-          `Stored value = your bit pattern\u2019s denary value.  ` +
-          `Absolute error = |target \u2212 stored|.  ` +
-          `Percentage relative error = (absolute error \u00F7 |target|) \u00D7 100.`;
-        ['q-abs-err', 'q-rel-err'].forEach(id => {
-          const el = document.getElementById(id);
-          el.value = ''; el.disabled = false;
-        });
-        errArea.hidden = false;
-      } else {
-        document.getElementById('q-text').textContent =
-          'Toggle the bits to represent the denary value shown below.';
-        errArea.hidden = true;
-      }
-    } else if (['3', '4', '5', '6'].includes(t)) {
-      // Extrema types: all are binary → denary format with custom questions
-      const typeNames = {
-        '3': 'smallest positive',
-        '4': 'largest positive',
-        '5': 'largest negative (closest to zero)',
-        '6': 'most negative'
-      };
-      const labels = {
-        '3': 'Smallest positive',
-        '4': 'Largest positive',
-        '5': 'Largest negative',
-        '6': 'Most negative'
-      };
-      badge.className = 'badge badge-m';
-      badge.textContent = labels[t];
-      document.getElementById('q-text').textContent =
-        `What is the ${typeNames[t]} number when a floating-point number is represented with ` +
-        `a ${QS.mLen}-bit two's complement mantissa and a ${QS.eLen}-bit two's complement exponent?`;
-      document.getElementById('q-target-wrap').hidden = true;
-      document.getElementById('q-t1-area').hidden = false;
-      errArea.hidden = true;
-      document.getElementById('q-m-card').hidden = true;
-      document.getElementById('q-e-card').hidden = true;
-      document.getElementById('q-answer-lbl').textContent = 'Your answer';
-      const inp = document.getElementById('q-denary-input');
-      inp.value = ''; inp.disabled = false;
-      inp.inputMode = 'decimal';
-      document.getElementById('q-denary-sign-btn').disabled = false;
-      document.getElementById('q-denary-sign-btn').hidden = false;
-    }
-
-    if (['1', '2'].includes(t)) {
-      document.getElementById('q-m-card').hidden = false;
-      document.getElementById('q-e-card').hidden = false;
-      renderQuizGrid('m', t === '1' ? QS.mBits : QS.studentM, t === '2');
-      renderQuizGrid('e', t === '1' ? QS.eBits : QS.studentE, t === '2');
-    }
-
-    closeModal();
-    document.getElementById('q-modal-feedback').innerHTML = '';
-    document.getElementById('q-submit').hidden   = false;
-    document.getElementById('q-submit').disabled = false;
-    V.clearInputError(document.getElementById('q-denary-input'));
-    V.clearInputError(document.getElementById('q-abs-err'));
-    V.clearInputError(document.getElementById('q-rel-err'));
-    V.clearSummary('q-submit');
-  }
-
-  function renderQuizGrid(type, bits, interactive) {
-    const grid = document.getElementById(`q-${type}-grid`);
-    grid.innerHTML = '';
-    const n = bits.length;
-    bits.forEach((bit, i) => {
-      const isSign = i === 0;
-      const prefix = type === 'm' ? 'm' : 'e';
-      const cls    = `${prefix}${isSign ? 's' : 'b'}${bit ? '1' : '0'}`;
-
-      const col = document.createElement('div');
-      col.className = 'bit-col';
-
-      const wt = document.createElement('div');
-      wt.className = 'bit-wt';
-      wt.innerHTML = type === 'm' ? mWeightHTML(i) : eWeightHTML(i, n);
-
-      const box = document.createElement('div');
-      box.className = `bit-box ${cls}${interactive ? '' : ' static'}`;
-      box.textContent = bit;
-
-      if (interactive) {
-        box.setAttribute('role', 'button');
-        box.setAttribute('tabindex', '0');
-        box.setAttribute('aria-label',
-          `${type === 'm' ? 'Mantissa' : 'Exponent'} bit ${i}, value ${bit}`);
-        const doToggle = () => {
-          if (QS.answered) return;
-          if (type === 'm') QS.studentM[i] ^= 1;
-          else              QS.studentE[i] ^= 1;
-          renderQuizGrid('m', QS.studentM, true);
-          renderQuizGrid('e', QS.studentE, true);
-        };
-        box.addEventListener('click', doToggle);
-        box.addEventListener('keydown', ev => {
-          if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); doToggle(); }
-        });
-      }
-
-      col.append(wt, box);
-      grid.appendChild(col);
-    });
-    fitGrid(`q-${type}-grid`, n);
-  }
-
-  function checkQuizAnswer() {
-    if (QS.answered) return;
-    const V = window.EncodrValidation;
-    const denaryInput = document.getElementById('q-denary-input');
-    const absInp = document.getElementById('q-abs-err');
-    const relInp = document.getElementById('q-rel-err');
-
-    V.clearInputError(denaryInput);
-    V.clearInputError(absInp);
-    V.clearInputError(relInp);
-    V.clearSummary('q-submit');
-
-    let student = null;
-    let stuAbs = null;
-    let stuRel = null;
-
-    if (['1', '3', '4', '5', '6'].includes(QS.currentType)) {
-      const raw = (denaryInput.value || '')
-        .trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
-      if (!raw) {
-        V.setInputError(denaryInput, 'This answer is required.');
-        V.setSummary('q-submit', 'Please fix the highlighted field.');
-        denaryInput.focus();
-        return;
-      }
-      student = parseFloat(raw);
-      if (isNaN(student)) {
-        V.setInputError(denaryInput, 'Enter a valid denary number.');
-        V.setSummary('q-submit', 'Please fix the highlighted field.');
-        denaryInput.focus();
-        return;
-      }
-    } else if (QS.isInexact) {
-      const absRaw = (absInp.value || '').trim();
-      const relRaw = (relInp.value || '').trim();
-      if (!absRaw) {
-        V.setInputError(absInp, 'Enter the absolute error value.');
-        V.setSummary('q-submit', 'Please fix the highlighted field.');
-        absInp.focus();
-        return;
-      }
-      if (!relRaw) {
-        V.setInputError(relInp, 'Enter the percentage relative error value.');
-        V.setSummary('q-submit', 'Please fix the highlighted field.');
-        relInp.focus();
-        return;
-      }
-
-      const parseErr = raw => parseFloat(
-        (raw || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.')
-      );
-      stuAbs = parseErr(absRaw);
-      stuRel = parseErr(relRaw);
-      if (isNaN(stuAbs)) {
-        V.setInputError(absInp, 'Enter a valid number for absolute error.');
-        V.setSummary('q-submit', 'Please fix the highlighted field.');
-        absInp.focus();
-        return;
-      }
-      if (isNaN(stuRel)) {
-        V.setInputError(relInp, 'Enter a valid number for percentage relative error.');
-        V.setSummary('q-submit', 'Please fix the highlighted field.');
-        relInp.focus();
-        return;
-      }
-    }
-
-    QS.answered = true;
-    QS.total++;
-    document.getElementById('q-submit').disabled = true;
-
-    let correct, html;
-    const target = QS.targetDenary;
-
-    if (['1', '3', '4', '5', '6'].includes(QS.currentType)) {
-      // ── Type 1 & extrema types: Binary → Denary ──────────────────────────────
-      const tol     = Math.abs(target) > 1e-12 ? Math.abs(target) * 1e-6 : 1e-9;
-      const typeLabel = ['3', '4', '5', '6'].includes(QS.currentType)
-        ? `<strong>${QS.extremaType === '3' ? 'smallest positive' : QS.extremaType === '4' ? 'largest positive' : QS.extremaType === '5' ? 'largest negative' : 'most negative'}</strong> `
-        : '';
-
-      correct = Math.abs(student - target) <= tol;
-      if (correct) {
-        html = `\u2713 Correct! The ${typeLabel}value is <strong>${fmtNum(target)}</strong>.`;
-      } else {
-        const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
-        html =
-          `<span class="fb-wrong">\u2717 Incorrect \u2014 you entered <strong>${fmtNum(student)}</strong>, ` +
-          `answer: <strong>${fmtNum(target)}</strong>.</span><br><br>` +
-          `Working:<br>` +
-          `\u00a0\u00a0Mantissa\u00a0= ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
-          `\u00a0\u00a0Exponent = ${eFormula(QS.eBits)} = ${ev}<br>` +
-          `\u00a0\u00a0Value\u00a0\u00a0\u00a0\u00a0= ${fmtNum(mv)} \u00d7 2<sup>${ev}</sup>` +
-          ` = <strong>${fmtNum(target)}</strong>`;
-      }
-      document.getElementById('q-denary-input').disabled = true;
-      document.getElementById('q-denary-sign-btn').disabled = true;
-
-    } else if (!QS.isInexact) {
-      // ── Type 2 exact: Denary → Binary ────────────────────────────
-      const smv = mVal(QS.studentM);
-      const sev = eVal(QS.studentE);
-      const sv  = smv === 0 ? 0 : smv * 2 ** sev;
-      const tol = Math.abs(target) > 1e-12 ? Math.abs(target) * 1e-6 : 1e-9;
-      correct = Math.abs(sv - target) <= tol;
-
-      if (correct) {
-        html = `\u2713 Correct! Your bits give <strong>${fmtNum(sv)}</strong>.`;
-      } else {
-        const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
-        html =
-          `<span class="fb-wrong">\u2717 Incorrect \u2014 your bits give <strong>${fmtNum(sv)}</strong>, ` +
-          `target: <strong>${fmtNum(target)}</strong>.</span><br><br>` +
-          `The correct answer:<br>` +
-          `\u00a0\u00a0Mantissa: <strong>${QS.mBits.join('\u00a0')}</strong><br>` +
-          `\u00a0\u00a0Exponent: <strong>${QS.eBits.join('\u00a0')}</strong><br><br>` +
-          `Working:<br>` +
-          `\u00a0\u00a0Mantissa\u00a0= ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
-          `\u00a0\u00a0Exponent = ${eFormula(QS.eBits)} = ${ev}<br>` +
-          `\u00a0\u00a0Value\u00a0\u00a0\u00a0\u00a0= ${fmtNum(mv)} \u00d7 2<sup>${ev}</sup>` +
-          ` = <strong>${fmtNum(target)}</strong>`;
-        renderQuizGrid('m', QS.mBits, false);
-        renderQuizGrid('e', QS.eBits, false);
-      }
-
-    } else {
-      // ── Type 2 inexact: Denary → Binary + error calculation ───────
-      const smv   = mVal(QS.studentM);
-      const sev   = eVal(QS.studentE);
-      const sv    = smv === 0 ? 0 : smv * 2 ** sev;
-      const stored = QS.storedValue;
-      const uls    = 2 ** (eVal(QS.eBits) - QS.mLen + 1);
-
-      // Check bits: student must produce the nearest representable value
-      const bitsCorrect = Math.abs(sv - stored) < uls * 0.001;
-
-      // Expected errors (computed from the correct stored value)
-      const expAbsErr = Math.abs(target - stored);
-      const expRelErr = expAbsErr / Math.abs(target) * 100;
-
-      // Tolerances: 5% relative on abs error; ±0.5 percentage points on rel error
-      const absCorrect = !isNaN(stuAbs) && Math.abs(stuAbs - expAbsErr) <= Math.max(expAbsErr * 0.05, 1e-12);
-      const relCorrect = !isNaN(stuRel) && Math.abs(stuRel - expRelErr) <= 0.5;
-
-      correct = bitsCorrect && absCorrect && relCorrect;
-
-      const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
-      const working =
-        `<br><br>Working:<br>` +
-        `\u00a0\u00a0Target\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0= <strong>${fmtNum(target)}</strong><br>` +
-        `\u00a0\u00a0Mantissa bits: <strong>${QS.mBits.join('\u00a0')}</strong> = ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
-        `\u00a0\u00a0Exponent bits: <strong>${QS.eBits.join('\u00a0')}</strong> = ${eFormula(QS.eBits)} = ${ev}<br>` +
-        `\u00a0\u00a0Stored value\u00a0= ${fmtNum(mv)} \u00d7 2<sup>${ev}</sup> = <strong>${fmtNum(stored)}</strong><br>` +
-        `\u00a0\u00a0Abs error\u00a0\u00a0\u00a0= |${fmtNum(target)} \u2212 ${fmtNum(stored)}| = <strong>${fmtNum(expAbsErr)}</strong><br>` +
-        `\u00a0\u00a0Rel error\u00a0\u00a0\u00a0= ${fmtNum(expAbsErr)} \u00F7 |${fmtNum(target)}| \u00D7 100 = <strong>${expRelErr.toPrecision(3)}%</strong>`;
-
-      if (correct) {
-        html =
-          `\u2713 All correct! Stored \u2248 <strong>${fmtNum(stored)}</strong>, ` +
-          `absolute error = <strong>${fmtNum(expAbsErr)}</strong>, ` +
-          `relative error \u2248 <strong>${expRelErr.toPrecision(3)}%</strong>.` +
-          working;
-      } else {
-        const tick = ok => ok ? '\u2713' : '\u2717';
-        html =
-          `<span class="fb-wrong">${tick(bitsCorrect)} Bit pattern: ` +
-          (bitsCorrect
-            ? `correct \u2014 stored value = <strong>${fmtNum(sv)}</strong>`
-            : `your bits give <strong>${fmtNum(sv)}</strong>, expected <strong>${fmtNum(stored)}</strong>`) +
-          `</span><br>` +
-          `<span class="fb-wrong">${tick(absCorrect)} Absolute error: ` +
-          (absCorrect
-            ? `<strong>${fmtNum(stuAbs)}</strong> \u2713`
-            : `you entered <strong>${isNaN(stuAbs) ? '(blank)' : fmtNum(stuAbs)}</strong>, expected <strong>${fmtNum(expAbsErr)}</strong>`) +
-          `</span><br>` +
-          `<span class="fb-wrong">${tick(relCorrect)} Relative error: ` +
-          (relCorrect
-            ? `<strong>${stuRel}%</strong> \u2713`
-            : `you entered <strong>${isNaN(stuRel) ? '(blank)' : stuRel + '%'}</strong>, expected <strong>${expRelErr.toPrecision(3)}%</strong>`) +
-          `</span>` +
-          working;
-        if (!bitsCorrect) {
-          renderQuizGrid('m', QS.mBits, false);
-          renderQuizGrid('e', QS.eBits, false);
-        }
-      }
-      document.getElementById('q-abs-err').disabled = true;
-      document.getElementById('q-rel-err').disabled = true;
-    }
-
-    if (correct) QS.correct++; else QS.wrong++;
-    updateScoreDisplay();
-    saveScoreFP();
-
-    const fbEl = document.getElementById('q-modal-feedback');
-    fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
-    fbEl.innerHTML = html;
-    if (document.activeElement) document.activeElement.blur();
-    openModal();
-  }
-
-  /* ── Mode-switch ─────────────────────────────── */
-  function switchMode(mode) {
-    const isExplore = mode === 'explore';
-    document.getElementById('explore-section').hidden = !isExplore;
-    document.getElementById('quiz-section').hidden    =  isExplore;
-    document.getElementById('tab-explore').classList.toggle('active',  isExplore);
-    document.getElementById('tab-quiz'   ).classList.toggle('active', !isExplore);
-    if (!isExplore) {
-      QS.questionNum = 1;
-      updateScoreDisplay();
-      generateQuizQuestion();
-    }
-  }
-
-  document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
-  document.getElementById('tab-quiz'   ).addEventListener('click', () => switchMode('quiz'));
-
-  document.querySelectorAll('.qtype-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('active')) return;
-      document.querySelectorAll('.qtype-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      QS.questionType = btn.dataset.qt;
-      closeModal();
-      QS.questionNum++;
-      generateQuizQuestion();
-    });
-  });
-
-  function wireLiveValidation() {
-    const V = window.EncodrValidation;
-    const denaryInput = document.getElementById('q-denary-input');
-    const absInp = document.getElementById('q-abs-err');
-    const relInp = document.getElementById('q-rel-err');
-
-    denaryInput.addEventListener('input', () => {
-      const raw = (denaryInput.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
-      if (raw && !isNaN(parseFloat(raw))) {
-        V.clearInputError(denaryInput);
-        V.maybeClearSummary('q-submit');
-      }
-    });
-
-    absInp.addEventListener('input', () => {
-      const raw = (absInp.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
-      if (raw && !isNaN(parseFloat(raw))) {
-        V.clearInputError(absInp);
-        V.maybeClearSummary('q-submit');
-      }
-    });
-
-    relInp.addEventListener('input', () => {
-      const raw = (relInp.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
-      if (raw && !isNaN(parseFloat(raw))) {
-        V.clearInputError(relInp);
-        V.maybeClearSummary('q-submit');
-      }
-    });
-  }
-
-  document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
-  document.getElementById('q-denary-input').addEventListener('keydown', ev => {
-    if (ev.key === 'Enter' && !QS.answered) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      checkQuizAnswer();
-    }
-  });
-  document.getElementById('q-next').addEventListener('click', () => {
-    closeModal();
-    QS.questionNum++;
-    generateQuizQuestion();
-  });
-  document.getElementById('q-reset-score').addEventListener('click', () => {
-    QS.correct = QS.wrong = QS.total = 0;
-    QS.questionNum = 1;
-    localStorage.removeItem(LS_SCORE_FP);
-    updateScoreDisplay();
-    generateQuizQuestion();
-  });
-
-  wireLiveValidation();
-</script>
-
-</body>
-</html>
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+  <meta name="theme-color" content="#050505" />
+
+  <meta name="description" content="Explore floating point representation by adjusting mantissa and exponent bits, then investigate normalisation and rounding error in focused A Level practice." />
+
+  <title>Encodr – Floating Point Numbers</title>
+
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+
+  <link rel="manifest" href="../site.webmanifest" />
+
+  <link rel="stylesheet" href="../style.css" />
+
+  <script src="../scripts/app.js" defer></script>
+
+  <script src="../scripts/quiz-generators.js" defer></script>
+
+
+
+  <style>
+
+    .intro-disclosure {
+
+      margin-bottom: 20px;
+
+      border: 1px solid var(--border);
+
+      border-radius: var(--r-sm);
+
+      background: rgba(255, 255, 255, 0.05);
+
+      overflow: clip;
+
+    }
+
+    .intro-disclosure summary {
+
+      list-style: none;
+
+      cursor: pointer;
+
+      padding: 10px 14px;
+
+      font-size: 14px;
+
+      font-weight: 700;
+
+      color: var(--text);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 12px;
+
+      background: rgba(0, 0, 0, 0.2);
+
+    }
+
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+
+    .intro-disclosure summary::after {
+
+      content: '+';
+
+      font-size: 20px;
+
+      line-height: 1;
+
+      color: var(--ml);
+
+    }
+
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+
+    .intro-disclosure .intro {
+
+      margin: 0;
+
+      padding: 12px 14px 14px;
+
+      font-size: 15px;
+
+      line-height: 1.6;
+
+    }
+
+    .status-area {
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: flex-end;
+
+      gap: 8px;
+
+      flex-wrap: wrap;
+
+    }
+
+    .denary-action-row {
+
+      display: flex;
+
+      justify-content: flex-end;
+
+      margin-top: 8px;
+
+    }
+
+    .denary-open-btn {
+
+      border: 1px solid rgba(255, 255, 255, 0.68);
+
+      background: rgba(0, 0, 0, 0.34);
+
+      color: #ffffff;
+
+      border-radius: 10px;
+
+      font-size: 13px;
+
+      font-weight: 700;
+
+      letter-spacing: 0.2px;
+
+      text-transform: none;
+
+      padding: 6px 12px;
+
+      cursor: pointer;
+
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.28);
+
+      transition: background .12s ease, border-color .12s ease, transform .08s ease;
+
+    }
+
+    .denary-open-btn:active { transform: translateY(0); }
+
+    .denary-open-btn:focus-visible {
+
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+
+      outline-offset: 2px;
+
+    }
+
+    #denary-modal {
+
+      border: none;
+
+      padding: 0;
+
+      background: transparent;
+
+      max-width: 100%;
+
+    }
+
+    #denary-modal[open] {
+
+      position: fixed;
+
+      inset: 0;
+
+      width: 100%;
+
+      height: 100%;
+
+      max-height: 100%;
+
+      padding: 24px;
+
+      box-sizing: border-box;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+    }
+
+    #denary-modal::backdrop { background: rgba(0,0,0,.72); }
+
+    .denary-modal-note {
+
+      font-size: 13px;
+
+      color: var(--muted);
+
+      margin-bottom: 14px;
+
+      line-height: 1.45;
+
+    }
+
+    .denary-modal-input-row {
+
+      display: flex;
+
+      gap: 10px;
+
+      align-items: stretch;
+
+      margin-bottom: 12px;
+
+    }
+
+    .denary-modal-input {
+
+      width: 100%;
+
+      flex: 1 1 auto;
+
+      font-size: 28px;
+
+      font-family: 'Consolas', monospace;
+
+      border: 1px solid var(--border);
+
+      border-radius: var(--r-sm);
+
+      background: #000;
+
+      color: #fff;
+
+      padding: 10px 12px;
+
+    }
+
+    .denary-modal-input:focus {
+
+      outline: none;
+
+      border-color: var(--ml);
+
+    }
+
+    .denary-sign-btn {
+
+      flex: 0 0 auto;
+
+      min-width: 56px;
+
+      padding: 0 12px;
+
+      border: 1px solid rgba(255, 255, 255, 0.55);
+
+      border-radius: var(--r-sm);
+
+      background: rgba(255, 255, 255, 0.08);
+
+      color: #fff;
+
+      font-size: 24px;
+
+      font-weight: 700;
+
+      font-family: 'Consolas', monospace;
+
+      cursor: pointer;
+
+      transition: background .12s ease, border-color .12s ease;
+
+    }
+
+    .denary-sign-btn:focus-visible {
+
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+
+      outline-offset: 2px;
+
+    }
+
+    .denary-sign-btn:disabled,
+
+    .denary-modal-input:disabled {
+
+      opacity: 0.6;
+
+      cursor: not-allowed;
+
+    }
+
+
+
+    @media (hover: hover) and (pointer: fine) {
+
+      .denary-open-btn:hover {
+
+        background: rgba(255, 255, 255, 0.14);
+
+        border-color: rgba(255, 255, 255, 0.95);
+
+        transform: translateY(-1px);
+
+      }
+
+
+
+      .denary-sign-btn:hover {
+
+        background: rgba(255, 255, 255, 0.16);
+
+        border-color: rgba(255, 255, 255, 0.85);
+
+      }
+
+    }
+
+    .denary-modal-feedback {
+
+      min-height: 62px;
+
+      font-size: 14px;
+
+      line-height: 1.6;
+
+      font-family: 'Consolas', monospace;
+
+      color: #fff;
+
+      margin-bottom: 14px;
+
+    }
+
+    .denary-stats {
+
+      display: grid;
+
+      gap: 2px;
+
+      justify-content: center;
+
+      margin-top: 4px;
+
+    }
+
+    .denary-stat-row {
+
+      display: grid;
+
+      grid-template-columns: 16ch 1ch auto;
+
+      column-gap: 8px;
+
+      align-items: baseline;
+
+      width: max-content;
+
+    }
+
+    .denary-stat-lbl { text-align: right; white-space: nowrap; }
+
+    .denary-stat-colon { text-align: center; }
+
+    .denary-stat-val { text-align: left; white-space: nowrap; }
+
+    .denary-modal-feedback .ok { color: #72ffa3; }
+
+    .denary-modal-feedback .warn { color: #ffd98f; }
+
+    .denary-modal-feedback .err { color: #ff8b8b; }
+
+    .denary-modal-actions {
+
+      display: flex;
+
+      gap: 10px;
+
+      justify-content: flex-end;
+
+      flex-wrap: wrap;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+
+
+<header>
+
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
+
+  <span class="breadcrumb-sep">›</span>
+
+  <span class="hsub">Floating Point Numbers</span>
+
+  <a class="home-btn" href="../index.html">Home</a>
+
+</header>
+
+
+
+<main>
+
+  <h1>Floating Point Numbers</h1>
+
+  <div class="mode-tabs" role="tablist">
+
+    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
+
+    <button class="mode-tab"        id="tab-quiz"    role="tab">Test</button>
+
+  </div>
+
+
+
+  <div id="explore-section">
+
+  <details class="intro-disclosure">
+
+    <summary>More info</summary>
+
+    <p class="intro">Click any bit to toggle it between&nbsp;0 and&nbsp;1. <br><br><strong>Normalisation</strong> (storing only one digit before the point) ensures each value has a <strong>unique representation</strong>, maximises <strong>precision</strong> by using all mantissa bits, and makes comparing numbers straightforward. A normalised number's mantissa starts with <strong>01</strong> or <strong>10</strong>.</p>
+
+    <p class="intro"><strong>Format used here:</strong> both the mantissa and exponent use <strong>two's complement</strong>, which is the format required by AQA. The value of the number is <em>mantissa &times; 2<sup>exponent</sup></em>, where the mantissa is treated as a two's complement binary fraction (bit&nbsp;0 has weight &minus;1, bit&nbsp;1 has weight 2<sup>&minus;1</sup>, and so on).<br><strong>Zero</strong> is a special case: it is stored as all mantissa and exponent bits set to&nbsp;0. This is the one value that cannot be normalised, and that is accepted convention rather than an error.</p>
+
+  </details>
+
+
+
+  <div class="controls">
+
+    <div class="chip chip-m">
+
+      <span class="chip-lbl chip-lbl-m">Mantissa</span>
+
+      <button class="step" id="m-minus" aria-label="Fewer mantissa bits">−</button>
+
+      <span class="step-val" id="m-count">8</span>
+
+      <button class="step" id="m-plus"  aria-label="More mantissa bits">+</button>
+
+      <span class="chip-lbl chip-lbl-u">bits</span>
+
+    </div>
+
+    <div class="chip chip-e">
+
+      <span class="chip-lbl chip-lbl-e">Exponent</span>
+
+      <button class="step" id="e-minus" aria-label="Fewer exponent bits">−</button>
+
+      <span class="step-val" id="e-count">4</span>
+
+      <button class="step" id="e-plus"  aria-label="More exponent bits">+</button>
+
+      <span class="chip-lbl chip-lbl-u">bits</span>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- Mantissa -->
+
+  <div class="result-card">
+
+    <div class="res-block">
+
+      <div class="labelled-grid-row">
+
+        <span class="badge badge-m row-badge">Mantissa</span>
+
+        <div class="grid-wrap">
+
+          <div class="bit-grid" id="m-grid"></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- Exponent -->
+
+  <div class="result-card">
+
+    <div class="res-block">
+
+      <div class="labelled-grid-row">
+
+        <span class="badge badge-e row-badge">Exponent</span>
+
+        <div class="grid-wrap">
+
+          <div class="bit-grid" id="e-grid"></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- Result -->
+
+  <div class="result-card">
+
+    <div class="res-block">
+
+      <div class="labelled-grid-row">
+
+        <div class="result-badge-row">
+
+          <span class="badge badge-r row-badge">Denary value</span>
+
+          <div class="status-area">
+
+            <div id="norm-area" class="norm-area"></div>
+
+          </div>
+
+        </div>
+
+        <div class="row-main">
+
+          <div class="res-big" id="res-big">0</div>
+
+          <div class="res-eq-row">
+
+            <div class="res-eq" id="res-eq"></div>
+
+          </div>
+
+          <div class="denary-action-row">
+
+            <button class="denary-open-btn" id="denary-open-btn" type="button" title="Edit the denary value and convert it to the closest representable floating-point value for the current mantissa and exponent sizes." aria-label="Edit denary value and convert to floating point">Edit denary</button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div><!-- /.result-card -->
+
+
+
+  <div class="result-card">
+
+    <div class="res-block">
+
+      <div class="labelled-grid-row">
+
+        <span class="badge badge-o row-badge">Range</span>
+
+        <div class="row-main">
+
+          <div class="res-eq" id="res-range-fl">Range: &minus;128 to 127</div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div><!-- /.result-card -->
+
+  </div><!-- /#explore-section -->
+
+
+
+  <!-- ── Quiz section ──────────────────────────────────────────────── -->
+
+  <div id="quiz-section" hidden>
+
+
+
+    <div class="quiz-topbar">
+
+      <div class="qtype-group">
+
+        <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
+
+        <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
+
+        <button class="qtype-btn" data-qt="1"><span class="qt-long">Binary &rarr; Denary</span><span class="qt-short">BIN &rarr; DEN</span></button>
+
+        <button class="qtype-btn" data-qt="2"><span class="qt-long">Denary &rarr; Binary</span><span class="qt-short">DEN &rarr; BIN</span></button>
+
+        <button class="qtype-btn" data-qt="extrema"><span class="qt-long">Extrema</span><span class="qt-short">EXT</span></button>
+
+      </div>
+
+      <div class="quiz-score-area">
+
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+
+        <button class="btn btn-sm" id="q-reset-score">Reset score</button>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card quiz-q-card">
+
+      <div class="res-block">
+
+        <div class="quiz-q-header">
+
+          <span class="quiz-q-num" id="q-num">Question 1</span>
+
+          <span class="badge" id="q-type-badge"></span>
+
+        </div>
+
+        <div class="quiz-q-text" id="q-text"></div>
+
+        <div id="q-target-wrap" hidden>
+
+          <div class="quiz-denary-target" id="q-denary-target"></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card" id="q-m-card">
+
+      <div class="res-block">
+
+        <div class="labelled-grid-row">
+
+          <span class="badge badge-m row-badge">Mantissa</span>
+
+          <div class="grid-wrap">
+
+            <div class="bit-grid" id="q-m-grid"></div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card" id="q-e-card">
+
+      <div class="res-block">
+
+        <div class="labelled-grid-row">
+
+          <span class="badge badge-e row-badge">Exponent</span>
+
+          <div class="grid-wrap">
+
+            <div class="bit-grid" id="q-e-grid"></div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card" id="q-t1-area" hidden>
+
+      <div class="res-block">
+
+        <div class="q-answer-lbl" id="q-answer-lbl">Your answer (denary)</div>
+
+        <div class="denary-modal-input-row">
+
+          <input class="q-denary-input" type="text" id="q-denary-input" inputmode="decimal"
+
+                 placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+
+          <button class="denary-sign-btn" id="q-denary-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card" id="q-err-area" hidden>
+
+      <div class="res-block">
+
+        <div class="q-err-notice" id="q-err-notice"></div>
+
+        <div class="err-grid">
+
+          <div>
+
+            <div class="q-err-lbl">Absolute error</div>
+
+            <input class="q-denary-input q-err-input" type="text" id="q-abs-err" inputmode="decimal"
+
+                   placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+
+          </div>
+
+          <div>
+
+            <div class="q-err-lbl">Relative Error (%)</div>
+
+            <input class="q-denary-input q-err-input" type="text" id="q-rel-err" inputmode="decimal"
+
+                   placeholder="Enter your answer" autocomplete="off" spellcheck="false" />
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="quiz-actions">
+
+      <button class="btn btn-submit" id="q-submit">Check Answer</button>
+
+    </div>
+
+
+
+  </div><!-- /#quiz-section -->
+
+
+
+  <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
+
+
+
+</main>
+
+
+
+<!-- Feedback modal — native <dialog> renders in top layer, immune to scroll/overflow/z-index on iOS -->
+
+<dialog id="q-modal" aria-labelledby="q-modal-feedback">
+
+  <div class="modal">
+
+    <div class="modal-feedback" id="q-modal-feedback"></div>
+
+    <div class="modal-footer">
+
+      <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
+
+    </div>
+
+  </div>
+
+</dialog>
+
+
+
+<dialog id="denary-modal" aria-labelledby="denary-modal-title">
+
+  <div class="modal">
+
+    <div class="modal-feedback">
+
+      <div id="denary-modal-title" class="denary-modal-note">Enter a denary number</div>
+
+      <div class="denary-modal-input-row">
+
+        <input class="denary-modal-input" id="denary-modal-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" />
+
+        <button class="denary-sign-btn" id="denary-sign-btn" type="button" title="Toggle positive or negative sign" aria-label="Toggle positive or negative sign">+/-</button>
+
+      </div>
+
+      <div class="denary-modal-feedback" id="denary-modal-feedback"></div>
+
+      <div class="denary-modal-actions">
+
+        <button class="btn btn-sm" id="denary-cancel" type="button">Cancel</button>
+
+        <button class="btn btn-sm" id="denary-confirm" type="button" hidden>Use Closest</button>
+
+        <button class="btn btn-submit" id="denary-submit" type="button">Submit</button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</dialog>
+
+
+
+<script>
+
+  /* ── State ─────────────────────────────────────────────────────── */
+
+  const S = {
+
+    m: Array(8).fill(0),
+
+    e: Array(4).fill(0),
+
+  };
+
+
+
+  /* ── Maths ─────────────────────────────────────────────────────── */
+
+  function mVal(bits) {
+
+    // Two's complement binary fraction: bit 0 = −1, bit i = 2^−i (i ≥ 1)
+
+    let v = bits[0] ? -1 : 0;
+
+    for (let i = 1; i < bits.length; i++) if (bits[i]) v += 2 ** -i;
+
+    return v;
+
+  }
+
+
+
+  function eVal(bits) {
+
+    // Two's complement integer: bit 0 = −2^(n−1), bit i = 2^(n−1−i)
+
+    const n = bits.length;
+
+    let v = bits[0] ? -(2 ** (n - 1)) : 0;
+
+    for (let i = 1; i < n; i++) if (bits[i]) v += 2 ** (n - 1 - i);
+
+    return v;
+
+  }
+
+
+
+  /* ── Formatting ────────────────────────────────────────────────── */
+
+  function fmtNum(n) {
+
+    if (n === Infinity)  return '+∞';
+
+    if (n === -Infinity) return '−∞';
+
+    if (!isFinite(n))    return 'Undefined';
+
+    if (n === 0)         return '0';
+
+    const r = parseFloat(n.toPrecision(10));
+
+    if (Math.abs(r) >= 1e13 || (Math.abs(r) < 0.0001 && r !== 0))
+
+      return r.toExponential(4);
+
+    return r.toString();
+
+  }
+
+
+
+  // HTML weight label above each mantissa bit
+
+  function mWeightHTML(i) {
+
+    if (i === 0) return '&minus;1';
+
+    return `2<sup>&minus;${i}</sup>`;
+
+  }
+
+
+
+  // HTML weight label above each exponent bit
+
+  function eWeightHTML(i, n) {
+
+    const exp = n - 1 - i;
+
+    const mag = 2 ** exp;
+
+    if (i === 0) return mag <= 64 ? `&minus;${mag}` : `&minus;2<sup>${n - 1}</sup>`;
+
+    return mag <= 64 ? mag.toString() : `2<sup>${exp}</sup>`;
+
+  }
+
+
+
+  // Plain-text breakdown formulas (no HTML needed, just Unicode)
+
+  function toSuperscript(n) {
+
+    const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+
+    return String(n).split('').map(ch => map[ch] || ch).join('');
+
+  }
+
+
+
+  function fracPower(i) {
+
+    return `2${toSuperscript(-i)}`;
+
+  }
+
+
+
+  function mFormula(bits) {
+
+    const parts = [];
+
+    if (bits[0]) parts.push('−1');
+
+    for (let i = 1; i < bits.length; i++) {
+
+      if (!bits[i]) continue;
+
+      parts.push(fracPower(i));
+
+    }
+
+    return parts.length ? parts.join(' + ') : '(all bits are 0)';
+
+  }
+
+
+
+  function eFormula(bits) {
+
+    const n = bits.length;
+
+    const parts = [];
+
+    if (bits[0]) parts.push(`−${2 ** (n - 1)}`);
+
+    for (let i = 1; i < n; i++) {
+
+      if (bits[i]) parts.push(String(2 ** (n - 1 - i)));
+
+    }
+
+    return parts.length ? parts.join(' + ') : '(all bits are 0)';
+
+  }
+
+
+
+  function signedIntToBits(v, n) {
+
+    const max = 2 ** n;
+
+    const u = v < 0 ? max + v : v;
+
+    return u.toString(2).padStart(n, '0').split('').map(ch => Number(ch));
+
+  }
+
+
+
+  function parseDenaryInput(raw) {
+
+    const text = raw.trim().replace(/,/g, '').replace(/\u2212/g, '-');
+
+    if (!text) return { empty: true };
+
+    const n = Number(text);
+
+    if (Number.isNaN(n)) return { invalid: true };
+
+    return { value: n };
+
+  }
+
+
+
+  function isMantissaNormalised(bits) {
+
+    if (bits.every(b => b === 0)) return false;
+
+    return bits.length < 2 || bits[0] !== bits[1];
+
+  }
+
+
+
+  function formatPercent(n) {
+
+    if (!isFinite(n)) return 'N/A';
+
+    return fmtNum(n) + ' %';
+
+  }
+
+
+
+  function isNumericallyExact(target, represented) {
+
+    if (represented === 0) return target === 0;
+
+    const tol = Number.EPSILON * 16 * Math.max(1, Math.abs(represented));
+
+    return Math.abs(target - represented) <= tol;
+
+  }
+
+
+
+  function encodeDenaryToFloat(x, mBits, eBits) {
+
+    const mScale = 2 ** (mBits - 1);
+
+    const minMInt = -(2 ** (mBits - 1));
+
+    const maxMInt = 2 ** (mBits - 1) - 1;
+
+    const minE = -(2 ** (eBits - 1));
+
+    const maxE = 2 ** (eBits - 1) - 1;
+
+    const maxRepresentable = (maxMInt / mScale) * (2 ** maxE);
+
+    const minRepresentable = -1 * (2 ** maxE);
+
+    const smallestPositive = 2 ** minE;
+
+    const smallestNegative = -(2 ** minE);
+
+
+
+    if (x === 0) {
+
+      return {
+
+        mBits: Array(mBits).fill(0),
+
+        eBits: Array(eBits).fill(0),
+
+        represented: 0,
+
+        status: 'exact',
+
+      };
+
+    }
+
+
+
+    if (!isFinite(x)) {
+
+      const maxMant = x < 0 ? minMInt : maxMInt;
+
+      return {
+
+        mBits: signedIntToBits(maxMant, mBits),
+
+        eBits: signedIntToBits(maxE, eBits),
+
+        represented: (maxMant / mScale) * (2 ** maxE),
+
+        status: 'overflow',
+
+      };
+
+    }
+
+
+
+    if (x > maxRepresentable) {
+
+      return {
+
+        mBits: signedIntToBits(maxMInt, mBits),
+
+        eBits: signedIntToBits(maxE, eBits),
+
+        represented: maxRepresentable,
+
+        status: 'overflow',
+
+      };
+
+    }
+
+
+
+    if (x < minRepresentable) {
+
+      return {
+
+        mBits: signedIntToBits(minMInt, mBits),
+
+        eBits: signedIntToBits(maxE, eBits),
+
+        represented: minRepresentable,
+
+        status: 'overflow',
+
+      };
+
+    }
+
+
+
+    if (x > 0 && Math.abs(x) < smallestPositive / 2) {
+
+      return {
+
+        mBits: Array(mBits).fill(0),
+
+        eBits: Array(eBits).fill(0),
+
+        represented: 0,
+
+        status: 'underflow',
+
+      };
+
+    }
+
+
+
+    if (x < 0 && Math.abs(x) < Math.abs(smallestNegative) / 2) {
+
+      return {
+
+        mBits: Array(mBits).fill(0),
+
+        eBits: Array(eBits).fill(0),
+
+        represented: 0,
+
+        status: 'underflow',
+
+      };
+
+    }
+
+
+
+    let best = null;
+
+    for (let E = minE; E <= maxE; E++) {
+
+      const scale = 2 ** E;
+
+      if (!isFinite(scale) || scale === 0) continue;
+
+
+
+      const scaled = (x / scale) * mScale;
+
+      if (!isFinite(scaled)) continue;
+
+
+
+      const rawCandidates = [Math.floor(scaled), Math.ceil(scaled), Math.round(scaled)];
+
+      const candidates = [...new Set(rawCandidates.map(v => Math.max(minMInt, Math.min(maxMInt, v))))];
+
+
+
+      for (const I of candidates) {
+
+        const represented = (I / mScale) * scale;
+
+        if (!isFinite(represented)) continue;
+
+
+
+        const err = Math.abs(represented - x);
+
+        const mArr = signedIntToBits(I, mBits);
+
+        const normalised = isMantissaNormalised(mArr);
+
+
+
+        if (!best || err < best.err || (err === best.err && normalised && !best.normalised)) {
+
+          best = { I, E, represented, err, normalised };
+
+          if (isNumericallyExact(x, represented) && normalised) break;
+
+        }
+
+      }
+
+
+
+      if (best && isNumericallyExact(x, best.represented) && best.normalised) break;
+
+    }
+
+
+
+    if (!best) {
+
+      return {
+
+        mBits: Array(mBits).fill(0),
+
+        eBits: Array(eBits).fill(0),
+
+        represented: 0,
+
+        status: 'underflow',
+
+      };
+
+    }
+
+
+
+    let status = 'inexact';
+
+    if (isNumericallyExact(x, best.represented)) {
+
+      status = 'exact';
+
+    } else if (best.represented === 0) {
+
+      status = 'underflow';
+
+    } else if ((x > 0 && best.I === maxMInt && best.E === maxE && best.represented < x) ||
+
+               (x < 0 && best.I === minMInt && best.E === maxE && best.represented > x)) {
+
+      status = 'overflow';
+
+    }
+
+
+
+    return {
+
+      mBits: signedIntToBits(best.I, mBits),
+
+      eBits: signedIntToBits(best.E, eBits),
+
+      represented: best.represented,
+
+      status,
+
+    };
+
+  }
+
+
+
+  function applyEncodedValue(enc) {
+
+    S.m = enc.mBits;
+
+    S.e = enc.eBits;
+
+    document.getElementById('m-count').textContent = S.m.length;
+
+    document.getElementById('e-count').textContent = S.e.length;
+
+    renderGrid('m');
+
+    renderGrid('e');
+
+    updateResult();
+
+  }
+
+
+
+  /* ── Rendering ─────────────────────────────────────────────────── */
+
+  function renderGrid(type) {
+
+    const bits = S[type];
+
+    const grid = document.getElementById(`${type}-grid`);
+
+    grid.innerHTML = '';
+
+    const n = bits.length;
+
+
+
+    bits.forEach((bit, i) => {
+
+      const isSign = i === 0;
+
+      const prefix = type === 'm' ? 'm' : 'e';
+
+      const cls = `${prefix}${isSign ? 's' : 'b'}${bit ? '1' : '0'}`;
+
+
+
+      const col = document.createElement('div');
+
+      col.className = 'bit-col';
+
+
+
+      const wt = document.createElement('div');
+
+      wt.className = 'bit-wt';
+
+      wt.innerHTML = type === 'm' ? mWeightHTML(i) : eWeightHTML(i, n);
+
+
+
+      const box = document.createElement('div');
+
+      box.className = `bit-box ${cls}`;
+
+      box.textContent = bit;
+
+      box.setAttribute('role', 'button');
+
+      box.setAttribute('tabindex', '0');
+
+      box.setAttribute('aria-label',
+
+        `${type === 'm' ? 'Mantissa' : 'Exponent'} bit ${i}, currently ${bit}`);
+
+      box.addEventListener('click', () => toggle(type, i));
+
+      box.addEventListener('keydown', ev => {
+
+        if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); toggle(type, i); }
+
+      });
+
+
+
+      col.append(wt, box);
+
+      grid.appendChild(col);
+
+    });
+
+    fitGrid(`${type}-grid`, n);
+
+  }
+
+
+
+  function fitGrid(gridId, n) {
+
+    const grid = document.getElementById(gridId);
+
+    if (!grid) return;
+
+    const available = grid.parentElement.clientWidth;
+
+    if (!available) return;
+
+    const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
+
+    grid.style.setProperty('--box-size', size + 'px');
+
+    grid.style.setProperty('--box-fs',   Math.round(size * 26 / 56) + 'px');
+
+    grid.style.setProperty('--wt-fs',    Math.max(9, Math.round(size * 17 / 56)) + 'px');
+
+  }
+
+
+
+  function toggle(type, i) {
+
+    S[type][i] ^= 1;
+
+    renderGrid(type);
+
+    updateResult();
+
+  }
+
+
+
+  function updateResult() {
+
+    const m = mVal(S.m);
+
+    const e = eVal(S.e);
+
+    const r = m === 0 ? 0 : m * 2 ** e;
+
+    const mBits = S.m.length;
+
+    const eBits = S.e.length;
+
+    const eMax = 2 ** (eBits - 1) - 1;
+
+    const min = -(2 ** eMax);
+
+    const max = (1 - 2 ** (-(mBits - 1))) * (2 ** eMax);
+
+
+
+    // Big value
+
+    document.getElementById('res-big').textContent = fmtNum(r);
+
+
+
+    // Equation line (values are computed numbers — safe to inject via innerHTML)
+
+    document.getElementById('res-eq').innerHTML =
+
+      `<span class="vm">${fmtNum(m)}</span>&thinsp;&times;&thinsp;` +
+
+      `2<sup><span class="ve">${e}</span></sup>&ensp;=&ensp;${fmtNum(r)}`;
+
+    document.getElementById('res-range-fl').innerHTML = `Range: <span class="vm">${fmtNum(min)}</span> to <span class="vm">${fmtNum(max)}</span>`;
+
+
+
+    // Normalisation indicator
+
+    const bits = S.m;
+
+    const normEl = document.getElementById('norm-area');
+
+    let cls, txt;
+
+    if (bits.every(b => b === 0) && S.e.every(b => b === 0)) {
+
+      cls = 'norm norm-z'; txt = 'Zero';
+
+    } else if (bits.length < 2 || bits[0] !== bits[1]) {
+
+      cls = 'norm norm-y'; txt = '✓ Normalised';
+
+    } else {
+
+      cls = 'norm norm-n'; txt = 'Not Normalised';
+
+    }
+
+    normEl.innerHTML = `<span class="${cls}">${txt}</span>`;
+
+
+
+  }
+
+
+
+  /* ── Bit-count controls ────────────────────────────────────────── */
+
+  function changeBits(type, delta) {
+
+    const cur  = S[type].length;
+
+    const next = Math.max(2, Math.min(16, cur + delta));
+
+    if (next === cur) return;
+
+    if (next > cur) S[type].push(0);
+
+    else            S[type].pop();
+
+
+
+    document.getElementById(type === 'm' ? 'm-count' : 'e-count').textContent = S[type].length;
+
+    renderGrid(type);
+
+    updateResult();
+
+  }
+
+
+
+  document.getElementById('m-minus').addEventListener('click', () => changeBits('m', -1));
+
+  document.getElementById('m-plus' ).addEventListener('click', () => changeBits('m', +1));
+
+  document.getElementById('e-minus').addEventListener('click', () => changeBits('e', -1));
+
+  document.getElementById('e-plus' ).addEventListener('click', () => changeBits('e', +1));
+
+
+
+  /* ── Init ──────────────────────────────────────────────────────── */
+
+  renderGrid('m');
+
+  renderGrid('e');
+
+  updateResult();
+
+
+
+  const denaryModal = document.getElementById('denary-modal');
+
+  const denaryModalInput = document.getElementById('denary-modal-input');
+
+  const denarySignBtn = document.getElementById('denary-sign-btn');
+
+  const denaryModalFeedback = document.getElementById('denary-modal-feedback');
+
+  const denaryConfirmBtn = document.getElementById('denary-confirm');
+
+  const denarySubmitBtn = document.getElementById('denary-submit');
+
+  let denaryPending = null;
+
+
+
+  function toggleDenarySign() {
+
+    if (denaryModalInput.disabled) return;
+
+    const value = denaryModalInput.value.trim();
+
+    if (!value) {
+
+      denaryModalInput.value = '-';
+
+    } else if (value.startsWith('-')) {
+
+      denaryModalInput.value = value.slice(1);
+
+    } else {
+
+      denaryModalInput.value = '-' + value;
+
+    }
+
+    denaryModalInput.focus();
+
+  }
+
+
+
+  function toggleQuizDenarySign() {
+
+    const quizInput = document.getElementById('q-denary-input');
+
+    if (!quizInput || quizInput.disabled) return;
+
+    const value = quizInput.value.trim();
+
+    if (!value) {
+
+      quizInput.value = '-';
+
+    } else if (value.startsWith('-')) {
+
+      quizInput.value = value.slice(1);
+
+    } else {
+
+      quizInput.value = '-' + value;
+
+    }
+
+    quizInput.focus();
+
+  }
+
+
+
+  function openDenaryModal() {
+
+    denaryPending = null;
+
+    denaryModalInput.value = document.getElementById('res-big').textContent.trim();
+
+    denaryModalInput.disabled = false;
+
+    denarySignBtn.disabled = false;
+
+    denaryModalFeedback.innerHTML = '';
+
+    denaryConfirmBtn.hidden = true;
+
+    denarySubmitBtn.hidden = false;
+
+    document.documentElement.classList.add('modal-open');
+
+    document.body.classList.add('modal-open');
+
+    denaryModal.showModal();
+
+    setTimeout(() => denaryModalInput.focus(), 0);
+
+  }
+
+
+
+  function closeDenaryModal() {
+
+    denaryModal.close();
+
+    if (!document.querySelector('dialog[open]')) {
+
+      document.documentElement.classList.remove('modal-open');
+
+      document.body.classList.remove('modal-open');
+
+    }
+
+  }
+
+
+
+  function describeStatus(status) {
+
+    if (status === 'underflow') return 'Underflow: this value is too small for this format and will be stored as 0.';
+
+    if (status === 'overflow') return 'Overflow: this value is outside the range for this format and will be set to the nearest valid limit.';
+
+    return 'This value cannot be represented exactly in this format.';
+
+  }
+
+
+
+  function handleDenarySubmit() {
+
+    const parsed = parseDenaryInput(denaryModalInput.value);
+
+    if (parsed.empty || parsed.invalid) {
+
+      denaryPending = null;
+
+      denaryModalInput.disabled = false;
+
+      denarySignBtn.disabled = false;
+
+      denaryConfirmBtn.hidden = true;
+
+      denarySubmitBtn.hidden = false;
+
+      denaryModalFeedback.innerHTML = '<span class="err">Please enter a valid denary number.</span>';
+
+      return;
+
+    }
+
+
+
+    const enc = encodeDenaryToFloat(parsed.value, S.m.length, S.e.length);
+
+    const absErr = Math.abs(parsed.value - enc.represented);
+
+    const relErr = parsed.value === 0 ? (absErr === 0 ? 0 : Infinity) : (absErr / Math.abs(parsed.value)) * 100;
+
+
+
+    if (enc.status === 'exact' || isNumericallyExact(parsed.value, enc.represented)) {
+
+      applyEncodedValue(enc);
+
+      closeDenaryModal();
+
+      return;
+
+    }
+
+
+
+    denaryPending = enc;
+
+    denaryModalInput.disabled = true;
+
+  denarySignBtn.disabled = true;
+
+    denaryConfirmBtn.hidden = false;
+
+    denarySubmitBtn.hidden = true;
+
+    denaryModalFeedback.innerHTML =
+
+      `<div class="warn">${describeStatus(enc.status)}</div>` +
+
+      `<div class="denary-stats">` +
+
+      `<div class="denary-stat-row"><span class="denary-stat-lbl">Closest possible</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${fmtNum(enc.represented)}</span></div>` +
+
+      `<div class="denary-stat-row"><span class="denary-stat-lbl">Absolute error</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${fmtNum(absErr)}</span></div>` +
+
+      `<div class="denary-stat-row"><span class="denary-stat-lbl">Relative error</span><span class="denary-stat-colon">:</span><span class="denary-stat-val">${formatPercent(relErr)}</span></div>` +
+
+      `</div>`;
+
+  }
+
+
+
+  document.getElementById('denary-open-btn').addEventListener('click', openDenaryModal);
+
+  document.getElementById('denary-cancel').addEventListener('click', closeDenaryModal);
+
+  document.getElementById('denary-submit').addEventListener('click', handleDenarySubmit);
+
+  denarySignBtn.addEventListener('click', toggleDenarySign);
+
+  document.getElementById('q-denary-sign-btn').addEventListener('click', toggleQuizDenarySign);
+
+  document.getElementById('denary-confirm').addEventListener('click', () => {
+
+    if (!denaryPending) return;
+
+    applyEncodedValue(denaryPending);
+
+    closeDenaryModal();
+
+  });
+
+  denaryModalInput.addEventListener('keydown', ev => {
+
+    if (ev.key === 'Enter') {
+
+      ev.preventDefault();
+
+      handleDenarySubmit();
+
+    }
+
+    if (ev.key === 'Escape') {
+
+      ev.preventDefault();
+
+      closeDenaryModal();
+
+    }
+
+  });
+
+
+
+  let _rfTimer;
+
+  window.addEventListener('resize', () => {
+
+    clearTimeout(_rfTimer);
+
+    _rfTimer = setTimeout(() => {
+
+      fitGrid('m-grid', S.m.length);
+
+      fitGrid('e-grid', S.e.length);
+
+    }, 80);
+
+  });
+
+
+
+  /* ══════════════════════════════════════════════════════════════════
+
+     QUIZ MODE
+
+  ══════════════════════════════════════════════════════════════════ */
+
+
+
+  /* ── Modal open / close ───────────────────────────────────────
+
+     Native <dialog>.showModal() renders in the browser top layer —
+
+     above all content, unaffected by scroll position, overflow, or
+
+     z-index. Eliminates all iOS Safari position:fixed quirks. */
+
+  function openModal() {
+
+    // Add class synchronously BEFORE showModal() so overflow:hidden is
+
+    // applied immediately — :has() recalculates async and would leave a
+
+    // brief window where background scroll is still possible.
+
+    document.documentElement.classList.add('modal-open');
+
+    document.body.classList.add('modal-open');
+
+    document.getElementById('q-modal').showModal();
+
+  }
+
+  function closeModal() {
+
+    document.getElementById('q-modal').close();
+
+    document.documentElement.classList.remove('modal-open');
+
+    document.body.classList.remove('modal-open');
+
+  }
+
+
+
+  // Weighted bit-width pools matching AQA paper distribution
+
+  const M_LENS_T1 = [6, 7, 7, 8, 8, 9, 10]; // Binary→Denary: full range
+
+  const M_LENS_T2 = [6, 7, 7, 8, 8];         // Denary→Binary: max 8 bits
+
+  const E_LENS    = [4, 4, 4, 5, 5, 6];       // weighted toward 4
+
+
+
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function randomBits(n) { return Array.from({length: n}, () => Math.round(Math.random())); }
+
+  function dpCount(n) {
+
+    const s = parseFloat(n.toPrecision(10)).toString();
+
+    const d = s.indexOf('.');
+
+    return d === -1 ? 0 : s.length - d - 1;
+
+  }
+
+
+
+  const QS = {
+
+    questionType: 'mixed',   // 'mixed' | '1' | '2' | 'extrema'
+
+    currentType:  1,          // actual type for current question
+
+    questionNum:  1,
+
+    correct:      0,
+
+    wrong:        0,
+
+    total:        0,
+
+    answered:     false,
+
+    mLen:         8,
+
+    eLen:         4,
+
+    mBits:        [],
+
+    eBits:        [],
+
+    targetDenary: 0,
+
+    storedValue:  0,   // nearest representable value (= targetDenary for exact questions)
+
+    isInexact:    false,
+
+    studentM:     [],
+
+    studentE:     [],
+
+    extremaType:  null, // '3'|'4'|'5'|'6' for extrema questions
+
+  };
+
+
+
+  const LS_SCORE_FP = 'encodr-fp-score';
+
+  function loadScoreFP() { try { return JSON.parse(localStorage.getItem(LS_SCORE_FP)) || {correct:0,wrong:0,total:0}; } catch { return {correct:0,wrong:0,total:0}; } }
+
+  function saveScoreFP() { localStorage.setItem(LS_SCORE_FP, JSON.stringify({correct:QS.correct,wrong:QS.wrong,total:QS.total})); }
+
+  function updateScoreDisplay() {
+
+    document.getElementById('q-correct').textContent = QS.correct;
+
+    document.getElementById('q-wrong').textContent   = QS.wrong;
+
+    document.getElementById('q-total').textContent   = QS.total;
+
+  }
+
+  const _sc = loadScoreFP();
+
+  QS.correct = _sc.correct; QS.wrong = _sc.wrong; QS.total = _sc.total;
+
+
+
+  function generateQuizQuestion() {
+
+    Object.assign(QS, window.EncodrQuizGenerators.floatingPoint.generate(QS.questionType));
+
+
+
+    renderQuizQuestion();
+
+  }
+
+
+
+  function renderQuizQuestion() {
+
+    const V = window.EncodrValidation;
+
+    const t = QS.currentType;
+
+    document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
+
+
+
+    const badge   = document.getElementById('q-type-badge');
+
+    const errArea = document.getElementById('q-err-area');
+
+
+
+    if (t === '1') {
+
+      badge.className = 'badge badge-m';
+
+      badge.textContent = 'Binary \u2192 Denary';
+
+      document.getElementById('q-text').textContent =
+
+        'What is the denary value of this floating point number?';
+
+      document.getElementById('q-target-wrap').hidden = true;
+
+      document.getElementById('q-t1-area').hidden = false;
+
+      errArea.hidden = true;
+
+      document.getElementById('q-answer-lbl').textContent = 'Your answer (denary)';
+
+      const inp = document.getElementById('q-denary-input');
+
+      inp.value = ''; inp.disabled = false;
+
+      inp.inputMode = 'decimal';
+
+      document.getElementById('q-denary-sign-btn').disabled = false;
+
+      document.getElementById('q-denary-sign-btn').hidden = false;
+
+    } else if (t === '2') {
+
+      badge.className = 'badge badge-e';
+
+      badge.textContent = 'Denary \u2192 Binary';
+
+      document.getElementById('q-t1-area').hidden = true;
+
+      document.getElementById('q-target-wrap').hidden = false;
+
+      document.getElementById('q-denary-target').textContent = fmtNum(QS.targetDenary);
+
+
+
+      if (QS.isInexact) {
+
+        document.getElementById('q-text').textContent =
+
+          `This value cannot be represented exactly in a ${QS.mLen}-bit mantissa. ` +
+
+          `Toggle the bits to the closest approximation, then calculate the errors below.`;
+
+        document.getElementById('q-err-notice').textContent =
+
+          `Stored value = your bit pattern\u2019s denary value.  ` +
+
+          `Absolute error = |target \u2212 stored|.  ` +
+
+          `Percentage relative error = (absolute error \u00F7 |target|) \u00D7 100.`;
+
+        ['q-abs-err', 'q-rel-err'].forEach(id => {
+
+          const el = document.getElementById(id);
+
+          el.value = ''; el.disabled = false;
+
+        });
+
+        errArea.hidden = false;
+
+      } else {
+
+        document.getElementById('q-text').textContent =
+
+          'Toggle the bits to represent the denary value shown below.';
+
+        errArea.hidden = true;
+
+      }
+
+    } else if (['3', '4', '5', '6'].includes(t)) {
+
+      // Extrema types: all are binary → denary format with custom questions
+
+      const typeNames = {
+
+        '3': 'smallest positive',
+
+        '4': 'largest positive',
+
+        '5': 'largest negative (closest to zero)',
+
+        '6': 'most negative'
+
+      };
+
+      const labels = {
+
+        '3': 'Smallest positive',
+
+        '4': 'Largest positive',
+
+        '5': 'Largest negative',
+
+        '6': 'Most negative'
+
+      };
+
+      badge.className = 'badge badge-m';
+
+      badge.textContent = labels[t];
+
+      document.getElementById('q-text').textContent =
+
+        `What is the ${typeNames[t]} number when a floating-point number is represented with ` +
+
+        `a ${QS.mLen}-bit two's complement mantissa and a ${QS.eLen}-bit two's complement exponent?`;
+
+      document.getElementById('q-target-wrap').hidden = true;
+
+      document.getElementById('q-t1-area').hidden = false;
+
+      errArea.hidden = true;
+
+      document.getElementById('q-m-card').hidden = true;
+
+      document.getElementById('q-e-card').hidden = true;
+
+      document.getElementById('q-answer-lbl').textContent = 'Your answer';
+
+      const inp = document.getElementById('q-denary-input');
+
+      inp.value = ''; inp.disabled = false;
+
+      inp.inputMode = 'decimal';
+
+      document.getElementById('q-denary-sign-btn').disabled = false;
+
+      document.getElementById('q-denary-sign-btn').hidden = false;
+
+    }
+
+
+
+    if (['1', '2'].includes(t)) {
+
+      document.getElementById('q-m-card').hidden = false;
+
+      document.getElementById('q-e-card').hidden = false;
+
+      renderQuizGrid('m', t === '1' ? QS.mBits : QS.studentM, t === '2');
+
+      renderQuizGrid('e', t === '1' ? QS.eBits : QS.studentE, t === '2');
+
+    }
+
+
+
+    closeModal();
+
+    document.getElementById('q-modal-feedback').innerHTML = '';
+
+    document.getElementById('q-submit').hidden   = false;
+
+    document.getElementById('q-submit').disabled = false;
+
+    V.clearInputError(document.getElementById('q-denary-input'));
+
+    V.clearInputError(document.getElementById('q-abs-err'));
+
+    V.clearInputError(document.getElementById('q-rel-err'));
+
+    V.clearSummary('q-submit');
+
+  }
+
+
+
+  function renderQuizGrid(type, bits, interactive) {
+
+    const grid = document.getElementById(`q-${type}-grid`);
+
+    grid.innerHTML = '';
+
+    const n = bits.length;
+
+    bits.forEach((bit, i) => {
+
+      const isSign = i === 0;
+
+      const prefix = type === 'm' ? 'm' : 'e';
+
+      const cls    = `${prefix}${isSign ? 's' : 'b'}${bit ? '1' : '0'}`;
+
+
+
+      const col = document.createElement('div');
+
+      col.className = 'bit-col';
+
+
+
+      const wt = document.createElement('div');
+
+      wt.className = 'bit-wt';
+
+      wt.innerHTML = type === 'm' ? mWeightHTML(i) : eWeightHTML(i, n);
+
+
+
+      const box = document.createElement('div');
+
+      box.className = `bit-box ${cls}${interactive ? '' : ' static'}`;
+
+      box.textContent = bit;
+
+
+
+      if (interactive) {
+
+        box.setAttribute('role', 'button');
+
+        box.setAttribute('tabindex', '0');
+
+        box.setAttribute('aria-label',
+
+          `${type === 'm' ? 'Mantissa' : 'Exponent'} bit ${i}, value ${bit}`);
+
+        const doToggle = () => {
+
+          if (QS.answered) return;
+
+          if (type === 'm') QS.studentM[i] ^= 1;
+
+          else              QS.studentE[i] ^= 1;
+
+          renderQuizGrid('m', QS.studentM, true);
+
+          renderQuizGrid('e', QS.studentE, true);
+
+        };
+
+        box.addEventListener('click', doToggle);
+
+        box.addEventListener('keydown', ev => {
+
+          if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); doToggle(); }
+
+        });
+
+      }
+
+
+
+      col.append(wt, box);
+
+      grid.appendChild(col);
+
+    });
+
+    fitGrid(`q-${type}-grid`, n);
+
+  }
+
+
+
+  function checkQuizAnswer() {
+
+    if (QS.answered) return;
+
+    const V = window.EncodrValidation;
+
+    const denaryInput = document.getElementById('q-denary-input');
+
+    const absInp = document.getElementById('q-abs-err');
+
+    const relInp = document.getElementById('q-rel-err');
+
+
+
+    V.clearInputError(denaryInput);
+
+    V.clearInputError(absInp);
+
+    V.clearInputError(relInp);
+
+    V.clearSummary('q-submit');
+
+
+
+    let student = null;
+
+    let stuAbs = null;
+
+    let stuRel = null;
+
+
+
+    if (['1', '3', '4', '5', '6'].includes(QS.currentType)) {
+
+      const raw = (denaryInput.value || '')
+
+        .trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
+
+      if (!raw) {
+
+        V.setInputError(denaryInput, 'This answer is required.');
+
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+
+        denaryInput.focus();
+
+        return;
+
+      }
+
+      student = parseFloat(raw);
+
+      if (isNaN(student)) {
+
+        V.setInputError(denaryInput, 'Enter a valid denary number.');
+
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+
+        denaryInput.focus();
+
+        return;
+
+      }
+
+    } else if (QS.isInexact) {
+
+      const absRaw = (absInp.value || '').trim();
+
+      const relRaw = (relInp.value || '').trim();
+
+      if (!absRaw) {
+
+        V.setInputError(absInp, 'Enter the absolute error value.');
+
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+
+        absInp.focus();
+
+        return;
+
+      }
+
+      if (!relRaw) {
+
+        V.setInputError(relInp, 'Enter the percentage relative error value.');
+
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+
+        relInp.focus();
+
+        return;
+
+      }
+
+
+
+      const parseErr = raw => parseFloat(
+
+        (raw || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.')
+
+      );
+
+      stuAbs = parseErr(absRaw);
+
+      stuRel = parseErr(relRaw);
+
+      if (isNaN(stuAbs)) {
+
+        V.setInputError(absInp, 'Enter a valid number for absolute error.');
+
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+
+        absInp.focus();
+
+        return;
+
+      }
+
+      if (isNaN(stuRel)) {
+
+        V.setInputError(relInp, 'Enter a valid number for percentage relative error.');
+
+        V.setSummary('q-submit', 'Please fix the highlighted field.');
+
+        relInp.focus();
+
+        return;
+
+      }
+
+    }
+
+
+
+    QS.answered = true;
+
+    QS.total++;
+
+    document.getElementById('q-submit').disabled = true;
+
+
+
+    let correct, html;
+
+    const target = QS.targetDenary;
+
+
+
+    if (['1', '3', '4', '5', '6'].includes(QS.currentType)) {
+
+      // ── Type 1 & extrema types: Binary → Denary ──────────────────────────────
+
+      const tol     = Math.abs(target) > 1e-12 ? Math.abs(target) * 1e-6 : 1e-9;
+
+      const typeLabel = ['3', '4', '5', '6'].includes(QS.currentType)
+
+        ? `<strong>${QS.extremaType === '3' ? 'smallest positive' : QS.extremaType === '4' ? 'largest positive' : QS.extremaType === '5' ? 'largest negative' : 'most negative'}</strong> `
+
+        : '';
+
+
+
+      correct = Math.abs(student - target) <= tol;
+
+      if (correct) {
+
+        html = `\u2713 Correct! The ${typeLabel}value is <strong>${fmtNum(target)}</strong>.`;
+
+      } else {
+
+        const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
+
+        html =
+
+          `<span class="fb-wrong">\u2717 Incorrect \u2014 you entered <strong>${fmtNum(student)}</strong>, ` +
+
+          `answer: <strong>${fmtNum(target)}</strong>.</span><br><br>` +
+
+          `Working:<br>` +
+
+          `\u00a0\u00a0Mantissa\u00a0= ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
+
+          `\u00a0\u00a0Exponent = ${eFormula(QS.eBits)} = ${ev}<br>` +
+
+          `\u00a0\u00a0Value\u00a0\u00a0\u00a0\u00a0= ${fmtNum(mv)} \u00d7 2<sup>${ev}</sup>` +
+
+          ` = <strong>${fmtNum(target)}</strong>`;
+
+      }
+
+      document.getElementById('q-denary-input').disabled = true;
+
+      document.getElementById('q-denary-sign-btn').disabled = true;
+
+
+
+    } else if (!QS.isInexact) {
+
+      // ── Type 2 exact: Denary → Binary ────────────────────────────
+
+      const smv = mVal(QS.studentM);
+
+      const sev = eVal(QS.studentE);
+
+      const sv  = smv === 0 ? 0 : smv * 2 ** sev;
+
+      const tol = Math.abs(target) > 1e-12 ? Math.abs(target) * 1e-6 : 1e-9;
+
+      correct = Math.abs(sv - target) <= tol;
+
+
+
+      if (correct) {
+
+        html = `\u2713 Correct! Your bits give <strong>${fmtNum(sv)}</strong>.`;
+
+      } else {
+
+        const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
+
+        html =
+
+          `<span class="fb-wrong">\u2717 Incorrect \u2014 your bits give <strong>${fmtNum(sv)}</strong>, ` +
+
+          `target: <strong>${fmtNum(target)}</strong>.</span><br><br>` +
+
+          `The correct answer:<br>` +
+
+          `\u00a0\u00a0Mantissa: <strong>${QS.mBits.join('\u00a0')}</strong><br>` +
+
+          `\u00a0\u00a0Exponent: <strong>${QS.eBits.join('\u00a0')}</strong><br><br>` +
+
+          `Working:<br>` +
+
+          `\u00a0\u00a0Mantissa\u00a0= ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
+
+          `\u00a0\u00a0Exponent = ${eFormula(QS.eBits)} = ${ev}<br>` +
+
+          `\u00a0\u00a0Value\u00a0\u00a0\u00a0\u00a0= ${fmtNum(mv)} \u00d7 2<sup>${ev}</sup>` +
+
+          ` = <strong>${fmtNum(target)}</strong>`;
+
+        renderQuizGrid('m', QS.mBits, false);
+
+        renderQuizGrid('e', QS.eBits, false);
+
+      }
+
+
+
+    } else {
+
+      // ── Type 2 inexact: Denary → Binary + error calculation ───────
+
+      const smv   = mVal(QS.studentM);
+
+      const sev   = eVal(QS.studentE);
+
+      const sv    = smv === 0 ? 0 : smv * 2 ** sev;
+
+      const stored = QS.storedValue;
+
+      const uls    = 2 ** (eVal(QS.eBits) - QS.mLen + 1);
+
+
+
+      // Check bits: student must produce the nearest representable value
+
+      const bitsCorrect = Math.abs(sv - stored) < uls * 0.001;
+
+
+
+      // Expected errors (computed from the correct stored value)
+
+      const expAbsErr = Math.abs(target - stored);
+
+      const expRelErr = expAbsErr / Math.abs(target) * 100;
+
+
+
+      // Tolerances: 5% relative on abs error; ±0.5 percentage points on rel error
+
+      const absCorrect = !isNaN(stuAbs) && Math.abs(stuAbs - expAbsErr) <= Math.max(expAbsErr * 0.05, 1e-12);
+
+      const relCorrect = !isNaN(stuRel) && Math.abs(stuRel - expRelErr) <= 0.5;
+
+
+
+      correct = bitsCorrect && absCorrect && relCorrect;
+
+
+
+      const mv = mVal(QS.mBits), ev = eVal(QS.eBits);
+
+      const working =
+
+        `<br><br>Working:<br>` +
+
+        `\u00a0\u00a0Target\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0= <strong>${fmtNum(target)}</strong><br>` +
+
+        `\u00a0\u00a0Mantissa bits: <strong>${QS.mBits.join('\u00a0')}</strong> = ${mFormula(QS.mBits)} = ${fmtNum(mv)}<br>` +
+
+        `\u00a0\u00a0Exponent bits: <strong>${QS.eBits.join('\u00a0')}</strong> = ${eFormula(QS.eBits)} = ${ev}<br>` +
+
+        `\u00a0\u00a0Stored value\u00a0= ${fmtNum(mv)} \u00d7 2<sup>${ev}</sup> = <strong>${fmtNum(stored)}</strong><br>` +
+
+        `\u00a0\u00a0Abs error\u00a0\u00a0\u00a0= |${fmtNum(target)} \u2212 ${fmtNum(stored)}| = <strong>${fmtNum(expAbsErr)}</strong><br>` +
+
+        `\u00a0\u00a0Rel error\u00a0\u00a0\u00a0= ${fmtNum(expAbsErr)} \u00F7 |${fmtNum(target)}| \u00D7 100 = <strong>${expRelErr.toPrecision(3)}%</strong>`;
+
+
+
+      if (correct) {
+
+        html =
+
+          `\u2713 All correct! Stored \u2248 <strong>${fmtNum(stored)}</strong>, ` +
+
+          `absolute error = <strong>${fmtNum(expAbsErr)}</strong>, ` +
+
+          `relative error \u2248 <strong>${expRelErr.toPrecision(3)}%</strong>.` +
+
+          working;
+
+      } else {
+
+        const tick = ok => ok ? '\u2713' : '\u2717';
+
+        html =
+
+          `<span class="fb-wrong">${tick(bitsCorrect)} Bit pattern: ` +
+
+          (bitsCorrect
+
+            ? `correct \u2014 stored value = <strong>${fmtNum(sv)}</strong>`
+
+            : `your bits give <strong>${fmtNum(sv)}</strong>, expected <strong>${fmtNum(stored)}</strong>`) +
+
+          `</span><br>` +
+
+          `<span class="fb-wrong">${tick(absCorrect)} Absolute error: ` +
+
+          (absCorrect
+
+            ? `<strong>${fmtNum(stuAbs)}</strong> \u2713`
+
+            : `you entered <strong>${isNaN(stuAbs) ? '(blank)' : fmtNum(stuAbs)}</strong>, expected <strong>${fmtNum(expAbsErr)}</strong>`) +
+
+          `</span><br>` +
+
+          `<span class="fb-wrong">${tick(relCorrect)} Relative error: ` +
+
+          (relCorrect
+
+            ? `<strong>${stuRel}%</strong> \u2713`
+
+            : `you entered <strong>${isNaN(stuRel) ? '(blank)' : stuRel + '%'}</strong>, expected <strong>${expRelErr.toPrecision(3)}%</strong>`) +
+
+          `</span>` +
+
+          working;
+
+        if (!bitsCorrect) {
+
+          renderQuizGrid('m', QS.mBits, false);
+
+          renderQuizGrid('e', QS.eBits, false);
+
+        }
+
+      }
+
+      document.getElementById('q-abs-err').disabled = true;
+
+      document.getElementById('q-rel-err').disabled = true;
+
+    }
+
+
+
+    if (correct) QS.correct++; else QS.wrong++;
+
+    updateScoreDisplay();
+
+    saveScoreFP();
+
+
+
+    const fbEl = document.getElementById('q-modal-feedback');
+
+    fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
+
+    fbEl.innerHTML = html;
+
+    if (document.activeElement) document.activeElement.blur();
+
+    openModal();
+
+  }
+
+
+
+  /* ── Mode-switch ─────────────────────────────── */
+
+  function switchMode(mode) {
+
+    const isExplore = mode === 'explore';
+
+    document.getElementById('explore-section').hidden = !isExplore;
+
+    document.getElementById('quiz-section').hidden    =  isExplore;
+
+    document.getElementById('tab-explore').classList.toggle('active',  isExplore);
+
+    document.getElementById('tab-quiz'   ).classList.toggle('active', !isExplore);
+
+    if (!isExplore) {
+
+      QS.questionNum = 1;
+
+      updateScoreDisplay();
+
+      generateQuizQuestion();
+
+    }
+
+  }
+
+
+
+  document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
+
+  document.getElementById('tab-quiz'   ).addEventListener('click', () => switchMode('quiz'));
+
+
+
+  document.querySelectorAll('.qtype-btn').forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+      if (btn.classList.contains('active')) return;
+
+      document.querySelectorAll('.qtype-btn').forEach(b => b.classList.remove('active'));
+
+      btn.classList.add('active');
+
+      QS.questionType = btn.dataset.qt;
+
+      closeModal();
+
+      QS.questionNum++;
+
+      generateQuizQuestion();
+
+    });
+
+  });
+
+
+
+  function wireLiveValidation() {
+
+    const V = window.EncodrValidation;
+
+    const denaryInput = document.getElementById('q-denary-input');
+
+    const absInp = document.getElementById('q-abs-err');
+
+    const relInp = document.getElementById('q-rel-err');
+
+
+
+    denaryInput.addEventListener('input', () => {
+
+      const raw = (denaryInput.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
+
+      if (raw && !isNaN(parseFloat(raw))) {
+
+        V.clearInputError(denaryInput);
+
+        V.maybeClearSummary('q-submit');
+
+      }
+
+    });
+
+
+
+    absInp.addEventListener('input', () => {
+
+      const raw = (absInp.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
+
+      if (raw && !isNaN(parseFloat(raw))) {
+
+        V.clearInputError(absInp);
+
+        V.maybeClearSummary('q-submit');
+
+      }
+
+    });
+
+
+
+    relInp.addEventListener('input', () => {
+
+      const raw = (relInp.value || '').trim().replace(/[\u2212\u2013\u2014]/g, '-').replace(',', '.');
+
+      if (raw && !isNaN(parseFloat(raw))) {
+
+        V.clearInputError(relInp);
+
+        V.maybeClearSummary('q-submit');
+
+      }
+
+    });
+
+  }
+
+
+
+  document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
+
+  document.getElementById('q-denary-input').addEventListener('keydown', ev => {
+
+    if (ev.key === 'Enter' && !QS.answered) {
+
+      ev.preventDefault();
+
+      ev.stopPropagation();
+
+      checkQuizAnswer();
+
+    }
+
+  });
+
+  document.getElementById('q-next').addEventListener('click', () => {
+
+    closeModal();
+
+    QS.questionNum++;
+
+    generateQuizQuestion();
+
+  });
+
+  document.getElementById('q-reset-score').addEventListener('click', () => {
+
+    QS.correct = QS.wrong = QS.total = 0;
+
+    QS.questionNum = 1;
+
+    localStorage.removeItem(LS_SCORE_FP);
+
+    updateScoreDisplay();
+
+    generateQuizQuestion();
+
+  });
+
+
+
+  wireLiveValidation();
+
+</script>
+
+
+
+</body>
+
+</html>
+

@@ -1,1314 +1,2620 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="theme-color" content="#050505" />
-  <meta name="description" content="Visualise digitised sound by changing sampling rate and sample resolution, then apply Nyquist and file size calculations for GCSE and A Level practice." />
-  <title>Encodr – Digitised Sound</title>
-  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
-  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
-  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
-  <link rel="manifest" href="../site.webmanifest" />
-  <link rel="stylesheet" href="../style.css" />
-  <script src="../scripts/app.js" defer></script>
-  <script src="../scripts/quiz-generators.js" defer></script>
-  <!-- Cloudflare Web Analytics -->
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"3fd947bc782243ada1dbd315a9feca0e"}'></script>
-  <!-- End Cloudflare Web Analytics -->
-  <script data-goatcounter="https://korovatron.goatcounter.com/count"
-          async src="//gc.zgo.at/count.js"></script>
-  <style>
-    /* ── Sound page layout ───────────────────── */
-    .sound-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 18px;
-    }
-
-    .intro-disclosure {
-      margin-bottom: 20px;
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      background: rgba(255, 255, 255, 0.05);
-      overflow: clip;
-    }
-    .intro-disclosure summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 10px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: rgba(0, 0, 0, 0.2);
-    }
-    .intro-disclosure summary::-webkit-details-marker { display: none; }
-    .intro-disclosure summary::after {
-      content: '+';
-      font-size: 20px;
-      line-height: 1;
-      color: var(--ml);
-    }
-    .intro-disclosure[open] summary::after { content: '\2212'; }
-    .intro-disclosure .intro {
-      margin: 0;
-      padding: 12px 14px 14px;
-      font-size: 15px;
-      line-height: 1.6;
-    }
-
-    /* ── Canvas card ─────────────────────────── */
-    .wave-card {
-      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 10px;
-      box-shadow: 0 4px 18px rgba(0,0,0,.45);
-    }
-    .wave-canvas-wrap {
-      background: #000;
-      border-radius: var(--r-sm);
-      padding: 4px;
-      width: 100%;
-      min-width: 0;
-    }
-    #wave-canvas {
-      display: block;
-      width: 100%;
-      height: auto;
-      background: #0a0714;
-      border-radius: calc(var(--r-sm) - 2px);
-    }
-
-    /* ── Legend ──────────────────────────────── */
-    .wave-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 18px;
-      padding: 14px 14px 6px;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .legend-swatch {
-      width: 28px; height: 3px;
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
-    .legend-swatch-dot {
-      width: 11px; height: 11px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .legend-swatch-dashed {
-      width: 28px; height: 0;
-      border-top: 2px dashed;
-      border-radius: 0;
-      flex-shrink: 0;
-    }
-
-    /* ── Component strip ────────────────────────── */
-    .comp-strip {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 0;
-    }
-    .comp-slot {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .comp-pill {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      background: #000;
-      border-radius: 0;
-      padding: 7px 14px;
-      box-shadow: 0 0 0 1.5px var(--comp-col, rgba(255,255,255,.40));
-      transition: opacity .15s;
-    }
-    .comp-pill.inactive {
-      opacity: .38;
-    }
-    .comp-lbl {
-      font-size: 14px; font-weight: 800;
-      letter-spacing: 1px;
-      color: var(--comp-col, #fff);
-      font-family: 'Consolas', monospace;
-      min-width: 16px; text-align: center;
-    }
-    .comp-toggle {
-      font-size: 11px; font-weight: 800;
-      letter-spacing: 1.5px; text-transform: uppercase;
-      color: #000;
-      background: var(--comp-col, #fff);
-      border: none;
-      border-radius: 0;
-      cursor: pointer;
-      padding: 3px 10px;
-      min-width: 52px;
-      text-align: center;
-      line-height: 1.4;
-      transition: opacity .12s, background .12s;
-      flex-shrink: 0;
-    }
-    .comp-toggle.inactive {
-      background: transparent;
-      color: var(--comp-col, #fff);
-      box-shadow: 0 0 0 1.5px var(--comp-col, #fff);
-    }
-    .comp-freq-val {
-      font-size: 15px; font-weight: 700;
-      font-family: 'Consolas', monospace;
-      color: var(--comp-col, #fff);
-      min-width: 44px; text-align: center;
-    }
-
-    @media (hover: hover) and (pointer: fine) {
-      .comp-toggle:hover { opacity: .80; }
-    }
-    .comp-pill-a { --comp-col: #c0a0ff; }
-    .comp-pill-b { --comp-col: #ff9944; }
-    .comp-pill-c { --comp-col: #44ddaa; }
-    .comp-toggle-a { --comp-col: #c0a0ff; }
-    .comp-toggle-b { --comp-col: #ff9944; }
-    .comp-toggle-c { --comp-col: #44ddaa; }
-
-    @media (max-width: 560px) {
-      .comp-strip {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-
-    /* ── Sliders ─────────────────────────────── */
-    .sliders-card {
-      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 18px 18px 14px;
-      box-shadow: 0 4px 18px rgba(0,0,0,.45);
-    }
-    .sliders-inner {
-      background: transparent;
-      border-radius: var(--r-sm);
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
-    .slider-row {
-      display: grid;
-      grid-template-columns: 160px 1fr auto;
-      align-items: center;
-      gap: 14px;
-    }
-    @media (max-width: 560px) {
-      .slider-row {
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
-      }
-      .slider-row .slider-lbl { grid-column: 1; grid-row: 1; }
-      .slider-row .slider-val { grid-column: 2; grid-row: 1; text-align: right; }
-      .slider-row input[type=range] { grid-column: 1 / -1; grid-row: 2; }
-    }
-    .slider-lbl {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1.3;
-    }
-    .slider-lbl-sub {
-      display: block;
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--dim);
-      margin-top: 2px;
-    }
-    .slider-val {
-      font-size: 18px;
-      font-weight: 700;
-      font-family: 'Consolas', monospace;
-      color: var(--ml);
-      min-width: 90px;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    /* Range input styling */
-    input[type=range] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 44px;
-      background: transparent;
-      outline: none;
-      cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-runnable-track {
-      height: 6px;
-      border-radius: 3px;
-      background: rgba(255,255,255,.12);
-    }
-    input[type=range]::-moz-range-track {
-      height: 6px;
-      border-radius: 3px;
-      background: rgba(255,255,255,.12);
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 20px; height: 20px;
-      margin-top: -7px;
-      border-radius: 50%;
-      background: var(--ml);
-      border: 2px solid #000;
-      box-shadow: 0 0 0 2px var(--ml);
-      cursor: pointer;
-    }
-    input[type=range]::-moz-range-thumb {
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      background: var(--ml);
-      border: 2px solid #000;
-      box-shadow: 0 0 0 2px var(--ml);
-      cursor: pointer;
-    }
-    input[type=range]#sr-slider::-webkit-slider-thumb { background: #44aaff; box-shadow: 0 0 0 2px #44aaff; }
-    input[type=range]#sr-slider::-moz-range-thumb     { background: #44aaff; box-shadow: 0 0 0 2px #44aaff; }
-    .slider-val-sr { color: #44aaff; }
-
-    /* Nyquist warning */
-    .nyquist-warn {
-      display: block;
-      visibility: hidden;
-      margin: 10px auto 0;
-      font-size: 14px;
-      line-height: 1.55;
-      color: #ff4444;
-      font-weight: 700;
-      text-align: center;
-      background: #000000;
-      box-shadow: 0 0 0 2px rgba(255,255,255,.70);
-      border-radius: 0;
-      padding: 8px 12px;
-      max-width: fit-content;
-    }
-    .nyquist-warn.visible { visibility: visible; }
-
-    /* ── Wave card inner layout ──────────────── */
-    .wave-main-row {
-      display: flex;
-      align-items: stretch;
-      gap: 4px;
-    }
-    .wave-res-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 4px;
-      width: 76px;
-      flex-shrink: 0;
-      overflow: hidden;
-      border-left: 1px solid rgba(255,255,255,.30);
-    }
-    .vert-slider-wrap {
-      position: relative;
-      flex: 1;
-      width: 100%;
-      min-height: 80px;
-    }
-    .wave-ctrl-lbl {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #fff;
-      white-space: nowrap;
-    }
-    #res-slider {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      height: 44px;
-      width: 150px;
-      transform: translate(-50%, -50%) rotate(-90deg);
-      appearance: none;
-      -webkit-appearance: none;
-      writing-mode: horizontal-tb;
-      direction: ltr;
-      background: transparent;
-      outline: none;
-      cursor: pointer;
-      touch-action: none;
-      padding: 0;
-      margin: 0;
-    }
-    #res-slider::-webkit-slider-runnable-track {
-      height: 6px;
-      background: rgba(0,0,0,.50);
-      border-radius: 3px;
-    }
-    #res-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #fff;
-      margin-top: -5px;
-      cursor: pointer;
-    }
-    #res-slider::-moz-range-track {
-      height: 6px;
-      background: rgba(0,0,0,.50);
-      border-radius: 3px;
-    }
-    #res-slider::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #fff;
-      border: none;
-      cursor: pointer;
-    }
-    .wave-sr-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 4px 4px;
-      border-top: 1px solid rgba(255,255,255,.30);
-    }
-    .wave-sr-lbl {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #fff;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .wave-sr-row #sr-slider {
-      flex: 1 !important;
-      width: auto !important;
-    }
-    .wave-sr-row #sr-slider::-webkit-slider-runnable-track { background: rgba(0,0,0,.50); }
-    .wave-sr-row #sr-slider::-moz-range-track               { background: rgba(0,0,0,.50); }
-
-    /* ── File size card ──────────────────────── */
-    .filesize-card {
-      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 18px;
-      box-shadow: 0 4px 18px rgba(0,0,0,.45);
-    }
-    .filesize-inner {
-      background: transparent;
-      border-radius: var(--r-sm);
-      padding: 0;
-    }
-    .filesize-title {
-      font-size: 13px; text-transform: uppercase;
-      letter-spacing: 1.5px; color: var(--dim);
-      font-weight: 700; margin-bottom: 16px;
-    }
-    .filesize-formula {
-      font-size: 26px;
-      font-family: 'Consolas', monospace;
-      color: var(--muted);
-      margin-bottom: 16px;
-      line-height: 1.5;
-      text-align: center;
-    }
-
-    .filesize-formula strong {
-      font-size: 1.08em;
-    }
-
-    .fs-final-answer {
-      color: var(--muted);
-    }
-    .fs-var-rate { color: #44aaff; }
-    .fs-var-res  { color: var(--ml); }
-    .fs-var-secs { color: var(--exl); }
-    .filesize-duration-row {
-      display: grid;
-      grid-template-columns: 160px 1fr auto;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-    @media (max-width: 560px) {
-      .filesize-duration-row {
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
-      }
-      .filesize-duration-row .slider-lbl { grid-column: 1; grid-row: 1; }
-      .filesize-duration-row .slider-val { grid-column: 2; grid-row: 1; text-align: right; }
-      .filesize-duration-row input[type=range] { grid-column: 1 / -1; grid-row: 2; }
-    }
-    input[type=range]#dur-slider::-webkit-slider-thumb { background: var(--exl); box-shadow: 0 0 0 2px var(--exl); }
-    input[type=range]#dur-slider::-moz-range-thumb     { background: var(--exl); box-shadow: 0 0 0 2px var(--exl); }
-    input[type=range]#dur-slider::-webkit-slider-runnable-track { background: rgba(0,0,0,.50); }
-    input[type=range]#dur-slider::-moz-range-track               { background: rgba(0,0,0,.50); }
-    .slider-val-dur { color: var(--exl); }
-    .filesize-result {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .fs-box {
-      flex: 1;
-      min-width: 120px;
-      background: #000;
-      border-radius: var(--r-sm);
-      padding: 12px 14px;
-      text-align: center;
-    }
-    .fs-box-lbl {
-      font-size: 11px; text-transform: uppercase;
-      letter-spacing: 1.5px; color: var(--dim);
-      font-weight: 700; margin-bottom: 6px;
-    }
-    .fs-box-val {
-      font-size: 22px; font-weight: 800;
-      font-family: 'Consolas', monospace;
-      color: var(--ml);
-      line-height: 1.1;
-      word-break: break-all;
-    }
-
-    /* ── Quiz section ────────────────────────── */
-    .sound-quiz-q-card { margin-bottom: 10px; }
-
-    .sq-input {
-      display: block; width: 100%;
-      background: #000;
-      border: 2px solid rgba(255,255,255,.20);
-      border-radius: var(--r-sm);
-      color: var(--text);
-      font-size: 30px; font-weight: 700;
-      font-family: 'Consolas', monospace;
-      padding: 12px 16px;
-      outline: none;
-      transition: border-color .15s, box-shadow .15s;
-    }
-    .sq-input:focus {
-      border-color: rgba(255,255,255,.20);
-      box-shadow: 0 0 0 1.5px var(--ml);
-    }
-    .sq-input:disabled { opacity: .55; }
-
-    .sq-unit-label {
-      font-size: 16px; color: var(--muted);
-      font-family: 'Consolas', monospace;
-      margin-top: 10px;
-    }
-
-    .badge-sq {
-      background: #000000; color: #44aaff;
-      box-shadow: 0 0 0 2px #44aaff;
-    }
-  </style>
-</head>
-<body>
-
-<header>
-  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
-  <span class="breadcrumb-sep">›</span>
-  <span class="hsub">Digitised Sound</span>
-  <a class="home-btn" href="../index.html">Home</a>
-</header>
-
-<main>
-  <h1>Digitised Sound</h1>
-
-  <div class="mode-tabs" role="tablist">
-    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
-    <button class="mode-tab"        id="tab-quiz"    role="tab">Test</button>
-  </div>
-
-  <!-- ── Explore section ──────────────────────────────────────────── -->
-  <div id="explore-section">
-
-    <details class="intro-disclosure">
-      <summary>More info</summary>
-      <p class="intro">
-        Sound is an <strong>analogue</strong> signal - a continuously varying wave of air pressure.
-        An <strong>ADC (Analogue to Digital Converter)</strong> converts this wave into digital data by taking <strong>regular samples</strong> of its amplitude.
-        Each sample is then encoded using a fixed number of bits, set by the <strong>sample resolution</strong>.
-        <br>
-        <br>
-        Adjust the sliders below to see how sampling rate and sample resolution affect the digital representation.
-      </p>
-    </details>
-
-    <div class="sound-layout">
-
-      <!-- Component strip -->
-      <div class="comp-strip">
-
-        <!-- A: optional -->
-        <div class="comp-slot" id="comp-a-slot">
-          <button class="comp-toggle comp-toggle-a" id="comp-a-toggle">ON</button>
-          <div class="comp-pill comp-pill-a" id="comp-a-pill">
-            <span class="comp-lbl">A</span>
-            <button class="step" id="comp-a-minus" aria-label="Lower frequency A">−</button>
-            <span class="comp-freq-val" id="comp-a-freq">4 Hz</span>
-            <button class="step" id="comp-a-plus"  aria-label="Raise frequency A">+</button>
-          </div>
-        </div>
-
-        <!-- B: optional -->
-        <div class="comp-slot" id="comp-b-slot">
-          <button class="comp-toggle comp-toggle-b" id="comp-b-toggle">ON</button>
-          <div class="comp-pill comp-pill-b" id="comp-b-pill">
-            <span class="comp-lbl">B</span>
-            <button class="step" id="comp-b-minus" aria-label="Lower frequency B">−</button>
-            <span class="comp-freq-val" id="comp-b-freq">7 Hz</span>
-            <button class="step" id="comp-b-plus"  aria-label="Raise frequency B">+</button>
-          </div>
-        </div>
-
-        <!-- C: optional -->
-        <div class="comp-slot" id="comp-c-slot">
-          <button class="comp-toggle comp-toggle-c" id="comp-c-toggle">OFF</button>
-          <div class="comp-pill comp-pill-c inactive" id="comp-c-pill">
-            <span class="comp-lbl">C</span>
-            <button class="step" id="comp-c-minus" aria-label="Lower frequency C">−</button>
-            <span class="comp-freq-val" id="comp-c-freq">13 Hz</span>
-            <button class="step" id="comp-c-plus"  aria-label="Raise frequency C">+</button>
-          </div>
-        </div>
-
-      </div><!-- /.comp-strip -->
-
-      <!-- Canvas + embedded sliders -->
-      <div class="wave-card">
-        <div class="wave-main-row">
-          <div class="wave-canvas-wrap">
-            <canvas id="wave-canvas" width="900" height="420"></canvas>
-          </div>
-          <div class="wave-res-col">
-            <div style="display:flex;flex:1;flex-direction:row;align-items:stretch;gap:20px;">
-              <div class="vert-slider-wrap" id="res-wrap">
-                <input type="range" id="res-slider" min="1" max="8" step="1" value="4" />
-              </div>
-              <span class="wave-ctrl-lbl" style="writing-mode:vertical-rl;letter-spacing:2px;color:var(--ml);flex-shrink:0;display:flex;justify-content:center;align-items:center;">Sample Resolution</span>
-            </div>
-            <div class="slider-val" id="res-val" style="font-size:16px;">4 bits</div>
-          </div>
-        </div>
-        <div class="wave-sr-row">
-          <span class="wave-sr-lbl" style="color:#44aaff;">Sample Rate</span>
-          <input type="range" id="sr-slider" min="0" max="30" step="1" value="17" />
-          <div class="slider-val slider-val-sr" id="sr-val" style="font-size:17px;min-width:58px;text-align:right;">18 Hz</div>
-        </div>
-        <div class="qtype-group" style="margin:8px 2px 0;align-items:center;">
-          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Reconstruction:</span>
-          <button class="qtype-btn active" data-recon-mode="step" title="Stepped (sample-and-hold): each sample value is held until the next sample.">Stepped</button>
-          <button class="qtype-btn" data-recon-mode="line" title="Joined (interpolated view): sample points are connected with straight lines.">Joined</button>
-        </div>
-        <div class="nyquist-warn" id="nyquist-warn">
-          <strong>Below Nyquist threshold</strong> — the sample rate must be at least
-          <strong>twice</strong> the highest frequency in the signal (<strong id="nyquist-min"></strong>).
-          At this rate the reconstructed wave is incorrect (aliasing).
-        </div>
-        <div class="wave-legend">
-          <div class="legend-item">
-            <div class="legend-swatch" style="background:#b4a0f0;height:2px;border-top:2px solid #b4a0f0;"></div>
-            Analogue wave
-          </div>
-          <div class="legend-item">
-            <div class="legend-swatch-dashed" style="border-color:rgba(255,255,255,.18);"></div>
-            Quantisation levels
-          </div>
-          <div class="legend-item">
-            <div class="legend-swatch-dot" style="background:#44aaff;"></div>
-            Sample points
-          </div>
-          <div class="legend-item">
-            <div class="legend-swatch" style="background:none;border-top:2px solid #ffff00;"></div>
-            Reconstructed signal
-          </div>
-        </div>
-      </div>
-
-      <!-- File size calculator -->
-      <div class="filesize-card">
-        <div class="filesize-inner">
-          <div class="filesize-title">File size calculator</div>
-          <div class="filesize-formula" id="fs-formula">
-            File size (bits) = <span class="fs-var-rate">rate</span> × <span class="fs-var-res">resolution</span> × <span class="fs-var-secs">duration</span>
-          </div>
-          <div class="filesize-duration-row">
-            <div class="slider-lbl">
-              Duration
-              <span class="slider-lbl-sub">seconds</span>
-            </div>
-            <input type="range" id="dur-slider" min="1" max="300" step="1" value="60" />
-            <div class="slider-val slider-val-dur" id="dur-val">60 s</div>
-          </div>
-          <div class="filesize-result">
-            <div class="fs-box">
-              <div class="fs-box-lbl">Bits</div>
-              <div class="fs-box-val" id="fs-bits">—</div>
-            </div>
-            <div class="fs-box">
-              <div class="fs-box-lbl">Bytes</div>
-              <div class="fs-box-val" id="fs-bytes">—</div>
-            </div>
-            <div class="fs-box">
-              <div class="fs-box-lbl">Kilobytes (KB)</div>
-              <div class="fs-box-val" id="fs-kb">—</div>
-            </div>
-            <div class="fs-box">
-              <div class="fs-box-lbl">Megabytes (MB)</div>
-              <div class="fs-box-val" id="fs-mb">—</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /.sound-layout -->
-  </div><!-- /#explore-section -->
-
-  <!-- ── Quiz section ─────────────────────────────────────────────── -->
-  <div id="quiz-section" hidden>
-
-    <div class="quiz-topbar">
-      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
-        <div class="qtype-group">
-          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Units:</span>
-          <button class="qtype-btn active" data-sq-units="mix">Mix</button>
-          <button class="qtype-btn" data-sq-units="si">kB / MB…</button>
-          <button class="qtype-btn" data-sq-units="iec">kiB / MiB…</button>
-        </div>
-        <div class="qtype-group">
-          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Nyquist:</span>
-          <button class="qtype-btn active" data-sq-nyquist="on">On</button>
-          <button class="qtype-btn" data-sq-nyquist="off">Off</button>
-        </div>
-      </div>
-      <div class="quiz-score-area">
-        <span class="quiz-score-txt">
-          <span style="color:#4c4">✓</span> <span id="sq-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="sq-wrong">0</span>&ensp;(<span id="sq-total">0</span> attempted)
-        </span>
-        <button class="btn btn-sm" id="sq-reset">Reset score</button>
-      </div>
-    </div>
-
-    <div class="card sound-quiz-q-card">
-      <div class="res-block">
-        <div class="quiz-q-header">
-          <span class="quiz-q-num" id="sq-num">Question 1</span>
-          <span class="badge badge-sq" id="sq-badge"></span>
-        </div>
-        <div class="quiz-q-text" id="sq-text"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="res-block">
-        <div class="q-answer-lbl">Your answer</div>
-        <input class="sq-input" type="text" id="sq-input"
-               autocomplete="off" inputmode="decimal" spellcheck="false" />
-        <div class="sq-unit-label" id="sq-unit"></div>
-      </div>
-    </div>
-
-    <div class="quiz-actions">
-      <button class="btn btn-submit" id="sq-submit">Check Answer</button>
-    </div>
-
-  </div><!-- /#quiz-section -->
-
-  <p class="site-credit">
-    <span>&copy; 2026 Neil Kendall</span>
-    <span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span>
-  </p>
-</main>
-
-<!-- Feedback modal -->
-<dialog id="sq-modal" aria-labelledby="sq-modal-feedback">
-  <div class="modal">
-    <div class="modal-feedback" id="sq-modal-feedback"></div>
-    <div class="modal-footer">
-      <button class="btn btn-next" id="sq-next">Next Question &rarr;</button>
-    </div>
-  </div>
-</dialog>
-
-<script>
-  /* ═══════════════════════════════════════════════════════
-     EXPLORE — Wave canvas
-  ═══════════════════════════════════════════════════════ */
-
-  const canvas = document.getElementById('wave-canvas');
-  const ctx    = canvas.getContext('2d');
-
-  const WAVE_SECS = 1;   // seconds displayed
-
-  // Slider step values (non-linear for sample rate to give fine control at low end)
-  // We map slider index 0-30 → actual Hz values
-  const SR_VALUES = [
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-    22, 24, 26, 28, 32, 36, 40, 48, 64, 96, 128
-  ];
-
-  // ── Wave components ────────────────────────────────────────────────
-  const COMP_RANGES = [
-    { min: 2,  max: 8,  step: 1 },   // A
-    { min: 5,  max: 14, step: 1 },   // B
-    { min: 10, max: 20, step: 1 },   // C
-  ];
-  const components = [
-    { freq: 4,  active: true  },   // A
-    { freq: 7,  active: true  },   // B
-    { freq: 13, active: false },   // C
-  ];
-
-  function getMaxFreq() {
-    const activeFreqs = components.filter(c => c.active).map(c => c.freq);
-    return activeFreqs.length ? Math.max(...activeFreqs) : 0;
-  }
-
-  function waveAt(t) {
-    const active = components.filter(c => c.active);
-    if (!active.length) return 0;
-    const sum = active.reduce((s, c) => s + Math.sin(2 * Math.PI * c.freq * t), 0);
-    return sum / active.length;  // normalise by count to stay in [-1, 1]
-  }
-
-  let sampleRate = SR_VALUES[17]; // 18 Hz default
-  let sampleBits = 4;             // 4 bits default
-  let reconMode  = 'step';        // 'step' (DAC sample-and-hold) or 'line'
-
-  function quantise(amplitude, bits) {
-    const levels = Math.pow(2, bits);
-    // amplitude in [-1, 1] → quantised
-    const norm    = (amplitude + 1) / 2;          // 0..1
-    const stepped = Math.round(norm * (levels - 1)) / (levels - 1); // snapped
-    return stepped * 2 - 1;                        // back to -1..1
-  }
-
-  function drawWave() {
-    const scale = window.devicePixelRatio || 1;
-    const W = canvas.width / scale;
-    const H = canvas.height / scale;
-    ctx.clearRect(0, 0, W, H);
-
-    // ── Layout with axis margins ─────────────────────────────────────
-    const PAD_L = 52, PAD_R = 8, PAD_T = 10, PAD_B = 30;
-    const plotW  = W - PAD_L - PAD_R;
-    const plotH  = H - PAD_T - PAD_B;
-    const midY   = PAD_T + plotH / 2;
-    const ampPx  = plotH / 2 * 0.82;
-    const levels = Math.pow(2, sampleBits);
-
-    // Coordinate helpers
-    const tx  = t => PAD_L + (t / WAVE_SECS) * plotW;
-    const ay  = a => midY - a * ampPx;
-    // Y position where quantisation level i's dot actually lands (matches ay())
-    const dotY = i => levels <= 1 ? midY : midY - ((i / (levels - 1)) * 2 - 1) * ampPx;
-
-    // ── Quantisation grid (capped at 5-bit density) ─────────────────
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,.10)';
-    ctx.lineWidth   = 1;
-    ctx.setLineDash([4, 6]);
-    const gridLevels = Math.min(levels, 32); // cap at 2^5 lines
-    for (let i = 0; i <= gridLevels; i++) {
-      const y = midY + ampPx - (i / gridLevels) * ampPx * 2;
-      ctx.beginPath();
-      ctx.moveTo(PAD_L, y);
-      ctx.lineTo(PAD_L + plotW, y);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    ctx.restore();
-
-    // ── Axis lines ───────────────────────────────────────────────────
-    ctx.save();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth   = 1.5;
-    // Y axis
-    ctx.beginPath();
-    ctx.moveTo(PAD_L, PAD_T);
-    ctx.lineTo(PAD_L, PAD_T + plotH + 6);
-    ctx.stroke();
-    // X axis (at amplitude = 0)
-    ctx.beginPath();
-    ctx.moveTo(PAD_L - 4, ay(0));
-    ctx.lineTo(PAD_L + plotW, ay(0));
-    ctx.stroke();
-    ctx.restore();
-
-    // ── Y axis labels (signed integers, auto-thinned) ────────────────
-    ctx.save();
-    ctx.font      = `${Math.round(11 * (W / 900))}px 'Consolas', monospace`;
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    // Step size: keep ~7 labels maximum; always include extremes
-    const step = Math.max(1, Math.pow(2, Math.ceil(Math.log2(levels / 8))));
-    const tickSet = new Set();
-    tickSet.add(0);
-    tickSet.add(levels - 1);
-    for (let i = 0; i < levels; i += step) tickSet.add(i);
-    for (const i of [...tickSet].sort((a, b) => a - b)) {
-      const label = i - levels / 2;   // signed integer value
-      const y     = dotY(i);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth   = 1;
-      ctx.beginPath();
-      ctx.moveTo(PAD_L - 3, y);
-      ctx.lineTo(PAD_L,     y);
-      ctx.stroke();
-      ctx.fillText(label, PAD_L - 6, y);
-    }
-    // Y axis title
-    ctx.save();
-    ctx.translate(Math.round(11 * (W / 900)) + 2, PAD_T + plotH / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle    = '#ffffff';
-    ctx.font         = `${Math.round(13 * (W / 900))}px system-ui, sans-serif`;
-    ctx.fillText('Amplitude', 0, 0);
-    ctx.restore();
-    ctx.restore();
-
-    // ── X axis labels (time) ─────────────────────────────────────────
-    ctx.save();
-    ctx.font         = `${Math.round(11 * (W / 900))}px 'Consolas', monospace`;
-    ctx.fillStyle    = '#ffffff';
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'top';
-    const timeTicks = [0, 0.25, 0.5, 0.75, 1.0];
-    for (const t of timeTicks) {
-      const x = tx(t);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth   = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, PAD_T + plotH);
-      ctx.lineTo(x, PAD_T + plotH + 5);
-      ctx.stroke();
-      ctx.fillText(t === 1 ? '1 s' : t + ' s', x, PAD_T + plotH + 7);
-    }
-    // X axis title
-    ctx.fillStyle = '#ffffff';
-    ctx.font      = `${Math.round(10 * (W / 900))}px system-ui, sans-serif`;
-    ctx.fillText('Time (seconds)', PAD_L + plotW / 2, PAD_T + plotH + 18);
-    ctx.restore();
-
-    // ── Analogue wave ────────────────────────────────────────────────
-    ctx.save();
-    ctx.strokeStyle = '#b4a0f0';
-    ctx.lineWidth   = 2.5;
-    ctx.beginPath();
-    const STEPS = 800;
-    for (let i = 0; i <= STEPS; i++) {
-      const t = (i / STEPS) * WAVE_SECS;
-      const x = tx(t);
-      const y = ay(waveAt(t));
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-    ctx.restore();
-
-    // ── Sample points & reconstruction ──────────────────────────────
-    const numSamples = Math.floor(sampleRate * WAVE_SECS) + 1;
-    const sampleTs   = [];
-    const sampleQs   = [];
-
-    for (let i = 0; i < numSamples; i++) {
-      const t = i / sampleRate;
-      if (t > WAVE_SECS) break;
-      sampleTs.push(t);
-      sampleQs.push(quantise(waveAt(t), sampleBits));
-    }
-
-    if (sampleTs.length > 0) {
-      ctx.save();
-      ctx.strokeStyle = '#ffff00';
-      ctx.lineWidth   = 2;
-      ctx.beginPath();
-      for (let i = 0; i < sampleTs.length; i++) {
-        const x0 = tx(sampleTs[i]);
-        const y0 = ay(sampleQs[i]);
-        const x1 = i + 1 < sampleTs.length ? tx(sampleTs[i + 1]) : PAD_L + plotW;
-        if (i === 0) ctx.moveTo(x0, y0);
-        if (reconMode === 'line') {
-          ctx.lineTo(x0, y0);
-          if (i + 1 < sampleTs.length) {
-            ctx.lineTo(tx(sampleTs[i + 1]), ay(sampleQs[i + 1]));
-          }
-        } else {
-          ctx.lineTo(x0, y0);
-          ctx.lineTo(x1, y0);
-        }
-      }
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // ── Sample dots ─────────────────────────────────────────────────
-    ctx.save();
-    for (let i = 0; i < sampleTs.length; i++) {
-      const x = tx(sampleTs[i]);
-      const y = ay(sampleQs[i]);
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
-      ctx.fillStyle   = '#44aaff';
-      ctx.fill();
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth   = 1.5;
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function updateNyquistWarning() {
-    const warn    = document.getElementById('nyquist-warn');
-    const minEl   = document.getElementById('nyquist-min');
-    const maxFreq = getMaxFreq();
-    if (maxFreq <= 0) {
-      minEl.textContent = '0 Hz';
-      warn.classList.remove('visible');
-      return;
-    }
-    const minRate = maxFreq * 2;
-    minEl.textContent = `${minRate} Hz`;
-    if (sampleRate < minRate) {
-      warn.classList.add('visible');
-    } else {
-      warn.classList.remove('visible');
-    }
-  }
-
-  /* ── Component controls ───────────────────────────────────────── */
-  const COMP_IDS = ['a', 'b', 'c'];
-
-  function refreshComp(idx) {
-    const id   = COMP_IDS[idx];
-    const comp = components[idx];
-    const r    = COMP_RANGES[idx];
-    document.getElementById(`comp-${id}-freq`).textContent = comp.freq + ' Hz';
-    document.getElementById(`comp-${id}-pill`).classList.toggle('inactive', !comp.active);
-    document.getElementById(`comp-${id}-toggle`).textContent = comp.active ? 'ON' : 'OFF';
-    document.getElementById(`comp-${id}-toggle`).classList.toggle('inactive', !comp.active);
-    document.getElementById(`comp-${id}-minus`).disabled = comp.freq <= r.min;
-    document.getElementById(`comp-${id}-plus` ).disabled = comp.freq >= r.max;
-    updateNyquistWarning();
-    drawWave();
-  }
-
-  COMP_IDS.forEach((id, idx) => {
-    // Toggle
-    document.getElementById(`comp-${id}-toggle`).addEventListener('click', () => {
-      components[idx].active = !components[idx].active;
-      refreshComp(idx);
-    });
-    // Steppers
-    document.getElementById(`comp-${id}-minus`).addEventListener('click', () => {
-      const r = COMP_RANGES[idx];
-      if (components[idx].freq > r.min) { components[idx].freq -= r.step; refreshComp(idx); }
-    });
-    document.getElementById(`comp-${id}-plus`).addEventListener('click', () => {
-      const r = COMP_RANGES[idx];
-      if (components[idx].freq < r.max) { components[idx].freq += r.step; refreshComp(idx); }
-    });
-    refreshComp(idx);
-  });
-
-  /* ── Slider: sample rate ─────────────────────────────────────────── */
-  const srSlider = document.getElementById('sr-slider');
-  const srVal    = document.getElementById('sr-val');
-  srSlider.max   = SR_VALUES.length - 1;
-  srSlider.value = 17;
-
-  function onSrChange() {
-    sampleRate = SR_VALUES[+srSlider.value];
-    srVal.textContent = sampleRate + ' Hz';
-    updateNyquistWarning();
-    drawWave();
-    updateFileSize();
-  }
-  srSlider.addEventListener('input', onSrChange);
-
-  /* ── Slider: resolution ──────────────────────────────────────────── */
-  const resSlider = document.getElementById('res-slider');
-  const resVal    = document.getElementById('res-val');
-
-  function onResChange() {
-    sampleBits = +resSlider.value;
-    resVal.textContent = sampleBits + (sampleBits === 1 ? ' bit' : ' bits');
-    drawWave();
-    updateFileSize();
-  }
-  resSlider.addEventListener('input', onResChange);
-
-  /* ── Reconstruction display mode ───────────────────────────────── */
-  document.querySelectorAll('[data-recon-mode]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-recon-mode]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      reconMode = btn.dataset.reconMode;
-      drawWave();
-    });
-  });
-
-  /* ═══════════════════════════════════════════════════════
-     FILE SIZE CALCULATOR
-  ═══════════════════════════════════════════════════════ */
-  const durSlider = document.getElementById('dur-slider');
-  const durVal    = document.getElementById('dur-val');
-
-  function fmtLarge(n) {
-    if (n >= 1e9) return (n / 1e9).toFixed(2).replace(/\.?0+$/, '') + ' G';
-    if (n >= 1e6) return (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + ' M';
-    if (n >= 1e3) return (n / 1e3).toFixed(2).replace(/\.?0+$/, '') + ' K';
-    return n.toString();
-  }
-
-  function updateFileSize() {
-    const rate  = sampleRate;
-    const res   = sampleBits;
-    const secs  = +durSlider.value;
-
-    const bits  = rate * res * secs;
-    const bytes = bits / 8;
-    const kb    = bytes / 1000;
-    const mb    = kb / 1000;
-
-    document.getElementById('fs-formula').innerHTML =
-      `File size (bits) = ` +
-      `<span class="fs-var-rate">${rate}</span> × ` +
-      `<span class="fs-var-res">${res}</span> × ` +
-      `<span class="fs-var-secs">${secs}</span> = ` +
-      `<strong class="fs-final-answer">${bits.toLocaleString()} bits</strong>`;
-
-    document.getElementById('fs-bits' ).textContent = bits.toLocaleString();
-    document.getElementById('fs-bytes').textContent = bytes.toLocaleString();
-    document.getElementById('fs-kb'   ).textContent = kb >= 1 ? kb.toFixed(2) : kb.toFixed(3);
-    document.getElementById('fs-mb'   ).textContent = mb >= 0.01 ? mb.toFixed(3) : '< 0.01';
-  }
-
-  durSlider.addEventListener('input', () => {
-    const s = +durSlider.value;
-    durVal.textContent = s >= 60
-      ? `${Math.floor(s / 60)} min ${s % 60 > 0 ? (s % 60) + ' s' : ''}`.trim()
-      : `${s} s`;
-    updateFileSize();
-  });
-
-  /* ── Canvas responsive resize ────────────────────────────────────── */
-  function resizeCanvas() {
-    const wrap = canvas.parentElement;
-    const cssW = wrap.clientWidth - 8; // account for padding
-    const scale = window.devicePixelRatio || 1;
-    canvas.width  = Math.round(cssW * scale);
-    canvas.height = Math.round(420 * scale);
-    canvas.style.width  = cssW + 'px';
-    canvas.style.height = '420px';
-    ctx.scale(scale, scale);
-    // Size rotated res-slider to match wrapper height for vertical appearance
-    const resWrap = document.getElementById('res-wrap');
-    if (resWrap) resSlider.style.width = Math.max(80, resWrap.clientHeight) + 'px';
-    drawWave();
-  }
-  let _resizeTimer;
-  function scheduleResize() { clearTimeout(_resizeTimer); _resizeTimer = setTimeout(resizeCanvas, 150); }
-  window.addEventListener('resize', scheduleResize);
-  window.addEventListener('orientationchange', scheduleResize);
-
-  /* ═══════════════════════════════════════════════════════
-     QUIZ ENGINE
-  ═══════════════════════════════════════════════════════ */
-
-  const LS_SCORE_SQ = 'encodr-sound-score';
-  function loadScoreSQ() {
-    try { return JSON.parse(localStorage.getItem(LS_SCORE_SQ)) || {correct:0,wrong:0,total:0}; }
-    catch { return {correct:0,wrong:0,total:0}; }
-  }
-  function saveScoreSQ() {
-    localStorage.setItem(LS_SCORE_SQ, JSON.stringify({correct:sqCorrect,wrong:sqWrong,total:sqTotal}));
-  }
-  function updateSqDisplay() {
-    document.getElementById('sq-correct').textContent = sqCorrect;
-    document.getElementById('sq-wrong'  ).textContent = sqWrong;
-    document.getElementById('sq-total'  ).textContent = sqTotal;
-  }
-
-  const _sc = loadScoreSQ();
-  let sqCorrect = _sc.correct, sqWrong = _sc.wrong, sqTotal = _sc.total;
-  let sqQuestion = null, sqCount = 1;
-  updateSqDisplay();
-
-  // ── Quiz settings ────────────────────────────────────────────────
-  let sqUnitsMode = 'mix';  // 'mix' | 'si' | 'iec'
-  let sqNyquist   = true;
-
-  function genQuestion() {
-    return window.EncodrQuizGenerators.sound.generate({ unitsMode: sqUnitsMode, nyquistOn: sqNyquist });
-  }
-
-  function nextQuestion() {
-    const V = window.EncodrValidation;
-    sqQuestion = genQuestion();
-    document.getElementById('sq-num').textContent       = `Question ${sqCount++}`;
-    document.getElementById('sq-badge').textContent     = sqQuestion.badge;
-    document.getElementById('sq-text').innerHTML        = sqQuestion.text.replace(/\n\n/g, '<br><br>');
-    document.getElementById('sq-unit').textContent      = sqQuestion.unitLabel;
-    document.getElementById('sq-input').value           = '';
-    document.getElementById('sq-input').disabled        = false;
-    document.getElementById('sq-submit').disabled       = false;
-    V.clearInputError(document.getElementById('sq-input'));
-    V.clearSummary('sq-submit');
-    document.getElementById('sq-input').focus();
-  }
-
-  function formatQuizAnswer(value) {
-    if (Number.isInteger(value)) return value.toLocaleString();
-    return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
-  }
-
-  function matchesAtInputPrecision(rawInput, given, expected) {
-    if (Math.abs(given - expected) < 1e-9) return true;
-    const decimalMatch = rawInput.match(/\.(\d+)/);
-    if (!decimalMatch) return false;
-    const dp = Math.min(decimalMatch[1].length, 6);
-    return Number(given.toFixed(dp)) === Number(expected.toFixed(dp));
-  }
-
-  function checkAnswer() {
-    const V = window.EncodrValidation;
-    const inputEl = document.getElementById('sq-input');
-    V.clearInputError(inputEl);
-    V.clearSummary('sq-submit');
-
-    const raw   = inputEl.value.trim().replace(/,/g, '');
-    const given = parseFloat(raw);
-    if (isNaN(given)) {
-      V.setInputError(inputEl, 'Enter a valid numeric answer.');
-      V.setSummary('sq-submit', 'Please fix the highlighted field.');
-      inputEl.focus();
-      return;
-    }
-
-    document.getElementById('sq-input').disabled  = true;
-    document.getElementById('sq-submit').disabled = true;
-
-    sqTotal++;
-    const correct = matchesAtInputPrecision(raw, given, sqQuestion.answerNum);
-    if (correct) sqCorrect++; else sqWrong++;
-    updateSqDisplay();
-    saveScoreSQ();
-
-    const fb = document.getElementById('sq-modal-feedback');
-    fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
-    const expectedText = formatQuizAnswer(sqQuestion.answerNum);
-    fb.innerHTML = correct
-      ? `✓ <strong>Correct!</strong><br>The answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`
-      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`;
-    document.getElementById('sq-modal').showModal();
-  }
-
-  document.getElementById('sq-submit').addEventListener('click', checkAnswer);
-  document.getElementById('sq-input').addEventListener('input', () => {
-    const V = window.EncodrValidation;
-    const inputEl = document.getElementById('sq-input');
-    const raw = inputEl.value.trim().replace(/,/g, '');
-    if (raw && !isNaN(parseFloat(raw))) {
-      V.clearInputError(inputEl);
-      V.maybeClearSummary('sq-submit');
-    }
-  });
-  document.getElementById('sq-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      e.stopPropagation();
-      checkAnswer();
-    }
-  });
-  document.getElementById('sq-next').addEventListener('click', () => {
-    document.getElementById('sq-modal').close();
-    nextQuestion();
-  });
-  document.getElementById('sq-reset').addEventListener('click', () => {
-    sqCorrect = sqWrong = sqTotal = 0;
-    sqCount = 1;
-    localStorage.removeItem(LS_SCORE_SQ);
-    updateSqDisplay();
-    nextQuestion();
-  });
-
-  document.querySelectorAll('[data-sq-units]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-sq-units]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      sqUnitsMode = btn.dataset.sqUnits;
-      nextQuestion();
-    });
-  });
-
-  document.querySelectorAll('[data-sq-nyquist]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-sq-nyquist]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      sqNyquist = btn.dataset.sqNyquist === 'on';
-      nextQuestion();
-    });
-  });
-
-  /* ── Modal backdrop close (not on content click) ─────────────────── */
-  document.getElementById('sq-modal').addEventListener('click', e => {
-    if (e.target === e.currentTarget) e.currentTarget.close();
-  });
-
-  /* ── Mode switch ─────────────────────────────────────────────────── */
-  document.getElementById('tab-explore').addEventListener('click', () => {
-    document.getElementById('explore-section').hidden = false;
-    document.getElementById('quiz-section'   ).hidden = true;
-    document.getElementById('tab-explore').classList.add('active');
-    document.getElementById('tab-quiz'   ).classList.remove('active');
-  });
-  document.getElementById('tab-quiz').addEventListener('click', () => {
-    document.getElementById('explore-section').hidden = true;
-    document.getElementById('quiz-section'   ).hidden = false;
-    document.getElementById('tab-explore').classList.remove('active');
-    document.getElementById('tab-quiz'   ).classList.add('active');
-    if (!sqQuestion) nextQuestion();
-  });
-
-  /* ── Add modal CSS for sq-modal ─────────────────────────── ──────── */
-  const modalStyle = document.createElement('style');
-  modalStyle.textContent = `
-    html:has(#sq-modal[open]), body:has(#sq-modal[open]) { overflow: hidden; }
-    #sq-modal { border: none; padding: 0; background: transparent; max-width: 100%; }
-    #sq-modal[open] {
-      position: fixed; inset: 0; width: 100%; height: 100%; max-height: 100%;
-      padding: 24px; box-sizing: border-box;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #sq-modal::backdrop { background: rgba(0,0,0,.72); }
-  `;
-  document.head.appendChild(modalStyle);
-
-  /* ── Init ────────────────────────────────────────────────────────── */
-  resizeCanvas();
-  updateNyquistWarning();
-  updateFileSize();
-</script>
-</body>
-</html>
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+
+  <meta name="theme-color" content="#050505" />
+
+  <meta name="description" content="Visualise digitised sound by changing sampling rate and sample resolution, then apply Nyquist and file size calculations for GCSE and A Level practice." />
+
+  <title>Encodr – Digitised Sound</title>
+
+  <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
+
+  <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
+
+  <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
+
+  <link rel="manifest" href="../site.webmanifest" />
+
+  <link rel="stylesheet" href="../style.css" />
+
+  <script src="../scripts/app.js" defer></script>
+
+  <script src="../scripts/quiz-generators.js" defer></script>
+
+
+
+  <style>
+
+    /* ── Sound page layout ───────────────────── */
+
+    .sound-layout {
+
+      display: grid;
+
+      grid-template-columns: minmax(0, 1fr);
+
+      gap: 18px;
+
+    }
+
+
+
+    .intro-disclosure {
+
+      margin-bottom: 20px;
+
+      border: 1px solid var(--border);
+
+      border-radius: var(--r-sm);
+
+      background: rgba(255, 255, 255, 0.05);
+
+      overflow: clip;
+
+    }
+
+    .intro-disclosure summary {
+
+      list-style: none;
+
+      cursor: pointer;
+
+      padding: 10px 14px;
+
+      font-size: 14px;
+
+      font-weight: 700;
+
+      color: var(--text);
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 12px;
+
+      background: rgba(0, 0, 0, 0.2);
+
+    }
+
+    .intro-disclosure summary::-webkit-details-marker { display: none; }
+
+    .intro-disclosure summary::after {
+
+      content: '+';
+
+      font-size: 20px;
+
+      line-height: 1;
+
+      color: var(--ml);
+
+    }
+
+    .intro-disclosure[open] summary::after { content: '\2212'; }
+
+    .intro-disclosure .intro {
+
+      margin: 0;
+
+      padding: 12px 14px 14px;
+
+      font-size: 15px;
+
+      line-height: 1.6;
+
+    }
+
+
+
+    /* ── Canvas card ─────────────────────────── */
+
+    .wave-card {
+
+      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
+
+      border: 1px solid var(--border);
+
+      border-radius: var(--r);
+
+      padding: 10px;
+
+      box-shadow: 0 4px 18px rgba(0,0,0,.45);
+
+    }
+
+    .wave-canvas-wrap {
+
+      background: #000;
+
+      border-radius: var(--r-sm);
+
+      padding: 4px;
+
+      width: 100%;
+
+      min-width: 0;
+
+    }
+
+    #wave-canvas {
+
+      display: block;
+
+      width: 100%;
+
+      height: auto;
+
+      background: #0a0714;
+
+      border-radius: calc(var(--r-sm) - 2px);
+
+    }
+
+
+
+    /* ── Legend ──────────────────────────────── */
+
+    .wave-legend {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 18px;
+
+      padding: 14px 14px 6px;
+
+    }
+
+    .legend-item {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 7px;
+
+      font-size: 13px;
+
+      color: var(--muted);
+
+    }
+
+    .legend-swatch {
+
+      width: 28px; height: 3px;
+
+      border-radius: 2px;
+
+      flex-shrink: 0;
+
+    }
+
+    .legend-swatch-dot {
+
+      width: 11px; height: 11px;
+
+      border-radius: 50%;
+
+      flex-shrink: 0;
+
+    }
+
+    .legend-swatch-dashed {
+
+      width: 28px; height: 0;
+
+      border-top: 2px dashed;
+
+      border-radius: 0;
+
+      flex-shrink: 0;
+
+    }
+
+
+
+    /* ── Component strip ────────────────────────── */
+
+    .comp-strip {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 10px;
+
+      margin-bottom: 0;
+
+    }
+
+    .comp-slot {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+    }
+
+    .comp-pill {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 9px;
+
+      background: #000;
+
+      border-radius: 0;
+
+      padding: 7px 14px;
+
+      box-shadow: 0 0 0 1.5px var(--comp-col, rgba(255,255,255,.40));
+
+      transition: opacity .15s;
+
+    }
+
+    .comp-pill.inactive {
+
+      opacity: .38;
+
+    }
+
+    .comp-lbl {
+
+      font-size: 14px; font-weight: 800;
+
+      letter-spacing: 1px;
+
+      color: var(--comp-col, #fff);
+
+      font-family: 'Consolas', monospace;
+
+      min-width: 16px; text-align: center;
+
+    }
+
+    .comp-toggle {
+
+      font-size: 11px; font-weight: 800;
+
+      letter-spacing: 1.5px; text-transform: uppercase;
+
+      color: #000;
+
+      background: var(--comp-col, #fff);
+
+      border: none;
+
+      border-radius: 0;
+
+      cursor: pointer;
+
+      padding: 3px 10px;
+
+      min-width: 52px;
+
+      text-align: center;
+
+      line-height: 1.4;
+
+      transition: opacity .12s, background .12s;
+
+      flex-shrink: 0;
+
+    }
+
+    .comp-toggle.inactive {
+
+      background: transparent;
+
+      color: var(--comp-col, #fff);
+
+      box-shadow: 0 0 0 1.5px var(--comp-col, #fff);
+
+    }
+
+    .comp-freq-val {
+
+      font-size: 15px; font-weight: 700;
+
+      font-family: 'Consolas', monospace;
+
+      color: var(--comp-col, #fff);
+
+      min-width: 44px; text-align: center;
+
+    }
+
+
+
+    @media (hover: hover) and (pointer: fine) {
+
+      .comp-toggle:hover { opacity: .80; }
+
+    }
+
+    .comp-pill-a { --comp-col: #c0a0ff; }
+
+    .comp-pill-b { --comp-col: #ff9944; }
+
+    .comp-pill-c { --comp-col: #44ddaa; }
+
+    .comp-toggle-a { --comp-col: #c0a0ff; }
+
+    .comp-toggle-b { --comp-col: #ff9944; }
+
+    .comp-toggle-c { --comp-col: #44ddaa; }
+
+
+
+    @media (max-width: 560px) {
+
+      .comp-strip {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+      }
+
+    }
+
+
+
+    /* ── Sliders ─────────────────────────────── */
+
+    .sliders-card {
+
+      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
+
+      border: 1px solid var(--border);
+
+      border-radius: var(--r);
+
+      padding: 18px 18px 14px;
+
+      box-shadow: 0 4px 18px rgba(0,0,0,.45);
+
+    }
+
+    .sliders-inner {
+
+      background: transparent;
+
+      border-radius: var(--r-sm);
+
+      padding: 0;
+
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 22px;
+
+    }
+
+    .slider-row {
+
+      display: grid;
+
+      grid-template-columns: 160px 1fr auto;
+
+      align-items: center;
+
+      gap: 14px;
+
+    }
+
+    @media (max-width: 560px) {
+
+      .slider-row {
+
+        grid-template-columns: 1fr auto;
+
+        grid-template-rows: auto auto;
+
+      }
+
+      .slider-row .slider-lbl { grid-column: 1; grid-row: 1; }
+
+      .slider-row .slider-val { grid-column: 2; grid-row: 1; text-align: right; }
+
+      .slider-row input[type=range] { grid-column: 1 / -1; grid-row: 2; }
+
+    }
+
+    .slider-lbl {
+
+      font-size: 14px;
+
+      font-weight: 600;
+
+      color: var(--text);
+
+      line-height: 1.3;
+
+    }
+
+    .slider-lbl-sub {
+
+      display: block;
+
+      font-size: 12px;
+
+      font-weight: 400;
+
+      color: var(--dim);
+
+      margin-top: 2px;
+
+    }
+
+    .slider-val {
+
+      font-size: 18px;
+
+      font-weight: 700;
+
+      font-family: 'Consolas', monospace;
+
+      color: var(--ml);
+
+      min-width: 90px;
+
+      text-align: right;
+
+      white-space: nowrap;
+
+    }
+
+
+
+    /* Range input styling */
+
+    input[type=range] {
+
+      -webkit-appearance: none;
+
+      appearance: none;
+
+      width: 100%;
+
+      height: 44px;
+
+      background: transparent;
+
+      outline: none;
+
+      cursor: pointer;
+
+    }
+
+    input[type=range]::-webkit-slider-runnable-track {
+
+      height: 6px;
+
+      border-radius: 3px;
+
+      background: rgba(255,255,255,.12);
+
+    }
+
+    input[type=range]::-moz-range-track {
+
+      height: 6px;
+
+      border-radius: 3px;
+
+      background: rgba(255,255,255,.12);
+
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+
+      -webkit-appearance: none;
+
+      width: 20px; height: 20px;
+
+      margin-top: -7px;
+
+      border-radius: 50%;
+
+      background: var(--ml);
+
+      border: 2px solid #000;
+
+      box-shadow: 0 0 0 2px var(--ml);
+
+      cursor: pointer;
+
+    }
+
+    input[type=range]::-moz-range-thumb {
+
+      width: 20px; height: 20px;
+
+      border-radius: 50%;
+
+      background: var(--ml);
+
+      border: 2px solid #000;
+
+      box-shadow: 0 0 0 2px var(--ml);
+
+      cursor: pointer;
+
+    }
+
+    input[type=range]#sr-slider::-webkit-slider-thumb { background: #44aaff; box-shadow: 0 0 0 2px #44aaff; }
+
+    input[type=range]#sr-slider::-moz-range-thumb     { background: #44aaff; box-shadow: 0 0 0 2px #44aaff; }
+
+    .slider-val-sr { color: #44aaff; }
+
+
+
+    /* Nyquist warning */
+
+    .nyquist-warn {
+
+      display: block;
+
+      visibility: hidden;
+
+      margin: 10px auto 0;
+
+      font-size: 14px;
+
+      line-height: 1.55;
+
+      color: #ff4444;
+
+      font-weight: 700;
+
+      text-align: center;
+
+      background: #000000;
+
+      box-shadow: 0 0 0 2px rgba(255,255,255,.70);
+
+      border-radius: 0;
+
+      padding: 8px 12px;
+
+      max-width: fit-content;
+
+    }
+
+    .nyquist-warn.visible { visibility: visible; }
+
+
+
+    /* ── Wave card inner layout ──────────────── */
+
+    .wave-main-row {
+
+      display: flex;
+
+      align-items: stretch;
+
+      gap: 4px;
+
+    }
+
+    .wave-res-col {
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+      gap: 6px;
+
+      padding: 4px 4px;
+
+      width: 76px;
+
+      flex-shrink: 0;
+
+      overflow: hidden;
+
+      border-left: 1px solid rgba(255,255,255,.30);
+
+    }
+
+    .vert-slider-wrap {
+
+      position: relative;
+
+      flex: 1;
+
+      width: 100%;
+
+      min-height: 80px;
+
+    }
+
+    .wave-ctrl-lbl {
+
+      font-size: 13px;
+
+      text-transform: uppercase;
+
+      letter-spacing: 1px;
+
+      color: #fff;
+
+      white-space: nowrap;
+
+    }
+
+    #res-slider {
+
+      position: absolute;
+
+      left: 50%;
+
+      top: 50%;
+
+      height: 44px;
+
+      width: 150px;
+
+      transform: translate(-50%, -50%) rotate(-90deg);
+
+      appearance: none;
+
+      -webkit-appearance: none;
+
+      writing-mode: horizontal-tb;
+
+      direction: ltr;
+
+      background: transparent;
+
+      outline: none;
+
+      cursor: pointer;
+
+      touch-action: none;
+
+      padding: 0;
+
+      margin: 0;
+
+    }
+
+    #res-slider::-webkit-slider-runnable-track {
+
+      height: 6px;
+
+      background: rgba(0,0,0,.50);
+
+      border-radius: 3px;
+
+    }
+
+    #res-slider::-webkit-slider-thumb {
+
+      -webkit-appearance: none;
+
+      width: 16px;
+
+      height: 16px;
+
+      border-radius: 50%;
+
+      background: #fff;
+
+      margin-top: -5px;
+
+      cursor: pointer;
+
+    }
+
+    #res-slider::-moz-range-track {
+
+      height: 6px;
+
+      background: rgba(0,0,0,.50);
+
+      border-radius: 3px;
+
+    }
+
+    #res-slider::-moz-range-thumb {
+
+      width: 16px;
+
+      height: 16px;
+
+      border-radius: 50%;
+
+      background: #fff;
+
+      border: none;
+
+      cursor: pointer;
+
+    }
+
+    .wave-sr-row {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+
+      padding: 8px 4px 4px;
+
+      border-top: 1px solid rgba(255,255,255,.30);
+
+    }
+
+    .wave-sr-lbl {
+
+      font-size: 13px;
+
+      text-transform: uppercase;
+
+      letter-spacing: 1px;
+
+      color: #fff;
+
+      white-space: nowrap;
+
+      flex-shrink: 0;
+
+    }
+
+    .wave-sr-row #sr-slider {
+
+      flex: 1 !important;
+
+      width: auto !important;
+
+    }
+
+    .wave-sr-row #sr-slider::-webkit-slider-runnable-track { background: rgba(0,0,0,.50); }
+
+    .wave-sr-row #sr-slider::-moz-range-track               { background: rgba(0,0,0,.50); }
+
+
+
+    /* ── File size card ──────────────────────── */
+
+    .filesize-card {
+
+      background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
+
+      border: 1px solid var(--border);
+
+      border-radius: var(--r);
+
+      padding: 18px;
+
+      box-shadow: 0 4px 18px rgba(0,0,0,.45);
+
+    }
+
+    .filesize-inner {
+
+      background: transparent;
+
+      border-radius: var(--r-sm);
+
+      padding: 0;
+
+    }
+
+    .filesize-title {
+
+      font-size: 13px; text-transform: uppercase;
+
+      letter-spacing: 1.5px; color: var(--dim);
+
+      font-weight: 700; margin-bottom: 16px;
+
+    }
+
+    .filesize-formula {
+
+      font-size: 26px;
+
+      font-family: 'Consolas', monospace;
+
+      color: var(--muted);
+
+      margin-bottom: 16px;
+
+      line-height: 1.5;
+
+      text-align: center;
+
+    }
+
+
+
+    .filesize-formula strong {
+
+      font-size: 1.08em;
+
+    }
+
+
+
+    .fs-final-answer {
+
+      color: var(--muted);
+
+    }
+
+    .fs-var-rate { color: #44aaff; }
+
+    .fs-var-res  { color: var(--ml); }
+
+    .fs-var-secs { color: var(--exl); }
+
+    .filesize-duration-row {
+
+      display: grid;
+
+      grid-template-columns: 160px 1fr auto;
+
+      align-items: center;
+
+      gap: 14px;
+
+      margin-bottom: 18px;
+
+    }
+
+    @media (max-width: 560px) {
+
+      .filesize-duration-row {
+
+        grid-template-columns: 1fr auto;
+
+        grid-template-rows: auto auto;
+
+      }
+
+      .filesize-duration-row .slider-lbl { grid-column: 1; grid-row: 1; }
+
+      .filesize-duration-row .slider-val { grid-column: 2; grid-row: 1; text-align: right; }
+
+      .filesize-duration-row input[type=range] { grid-column: 1 / -1; grid-row: 2; }
+
+    }
+
+    input[type=range]#dur-slider::-webkit-slider-thumb { background: var(--exl); box-shadow: 0 0 0 2px var(--exl); }
+
+    input[type=range]#dur-slider::-moz-range-thumb     { background: var(--exl); box-shadow: 0 0 0 2px var(--exl); }
+
+    input[type=range]#dur-slider::-webkit-slider-runnable-track { background: rgba(0,0,0,.50); }
+
+    input[type=range]#dur-slider::-moz-range-track               { background: rgba(0,0,0,.50); }
+
+    .slider-val-dur { color: var(--exl); }
+
+    .filesize-result {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 10px;
+
+    }
+
+    .fs-box {
+
+      flex: 1;
+
+      min-width: 120px;
+
+      background: #000;
+
+      border-radius: var(--r-sm);
+
+      padding: 12px 14px;
+
+      text-align: center;
+
+    }
+
+    .fs-box-lbl {
+
+      font-size: 11px; text-transform: uppercase;
+
+      letter-spacing: 1.5px; color: var(--dim);
+
+      font-weight: 700; margin-bottom: 6px;
+
+    }
+
+    .fs-box-val {
+
+      font-size: 22px; font-weight: 800;
+
+      font-family: 'Consolas', monospace;
+
+      color: var(--ml);
+
+      line-height: 1.1;
+
+      word-break: break-all;
+
+    }
+
+
+
+    /* ── Quiz section ────────────────────────── */
+
+    .sound-quiz-q-card { margin-bottom: 10px; }
+
+
+
+    .sq-input {
+
+      display: block; width: 100%;
+
+      background: #000;
+
+      border: 2px solid rgba(255,255,255,.20);
+
+      border-radius: var(--r-sm);
+
+      color: var(--text);
+
+      font-size: 30px; font-weight: 700;
+
+      font-family: 'Consolas', monospace;
+
+      padding: 12px 16px;
+
+      outline: none;
+
+      transition: border-color .15s, box-shadow .15s;
+
+    }
+
+    .sq-input:focus {
+
+      border-color: rgba(255,255,255,.20);
+
+      box-shadow: 0 0 0 1.5px var(--ml);
+
+    }
+
+    .sq-input:disabled { opacity: .55; }
+
+
+
+    .sq-unit-label {
+
+      font-size: 16px; color: var(--muted);
+
+      font-family: 'Consolas', monospace;
+
+      margin-top: 10px;
+
+    }
+
+
+
+    .badge-sq {
+
+      background: #000000; color: #44aaff;
+
+      box-shadow: 0 0 0 2px #44aaff;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+
+
+<header>
+
+  <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
+
+  <span class="breadcrumb-sep">›</span>
+
+  <span class="hsub">Digitised Sound</span>
+
+  <a class="home-btn" href="../index.html">Home</a>
+
+</header>
+
+
+
+<main>
+
+  <h1>Digitised Sound</h1>
+
+
+
+  <div class="mode-tabs" role="tablist">
+
+    <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
+
+    <button class="mode-tab"        id="tab-quiz"    role="tab">Test</button>
+
+  </div>
+
+
+
+  <!-- ── Explore section ──────────────────────────────────────────── -->
+
+  <div id="explore-section">
+
+
+
+    <details class="intro-disclosure">
+
+      <summary>More info</summary>
+
+      <p class="intro">
+
+        Sound is an <strong>analogue</strong> signal - a continuously varying wave of air pressure.
+
+        An <strong>ADC (Analogue to Digital Converter)</strong> converts this wave into digital data by taking <strong>regular samples</strong> of its amplitude.
+
+        Each sample is then encoded using a fixed number of bits, set by the <strong>sample resolution</strong>.
+
+        <br>
+
+        <br>
+
+        Adjust the sliders below to see how sampling rate and sample resolution affect the digital representation.
+
+      </p>
+
+    </details>
+
+
+
+    <div class="sound-layout">
+
+
+
+      <!-- Component strip -->
+
+      <div class="comp-strip">
+
+
+
+        <!-- A: optional -->
+
+        <div class="comp-slot" id="comp-a-slot">
+
+          <button class="comp-toggle comp-toggle-a" id="comp-a-toggle">ON</button>
+
+          <div class="comp-pill comp-pill-a" id="comp-a-pill">
+
+            <span class="comp-lbl">A</span>
+
+            <button class="step" id="comp-a-minus" aria-label="Lower frequency A">−</button>
+
+            <span class="comp-freq-val" id="comp-a-freq">4 Hz</span>
+
+            <button class="step" id="comp-a-plus"  aria-label="Raise frequency A">+</button>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- B: optional -->
+
+        <div class="comp-slot" id="comp-b-slot">
+
+          <button class="comp-toggle comp-toggle-b" id="comp-b-toggle">ON</button>
+
+          <div class="comp-pill comp-pill-b" id="comp-b-pill">
+
+            <span class="comp-lbl">B</span>
+
+            <button class="step" id="comp-b-minus" aria-label="Lower frequency B">−</button>
+
+            <span class="comp-freq-val" id="comp-b-freq">7 Hz</span>
+
+            <button class="step" id="comp-b-plus"  aria-label="Raise frequency B">+</button>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- C: optional -->
+
+        <div class="comp-slot" id="comp-c-slot">
+
+          <button class="comp-toggle comp-toggle-c" id="comp-c-toggle">OFF</button>
+
+          <div class="comp-pill comp-pill-c inactive" id="comp-c-pill">
+
+            <span class="comp-lbl">C</span>
+
+            <button class="step" id="comp-c-minus" aria-label="Lower frequency C">−</button>
+
+            <span class="comp-freq-val" id="comp-c-freq">13 Hz</span>
+
+            <button class="step" id="comp-c-plus"  aria-label="Raise frequency C">+</button>
+
+          </div>
+
+        </div>
+
+
+
+      </div><!-- /.comp-strip -->
+
+
+
+      <!-- Canvas + embedded sliders -->
+
+      <div class="wave-card">
+
+        <div class="wave-main-row">
+
+          <div class="wave-canvas-wrap">
+
+            <canvas id="wave-canvas" width="900" height="420"></canvas>
+
+          </div>
+
+          <div class="wave-res-col">
+
+            <div style="display:flex;flex:1;flex-direction:row;align-items:stretch;gap:20px;">
+
+              <div class="vert-slider-wrap" id="res-wrap">
+
+                <input type="range" id="res-slider" min="1" max="8" step="1" value="4" />
+
+              </div>
+
+              <span class="wave-ctrl-lbl" style="writing-mode:vertical-rl;letter-spacing:2px;color:var(--ml);flex-shrink:0;display:flex;justify-content:center;align-items:center;">Sample Resolution</span>
+
+            </div>
+
+            <div class="slider-val" id="res-val" style="font-size:16px;">4 bits</div>
+
+          </div>
+
+        </div>
+
+        <div class="wave-sr-row">
+
+          <span class="wave-sr-lbl" style="color:#44aaff;">Sample Rate</span>
+
+          <input type="range" id="sr-slider" min="0" max="30" step="1" value="17" />
+
+          <div class="slider-val slider-val-sr" id="sr-val" style="font-size:17px;min-width:58px;text-align:right;">18 Hz</div>
+
+        </div>
+
+        <div class="qtype-group" style="margin:8px 2px 0;align-items:center;">
+
+          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Reconstruction:</span>
+
+          <button class="qtype-btn active" data-recon-mode="step" title="Stepped (sample-and-hold): each sample value is held until the next sample.">Stepped</button>
+
+          <button class="qtype-btn" data-recon-mode="line" title="Joined (interpolated view): sample points are connected with straight lines.">Joined</button>
+
+        </div>
+
+        <div class="nyquist-warn" id="nyquist-warn">
+
+          <strong>Below Nyquist threshold</strong> — the sample rate must be at least
+
+          <strong>twice</strong> the highest frequency in the signal (<strong id="nyquist-min"></strong>).
+
+          At this rate the reconstructed wave is incorrect (aliasing).
+
+        </div>
+
+        <div class="wave-legend">
+
+          <div class="legend-item">
+
+            <div class="legend-swatch" style="background:#b4a0f0;height:2px;border-top:2px solid #b4a0f0;"></div>
+
+            Analogue wave
+
+          </div>
+
+          <div class="legend-item">
+
+            <div class="legend-swatch-dashed" style="border-color:rgba(255,255,255,.18);"></div>
+
+            Quantisation levels
+
+          </div>
+
+          <div class="legend-item">
+
+            <div class="legend-swatch-dot" style="background:#44aaff;"></div>
+
+            Sample points
+
+          </div>
+
+          <div class="legend-item">
+
+            <div class="legend-swatch" style="background:none;border-top:2px solid #ffff00;"></div>
+
+            Reconstructed signal
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- File size calculator -->
+
+      <div class="filesize-card">
+
+        <div class="filesize-inner">
+
+          <div class="filesize-title">File size calculator</div>
+
+          <div class="filesize-formula" id="fs-formula">
+
+            File size (bits) = <span class="fs-var-rate">rate</span> × <span class="fs-var-res">resolution</span> × <span class="fs-var-secs">duration</span>
+
+          </div>
+
+          <div class="filesize-duration-row">
+
+            <div class="slider-lbl">
+
+              Duration
+
+              <span class="slider-lbl-sub">seconds</span>
+
+            </div>
+
+            <input type="range" id="dur-slider" min="1" max="300" step="1" value="60" />
+
+            <div class="slider-val slider-val-dur" id="dur-val">60 s</div>
+
+          </div>
+
+          <div class="filesize-result">
+
+            <div class="fs-box">
+
+              <div class="fs-box-lbl">Bits</div>
+
+              <div class="fs-box-val" id="fs-bits">—</div>
+
+            </div>
+
+            <div class="fs-box">
+
+              <div class="fs-box-lbl">Bytes</div>
+
+              <div class="fs-box-val" id="fs-bytes">—</div>
+
+            </div>
+
+            <div class="fs-box">
+
+              <div class="fs-box-lbl">Kilobytes (KB)</div>
+
+              <div class="fs-box-val" id="fs-kb">—</div>
+
+            </div>
+
+            <div class="fs-box">
+
+              <div class="fs-box-lbl">Megabytes (MB)</div>
+
+              <div class="fs-box-val" id="fs-mb">—</div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+
+    </div><!-- /.sound-layout -->
+
+  </div><!-- /#explore-section -->
+
+
+
+  <!-- ── Quiz section ─────────────────────────────────────────────── -->
+
+  <div id="quiz-section" hidden>
+
+
+
+    <div class="quiz-topbar">
+
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+
+        <div class="qtype-group">
+
+          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Units:</span>
+
+          <button class="qtype-btn active" data-sq-units="mix">Mix</button>
+
+          <button class="qtype-btn" data-sq-units="si">kB / MB…</button>
+
+          <button class="qtype-btn" data-sq-units="iec">kiB / MiB…</button>
+
+        </div>
+
+        <div class="qtype-group">
+
+          <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Nyquist:</span>
+
+          <button class="qtype-btn active" data-sq-nyquist="on">On</button>
+
+          <button class="qtype-btn" data-sq-nyquist="off">Off</button>
+
+        </div>
+
+      </div>
+
+      <div class="quiz-score-area">
+
+        <span class="quiz-score-txt">
+
+          <span style="color:#4c4">✓</span> <span id="sq-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="sq-wrong">0</span>&ensp;(<span id="sq-total">0</span> attempted)
+
+        </span>
+
+        <button class="btn btn-sm" id="sq-reset">Reset score</button>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card sound-quiz-q-card">
+
+      <div class="res-block">
+
+        <div class="quiz-q-header">
+
+          <span class="quiz-q-num" id="sq-num">Question 1</span>
+
+          <span class="badge badge-sq" id="sq-badge"></span>
+
+        </div>
+
+        <div class="quiz-q-text" id="sq-text"></div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="card">
+
+      <div class="res-block">
+
+        <div class="q-answer-lbl">Your answer</div>
+
+        <input class="sq-input" type="text" id="sq-input"
+
+               autocomplete="off" inputmode="decimal" spellcheck="false" />
+
+        <div class="sq-unit-label" id="sq-unit"></div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="quiz-actions">
+
+      <button class="btn btn-submit" id="sq-submit">Check Answer</button>
+
+    </div>
+
+
+
+  </div><!-- /#quiz-section -->
+
+
+
+  <p class="site-credit">
+
+    <span>&copy; 2026 Neil Kendall</span>
+
+    <span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span>
+
+  </p>
+
+</main>
+
+
+
+<!-- Feedback modal -->
+
+<dialog id="sq-modal" aria-labelledby="sq-modal-feedback">
+
+  <div class="modal">
+
+    <div class="modal-feedback" id="sq-modal-feedback"></div>
+
+    <div class="modal-footer">
+
+      <button class="btn btn-next" id="sq-next">Next Question &rarr;</button>
+
+    </div>
+
+  </div>
+
+</dialog>
+
+
+
+<script>
+
+  /* ═══════════════════════════════════════════════════════
+
+     EXPLORE — Wave canvas
+
+  ═══════════════════════════════════════════════════════ */
+
+
+
+  const canvas = document.getElementById('wave-canvas');
+
+  const ctx    = canvas.getContext('2d');
+
+
+
+  const WAVE_SECS = 1;   // seconds displayed
+
+
+
+  // Slider step values (non-linear for sample rate to give fine control at low end)
+
+  // We map slider index 0-30 → actual Hz values
+
+  const SR_VALUES = [
+
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+
+    22, 24, 26, 28, 32, 36, 40, 48, 64, 96, 128
+
+  ];
+
+
+
+  // ── Wave components ────────────────────────────────────────────────
+
+  const COMP_RANGES = [
+
+    { min: 2,  max: 8,  step: 1 },   // A
+
+    { min: 5,  max: 14, step: 1 },   // B
+
+    { min: 10, max: 20, step: 1 },   // C
+
+  ];
+
+  const components = [
+
+    { freq: 4,  active: true  },   // A
+
+    { freq: 7,  active: true  },   // B
+
+    { freq: 13, active: false },   // C
+
+  ];
+
+
+
+  function getMaxFreq() {
+
+    const activeFreqs = components.filter(c => c.active).map(c => c.freq);
+
+    return activeFreqs.length ? Math.max(...activeFreqs) : 0;
+
+  }
+
+
+
+  function waveAt(t) {
+
+    const active = components.filter(c => c.active);
+
+    if (!active.length) return 0;
+
+    const sum = active.reduce((s, c) => s + Math.sin(2 * Math.PI * c.freq * t), 0);
+
+    return sum / active.length;  // normalise by count to stay in [-1, 1]
+
+  }
+
+
+
+  let sampleRate = SR_VALUES[17]; // 18 Hz default
+
+  let sampleBits = 4;             // 4 bits default
+
+  let reconMode  = 'step';        // 'step' (DAC sample-and-hold) or 'line'
+
+
+
+  function quantise(amplitude, bits) {
+
+    const levels = Math.pow(2, bits);
+
+    // amplitude in [-1, 1] → quantised
+
+    const norm    = (amplitude + 1) / 2;          // 0..1
+
+    const stepped = Math.round(norm * (levels - 1)) / (levels - 1); // snapped
+
+    return stepped * 2 - 1;                        // back to -1..1
+
+  }
+
+
+
+  function drawWave() {
+
+    const scale = window.devicePixelRatio || 1;
+
+    const W = canvas.width / scale;
+
+    const H = canvas.height / scale;
+
+    ctx.clearRect(0, 0, W, H);
+
+
+
+    // ── Layout with axis margins ─────────────────────────────────────
+
+    const PAD_L = 52, PAD_R = 8, PAD_T = 10, PAD_B = 30;
+
+    const plotW  = W - PAD_L - PAD_R;
+
+    const plotH  = H - PAD_T - PAD_B;
+
+    const midY   = PAD_T + plotH / 2;
+
+    const ampPx  = plotH / 2 * 0.82;
+
+    const levels = Math.pow(2, sampleBits);
+
+
+
+    // Coordinate helpers
+
+    const tx  = t => PAD_L + (t / WAVE_SECS) * plotW;
+
+    const ay  = a => midY - a * ampPx;
+
+    // Y position where quantisation level i's dot actually lands (matches ay())
+
+    const dotY = i => levels <= 1 ? midY : midY - ((i / (levels - 1)) * 2 - 1) * ampPx;
+
+
+
+    // ── Quantisation grid (capped at 5-bit density) ─────────────────
+
+    ctx.save();
+
+    ctx.strokeStyle = 'rgba(255,255,255,.10)';
+
+    ctx.lineWidth   = 1;
+
+    ctx.setLineDash([4, 6]);
+
+    const gridLevels = Math.min(levels, 32); // cap at 2^5 lines
+
+    for (let i = 0; i <= gridLevels; i++) {
+
+      const y = midY + ampPx - (i / gridLevels) * ampPx * 2;
+
+      ctx.beginPath();
+
+      ctx.moveTo(PAD_L, y);
+
+      ctx.lineTo(PAD_L + plotW, y);
+
+      ctx.stroke();
+
+    }
+
+    ctx.setLineDash([]);
+
+    ctx.restore();
+
+
+
+    // ── Axis lines ───────────────────────────────────────────────────
+
+    ctx.save();
+
+    ctx.strokeStyle = '#ffffff';
+
+    ctx.lineWidth   = 1.5;
+
+    // Y axis
+
+    ctx.beginPath();
+
+    ctx.moveTo(PAD_L, PAD_T);
+
+    ctx.lineTo(PAD_L, PAD_T + plotH + 6);
+
+    ctx.stroke();
+
+    // X axis (at amplitude = 0)
+
+    ctx.beginPath();
+
+    ctx.moveTo(PAD_L - 4, ay(0));
+
+    ctx.lineTo(PAD_L + plotW, ay(0));
+
+    ctx.stroke();
+
+    ctx.restore();
+
+
+
+    // ── Y axis labels (signed integers, auto-thinned) ────────────────
+
+    ctx.save();
+
+    ctx.font      = `${Math.round(11 * (W / 900))}px 'Consolas', monospace`;
+
+    ctx.fillStyle = '#ffffff';
+
+    ctx.textAlign = 'right';
+
+    ctx.textBaseline = 'middle';
+
+    // Step size: keep ~7 labels maximum; always include extremes
+
+    const step = Math.max(1, Math.pow(2, Math.ceil(Math.log2(levels / 8))));
+
+    const tickSet = new Set();
+
+    tickSet.add(0);
+
+    tickSet.add(levels - 1);
+
+    for (let i = 0; i < levels; i += step) tickSet.add(i);
+
+    for (const i of [...tickSet].sort((a, b) => a - b)) {
+
+      const label = i - levels / 2;   // signed integer value
+
+      const y     = dotY(i);
+
+      ctx.strokeStyle = '#ffffff';
+
+      ctx.lineWidth   = 1;
+
+      ctx.beginPath();
+
+      ctx.moveTo(PAD_L - 3, y);
+
+      ctx.lineTo(PAD_L,     y);
+
+      ctx.stroke();
+
+      ctx.fillText(label, PAD_L - 6, y);
+
+    }
+
+    // Y axis title
+
+    ctx.save();
+
+    ctx.translate(Math.round(11 * (W / 900)) + 2, PAD_T + plotH / 2);
+
+    ctx.rotate(-Math.PI / 2);
+
+    ctx.textAlign    = 'center';
+
+    ctx.textBaseline = 'top';
+
+    ctx.fillStyle    = '#ffffff';
+
+    ctx.font         = `${Math.round(13 * (W / 900))}px system-ui, sans-serif`;
+
+    ctx.fillText('Amplitude', 0, 0);
+
+    ctx.restore();
+
+    ctx.restore();
+
+
+
+    // ── X axis labels (time) ─────────────────────────────────────────
+
+    ctx.save();
+
+    ctx.font         = `${Math.round(11 * (W / 900))}px 'Consolas', monospace`;
+
+    ctx.fillStyle    = '#ffffff';
+
+    ctx.textAlign    = 'center';
+
+    ctx.textBaseline = 'top';
+
+    const timeTicks = [0, 0.25, 0.5, 0.75, 1.0];
+
+    for (const t of timeTicks) {
+
+      const x = tx(t);
+
+      ctx.strokeStyle = '#ffffff';
+
+      ctx.lineWidth   = 1;
+
+      ctx.beginPath();
+
+      ctx.moveTo(x, PAD_T + plotH);
+
+      ctx.lineTo(x, PAD_T + plotH + 5);
+
+      ctx.stroke();
+
+      ctx.fillText(t === 1 ? '1 s' : t + ' s', x, PAD_T + plotH + 7);
+
+    }
+
+    // X axis title
+
+    ctx.fillStyle = '#ffffff';
+
+    ctx.font      = `${Math.round(10 * (W / 900))}px system-ui, sans-serif`;
+
+    ctx.fillText('Time (seconds)', PAD_L + plotW / 2, PAD_T + plotH + 18);
+
+    ctx.restore();
+
+
+
+    // ── Analogue wave ────────────────────────────────────────────────
+
+    ctx.save();
+
+    ctx.strokeStyle = '#b4a0f0';
+
+    ctx.lineWidth   = 2.5;
+
+    ctx.beginPath();
+
+    const STEPS = 800;
+
+    for (let i = 0; i <= STEPS; i++) {
+
+      const t = (i / STEPS) * WAVE_SECS;
+
+      const x = tx(t);
+
+      const y = ay(waveAt(t));
+
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+
+    }
+
+    ctx.stroke();
+
+    ctx.restore();
+
+
+
+    // ── Sample points & reconstruction ──────────────────────────────
+
+    const numSamples = Math.floor(sampleRate * WAVE_SECS) + 1;
+
+    const sampleTs   = [];
+
+    const sampleQs   = [];
+
+
+
+    for (let i = 0; i < numSamples; i++) {
+
+      const t = i / sampleRate;
+
+      if (t > WAVE_SECS) break;
+
+      sampleTs.push(t);
+
+      sampleQs.push(quantise(waveAt(t), sampleBits));
+
+    }
+
+
+
+    if (sampleTs.length > 0) {
+
+      ctx.save();
+
+      ctx.strokeStyle = '#ffff00';
+
+      ctx.lineWidth   = 2;
+
+      ctx.beginPath();
+
+      for (let i = 0; i < sampleTs.length; i++) {
+
+        const x0 = tx(sampleTs[i]);
+
+        const y0 = ay(sampleQs[i]);
+
+        const x1 = i + 1 < sampleTs.length ? tx(sampleTs[i + 1]) : PAD_L + plotW;
+
+        if (i === 0) ctx.moveTo(x0, y0);
+
+        if (reconMode === 'line') {
+
+          ctx.lineTo(x0, y0);
+
+          if (i + 1 < sampleTs.length) {
+
+            ctx.lineTo(tx(sampleTs[i + 1]), ay(sampleQs[i + 1]));
+
+          }
+
+        } else {
+
+          ctx.lineTo(x0, y0);
+
+          ctx.lineTo(x1, y0);
+
+        }
+
+      }
+
+      ctx.stroke();
+
+      ctx.restore();
+
+    }
+
+
+
+    // ── Sample dots ─────────────────────────────────────────────────
+
+    ctx.save();
+
+    for (let i = 0; i < sampleTs.length; i++) {
+
+      const x = tx(sampleTs[i]);
+
+      const y = ay(sampleQs[i]);
+
+      ctx.beginPath();
+
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+
+      ctx.fillStyle   = '#44aaff';
+
+      ctx.fill();
+
+      ctx.strokeStyle = '#000';
+
+      ctx.lineWidth   = 1.5;
+
+      ctx.stroke();
+
+    }
+
+    ctx.restore();
+
+  }
+
+
+
+  function updateNyquistWarning() {
+
+    const warn    = document.getElementById('nyquist-warn');
+
+    const minEl   = document.getElementById('nyquist-min');
+
+    const maxFreq = getMaxFreq();
+
+    if (maxFreq <= 0) {
+
+      minEl.textContent = '0 Hz';
+
+      warn.classList.remove('visible');
+
+      return;
+
+    }
+
+    const minRate = maxFreq * 2;
+
+    minEl.textContent = `${minRate} Hz`;
+
+    if (sampleRate < minRate) {
+
+      warn.classList.add('visible');
+
+    } else {
+
+      warn.classList.remove('visible');
+
+    }
+
+  }
+
+
+
+  /* ── Component controls ───────────────────────────────────────── */
+
+  const COMP_IDS = ['a', 'b', 'c'];
+
+
+
+  function refreshComp(idx) {
+
+    const id   = COMP_IDS[idx];
+
+    const comp = components[idx];
+
+    const r    = COMP_RANGES[idx];
+
+    document.getElementById(`comp-${id}-freq`).textContent = comp.freq + ' Hz';
+
+    document.getElementById(`comp-${id}-pill`).classList.toggle('inactive', !comp.active);
+
+    document.getElementById(`comp-${id}-toggle`).textContent = comp.active ? 'ON' : 'OFF';
+
+    document.getElementById(`comp-${id}-toggle`).classList.toggle('inactive', !comp.active);
+
+    document.getElementById(`comp-${id}-minus`).disabled = comp.freq <= r.min;
+
+    document.getElementById(`comp-${id}-plus` ).disabled = comp.freq >= r.max;
+
+    updateNyquistWarning();
+
+    drawWave();
+
+  }
+
+
+
+  COMP_IDS.forEach((id, idx) => {
+
+    // Toggle
+
+    document.getElementById(`comp-${id}-toggle`).addEventListener('click', () => {
+
+      components[idx].active = !components[idx].active;
+
+      refreshComp(idx);
+
+    });
+
+    // Steppers
+
+    document.getElementById(`comp-${id}-minus`).addEventListener('click', () => {
+
+      const r = COMP_RANGES[idx];
+
+      if (components[idx].freq > r.min) { components[idx].freq -= r.step; refreshComp(idx); }
+
+    });
+
+    document.getElementById(`comp-${id}-plus`).addEventListener('click', () => {
+
+      const r = COMP_RANGES[idx];
+
+      if (components[idx].freq < r.max) { components[idx].freq += r.step; refreshComp(idx); }
+
+    });
+
+    refreshComp(idx);
+
+  });
+
+
+
+  /* ── Slider: sample rate ─────────────────────────────────────────── */
+
+  const srSlider = document.getElementById('sr-slider');
+
+  const srVal    = document.getElementById('sr-val');
+
+  srSlider.max   = SR_VALUES.length - 1;
+
+  srSlider.value = 17;
+
+
+
+  function onSrChange() {
+
+    sampleRate = SR_VALUES[+srSlider.value];
+
+    srVal.textContent = sampleRate + ' Hz';
+
+    updateNyquistWarning();
+
+    drawWave();
+
+    updateFileSize();
+
+  }
+
+  srSlider.addEventListener('input', onSrChange);
+
+
+
+  /* ── Slider: resolution ──────────────────────────────────────────── */
+
+  const resSlider = document.getElementById('res-slider');
+
+  const resVal    = document.getElementById('res-val');
+
+
+
+  function onResChange() {
+
+    sampleBits = +resSlider.value;
+
+    resVal.textContent = sampleBits + (sampleBits === 1 ? ' bit' : ' bits');
+
+    drawWave();
+
+    updateFileSize();
+
+  }
+
+  resSlider.addEventListener('input', onResChange);
+
+
+
+  /* ── Reconstruction display mode ───────────────────────────────── */
+
+  document.querySelectorAll('[data-recon-mode]').forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+      document.querySelectorAll('[data-recon-mode]').forEach(b => b.classList.remove('active'));
+
+      btn.classList.add('active');
+
+      reconMode = btn.dataset.reconMode;
+
+      drawWave();
+
+    });
+
+  });
+
+
+
+  /* ═══════════════════════════════════════════════════════
+
+     FILE SIZE CALCULATOR
+
+  ═══════════════════════════════════════════════════════ */
+
+  const durSlider = document.getElementById('dur-slider');
+
+  const durVal    = document.getElementById('dur-val');
+
+
+
+  function fmtLarge(n) {
+
+    if (n >= 1e9) return (n / 1e9).toFixed(2).replace(/\.?0+$/, '') + ' G';
+
+    if (n >= 1e6) return (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + ' M';
+
+    if (n >= 1e3) return (n / 1e3).toFixed(2).replace(/\.?0+$/, '') + ' K';
+
+    return n.toString();
+
+  }
+
+
+
+  function updateFileSize() {
+
+    const rate  = sampleRate;
+
+    const res   = sampleBits;
+
+    const secs  = +durSlider.value;
+
+
+
+    const bits  = rate * res * secs;
+
+    const bytes = bits / 8;
+
+    const kb    = bytes / 1000;
+
+    const mb    = kb / 1000;
+
+
+
+    document.getElementById('fs-formula').innerHTML =
+
+      `File size (bits) = ` +
+
+      `<span class="fs-var-rate">${rate}</span> × ` +
+
+      `<span class="fs-var-res">${res}</span> × ` +
+
+      `<span class="fs-var-secs">${secs}</span> = ` +
+
+      `<strong class="fs-final-answer">${bits.toLocaleString()} bits</strong>`;
+
+
+
+    document.getElementById('fs-bits' ).textContent = bits.toLocaleString();
+
+    document.getElementById('fs-bytes').textContent = bytes.toLocaleString();
+
+    document.getElementById('fs-kb'   ).textContent = kb >= 1 ? kb.toFixed(2) : kb.toFixed(3);
+
+    document.getElementById('fs-mb'   ).textContent = mb >= 0.01 ? mb.toFixed(3) : '< 0.01';
+
+  }
+
+
+
+  durSlider.addEventListener('input', () => {
+
+    const s = +durSlider.value;
+
+    durVal.textContent = s >= 60
+
+      ? `${Math.floor(s / 60)} min ${s % 60 > 0 ? (s % 60) + ' s' : ''}`.trim()
+
+      : `${s} s`;
+
+    updateFileSize();
+
+  });
+
+
+
+  /* ── Canvas responsive resize ────────────────────────────────────── */
+
+  function resizeCanvas() {
+
+    const wrap = canvas.parentElement;
+
+    const cssW = wrap.clientWidth - 8; // account for padding
+
+    const scale = window.devicePixelRatio || 1;
+
+    canvas.width  = Math.round(cssW * scale);
+
+    canvas.height = Math.round(420 * scale);
+
+    canvas.style.width  = cssW + 'px';
+
+    canvas.style.height = '420px';
+
+    ctx.scale(scale, scale);
+
+    // Size rotated res-slider to match wrapper height for vertical appearance
+
+    const resWrap = document.getElementById('res-wrap');
+
+    if (resWrap) resSlider.style.width = Math.max(80, resWrap.clientHeight) + 'px';
+
+    drawWave();
+
+  }
+
+  let _resizeTimer;
+
+  function scheduleResize() { clearTimeout(_resizeTimer); _resizeTimer = setTimeout(resizeCanvas, 150); }
+
+  window.addEventListener('resize', scheduleResize);
+
+  window.addEventListener('orientationchange', scheduleResize);
+
+
+
+  /* ═══════════════════════════════════════════════════════
+
+     QUIZ ENGINE
+
+  ═══════════════════════════════════════════════════════ */
+
+
+
+  const LS_SCORE_SQ = 'encodr-sound-score';
+
+  function loadScoreSQ() {
+
+    try { return JSON.parse(localStorage.getItem(LS_SCORE_SQ)) || {correct:0,wrong:0,total:0}; }
+
+    catch { return {correct:0,wrong:0,total:0}; }
+
+  }
+
+  function saveScoreSQ() {
+
+    localStorage.setItem(LS_SCORE_SQ, JSON.stringify({correct:sqCorrect,wrong:sqWrong,total:sqTotal}));
+
+  }
+
+  function updateSqDisplay() {
+
+    document.getElementById('sq-correct').textContent = sqCorrect;
+
+    document.getElementById('sq-wrong'  ).textContent = sqWrong;
+
+    document.getElementById('sq-total'  ).textContent = sqTotal;
+
+  }
+
+
+
+  const _sc = loadScoreSQ();
+
+  let sqCorrect = _sc.correct, sqWrong = _sc.wrong, sqTotal = _sc.total;
+
+  let sqQuestion = null, sqCount = 1;
+
+  updateSqDisplay();
+
+
+
+  // ── Quiz settings ────────────────────────────────────────────────
+
+  let sqUnitsMode = 'mix';  // 'mix' | 'si' | 'iec'
+
+  let sqNyquist   = true;
+
+
+
+  function genQuestion() {
+
+    return window.EncodrQuizGenerators.sound.generate({ unitsMode: sqUnitsMode, nyquistOn: sqNyquist });
+
+  }
+
+
+
+  function nextQuestion() {
+
+    const V = window.EncodrValidation;
+
+    sqQuestion = genQuestion();
+
+    document.getElementById('sq-num').textContent       = `Question ${sqCount++}`;
+
+    document.getElementById('sq-badge').textContent     = sqQuestion.badge;
+
+    document.getElementById('sq-text').innerHTML        = sqQuestion.text.replace(/\n\n/g, '<br><br>');
+
+    document.getElementById('sq-unit').textContent      = sqQuestion.unitLabel;
+
+    document.getElementById('sq-input').value           = '';
+
+    document.getElementById('sq-input').disabled        = false;
+
+    document.getElementById('sq-submit').disabled       = false;
+
+    V.clearInputError(document.getElementById('sq-input'));
+
+    V.clearSummary('sq-submit');
+
+    document.getElementById('sq-input').focus();
+
+  }
+
+
+
+  function formatQuizAnswer(value) {
+
+    if (Number.isInteger(value)) return value.toLocaleString();
+
+    return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+
+  }
+
+
+
+  function matchesAtInputPrecision(rawInput, given, expected) {
+
+    if (Math.abs(given - expected) < 1e-9) return true;
+
+    const decimalMatch = rawInput.match(/\.(\d+)/);
+
+    if (!decimalMatch) return false;
+
+    const dp = Math.min(decimalMatch[1].length, 6);
+
+    return Number(given.toFixed(dp)) === Number(expected.toFixed(dp));
+
+  }
+
+
+
+  function checkAnswer() {
+
+    const V = window.EncodrValidation;
+
+    const inputEl = document.getElementById('sq-input');
+
+    V.clearInputError(inputEl);
+
+    V.clearSummary('sq-submit');
+
+
+
+    const raw   = inputEl.value.trim().replace(/,/g, '');
+
+    const given = parseFloat(raw);
+
+    if (isNaN(given)) {
+
+      V.setInputError(inputEl, 'Enter a valid numeric answer.');
+
+      V.setSummary('sq-submit', 'Please fix the highlighted field.');
+
+      inputEl.focus();
+
+      return;
+
+    }
+
+
+
+    document.getElementById('sq-input').disabled  = true;
+
+    document.getElementById('sq-submit').disabled = true;
+
+
+
+    sqTotal++;
+
+    const correct = matchesAtInputPrecision(raw, given, sqQuestion.answerNum);
+
+    if (correct) sqCorrect++; else sqWrong++;
+
+    updateSqDisplay();
+
+    saveScoreSQ();
+
+
+
+    const fb = document.getElementById('sq-modal-feedback');
+
+    fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
+
+    const expectedText = formatQuizAnswer(sqQuestion.answerNum);
+
+    fb.innerHTML = correct
+
+      ? `✓ <strong>Correct!</strong><br>The answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`
+
+      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`;
+
+    document.getElementById('sq-modal').showModal();
+
+  }
+
+
+
+  document.getElementById('sq-submit').addEventListener('click', checkAnswer);
+
+  document.getElementById('sq-input').addEventListener('input', () => {
+
+    const V = window.EncodrValidation;
+
+    const inputEl = document.getElementById('sq-input');
+
+    const raw = inputEl.value.trim().replace(/,/g, '');
+
+    if (raw && !isNaN(parseFloat(raw))) {
+
+      V.clearInputError(inputEl);
+
+      V.maybeClearSummary('sq-submit');
+
+    }
+
+  });
+
+  document.getElementById('sq-input').addEventListener('keydown', e => {
+
+    if (e.key === 'Enter') {
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
+      checkAnswer();
+
+    }
+
+  });
+
+  document.getElementById('sq-next').addEventListener('click', () => {
+
+    document.getElementById('sq-modal').close();
+
+    nextQuestion();
+
+  });
+
+  document.getElementById('sq-reset').addEventListener('click', () => {
+
+    sqCorrect = sqWrong = sqTotal = 0;
+
+    sqCount = 1;
+
+    localStorage.removeItem(LS_SCORE_SQ);
+
+    updateSqDisplay();
+
+    nextQuestion();
+
+  });
+
+
+
+  document.querySelectorAll('[data-sq-units]').forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+      document.querySelectorAll('[data-sq-units]').forEach(b => b.classList.remove('active'));
+
+      btn.classList.add('active');
+
+      sqUnitsMode = btn.dataset.sqUnits;
+
+      nextQuestion();
+
+    });
+
+  });
+
+
+
+  document.querySelectorAll('[data-sq-nyquist]').forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+      document.querySelectorAll('[data-sq-nyquist]').forEach(b => b.classList.remove('active'));
+
+      btn.classList.add('active');
+
+      sqNyquist = btn.dataset.sqNyquist === 'on';
+
+      nextQuestion();
+
+    });
+
+  });
+
+
+
+  /* ── Modal backdrop close (not on content click) ─────────────────── */
+
+  document.getElementById('sq-modal').addEventListener('click', e => {
+
+    if (e.target === e.currentTarget) e.currentTarget.close();
+
+  });
+
+
+
+  /* ── Mode switch ─────────────────────────────────────────────────── */
+
+  document.getElementById('tab-explore').addEventListener('click', () => {
+
+    document.getElementById('explore-section').hidden = false;
+
+    document.getElementById('quiz-section'   ).hidden = true;
+
+    document.getElementById('tab-explore').classList.add('active');
+
+    document.getElementById('tab-quiz'   ).classList.remove('active');
+
+  });
+
+  document.getElementById('tab-quiz').addEventListener('click', () => {
+
+    document.getElementById('explore-section').hidden = true;
+
+    document.getElementById('quiz-section'   ).hidden = false;
+
+    document.getElementById('tab-explore').classList.remove('active');
+
+    document.getElementById('tab-quiz'   ).classList.add('active');
+
+    if (!sqQuestion) nextQuestion();
+
+  });
+
+
+
+  /* ── Add modal CSS for sq-modal ─────────────────────────── ──────── */
+
+  const modalStyle = document.createElement('style');
+
+  modalStyle.textContent = `
+
+    html:has(#sq-modal[open]), body:has(#sq-modal[open]) { overflow: hidden; }
+
+    #sq-modal { border: none; padding: 0; background: transparent; max-width: 100%; }
+
+    #sq-modal[open] {
+
+      position: fixed; inset: 0; width: 100%; height: 100%; max-height: 100%;
+
+      padding: 24px; box-sizing: border-box;
+
+      display: flex; align-items: center; justify-content: center;
+
+    }
+
+    #sq-modal::backdrop { background: rgba(0,0,0,.72); }
+
+  `;
+
+  document.head.appendChild(modalStyle);
+
+
+
+  /* ── Init ────────────────────────────────────────────────────────── */
+
+  resizeCanvas();
+
+  updateNyquistWarning();
+
+  updateFileSize();
+
+</script>
+
+</body>
+
+</html>
+
