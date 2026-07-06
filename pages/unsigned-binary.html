@@ -1,1574 +1,692 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-
   <meta name="theme-color" content="#050505" />
-
   <meta name="description" content="Convert between denary, unsigned binary and hexadecimal with variable bit widths for focused GCSE and A Level Data Representation exam practice." />
-
   <title>Encodr - Unsigned Binary &amp; Hexadecimal</title>
-
   <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
-
   <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
-
   <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
-
   <link rel="manifest" href="../site.webmanifest" />
-
   <link rel="stylesheet" href="../style.css" />
-
   <script src="../scripts/app.js" defer></script>
-
+    <script data-goatcounter="https://korovatron.goatcounter.com/count"
+      async src="//gc.zgo.at/count.js"></script>
   <script src="../scripts/quiz-generators.js" defer></script>
-
-
-
   <style>
-
     .intro-disclosure {
-
       margin-bottom: 20px;
-
       border: 1px solid var(--border);
-
       border-radius: var(--r-sm);
-
       background: rgba(255, 255, 255, 0.05);
-
       overflow: clip;
-
     }
-
     .intro-disclosure summary {
-
       list-style: none;
-
       cursor: pointer;
-
       padding: 10px 14px;
-
       font-size: 14px;
-
       font-weight: 700;
-
       color: var(--text);
-
       display: flex;
-
       align-items: center;
-
       justify-content: space-between;
-
       gap: 12px;
-
       background: rgba(0, 0, 0, 0.2);
-
     }
-
     .intro-disclosure summary::-webkit-details-marker { display: none; }
-
     .intro-disclosure summary::after {
-
       content: '+';
-
       font-size: 20px;
-
       line-height: 1;
-
       color: var(--ml);
-
     }
-
     .intro-disclosure[open] summary::after { content: '\2212'; }
-
     .intro-disclosure .intro {
-
       margin: 0;
-
       padding: 12px 14px 14px;
-
       font-size: 15px;
-
       line-height: 1.6;
-
     }
-
   </style>
-
 </head>
-
 <body>
-
-
-
 <header>
-
   <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
-
   <span class="breadcrumb-sep">&rsaquo;</span>
-
   <span class="hsub">Unsigned Binary &amp; Hexadecimal</span>
-
   <a class="home-btn" href="../index.html">Home</a>
-
 </header>
-
-
-
 <main>
-
   <h1>Unsigned Binary &amp; Hexadecimal</h1>
-
   <div class="mode-tabs" role="tablist">
-
     <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
-
     <button class="mode-tab" id="tab-quiz" role="tab">Test</button>
-
   </div>
-
-
-
   <div id="explore-section">
-
     <details class="intro-disclosure">
-
       <summary>More info</summary>
-
       <p class="intro">Click bits to toggle 0/1, or click denary/hex digits below to increment them.</p>
-
     </details>
-
-
-
     <div class="controls">
-
       <div class="chip chip-m">
-
         <span class="chip-lbl chip-lbl-m">Bits</span>
-
         <button class="step" id="u-minus" aria-label="Use fewer bits">-</button>
-
         <span class="step-val" id="u-count">8</span>
-
         <button class="step" id="u-plus" aria-label="Use more bits">+</button>
-
         <span class="chip-lbl chip-lbl-u">(2-16)</span>
-
       </div>
-
     </div>
-
-
-
     <div class="result-card">
-
       <div class="res-block">
-
         <div class="labelled-grid-row">
-
           <span class="badge badge-m row-badge">Unsigned Binary</span>
-
           <div class="grid-wrap">
-
             <div class="bit-grid" id="u-grid"></div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
-
-
     <div class="result-card">
-
       <div class="res-block">
-
         <div class="labelled-grid-row">
-
           <span class="badge badge-r row-badge">Denary Value</span>
-
           <div class="row-main">
-
             <div class="res-big" id="den-big">0</div>
-
             <div class="grid-wrap">
-
               <div class="bit-grid" id="den-grid"></div>
-
             </div>
-
             <div class="res-eq-row">
-
               <div class="res-eq" id="den-eq">0 = 0</div>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
-
-
     <div class="result-card">
-
       <div class="res-block">
-
         <div class="labelled-grid-row">
-
           <span class="badge badge-e row-badge">Hex Value</span>
-
           <div class="row-main">
-
             <div class="res-big" id="hex-big" style="color: var(--exl);">00</div>
-
             <div class="grid-wrap">
-
               <div class="bit-grid" id="hex-grid"></div>
-
             </div>
-
             <div class="res-eq-row">
-
               <div class="res-eq" id="hex-eq">0 = 00</div>
-
             </div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
-
-
     <div class="result-card">
-
       <div class="res-block">
-
         <div class="labelled-grid-row">
-
           <span class="badge badge-o row-badge">Range</span>
-
           <div class="row-main">
-
             <div class="res-eq" id="res-range-u">Range: 0 to 255</div>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
   </div>
-
-
-
   <div id="quiz-section" hidden>
-
     <div class="quiz-topbar">
-
       <div class="qtype-group">
-
         <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Question type:</span>
-
         <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
-
       </div>
-
       <div class="quiz-score-area">
-
-        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
-
+        <span class="quiz-score-txt"><span style="color:#4c4">âœ“</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
         <button class="btn btn-sm" id="q-reset-score">Reset score</button>
-
       </div>
-
     </div>
-
-
-
     <div class="card quiz-q-card">
-
       <div class="res-block">
-
         <div class="quiz-q-header">
-
           <span class="quiz-q-num" id="q-num">Question 1</span>
-
           <span class="badge" id="q-type-badge"></span>
-
         </div>
-
         <div class="quiz-q-text" id="q-text"></div>
-
         <p class="quiz-format-hint" id="q-format-hint"></p>
-
       </div>
-
     </div>
-
-
-
     <div class="card" id="q-answer-card">
-
       <div class="res-block">
-
         <div class="q-answer-lbl" id="q-answer-lbl">Your Answer</div>
-
         <input class="q-denary-input" type="text" id="q-input"
-
                placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
-
       </div>
-
     </div>
-
-
-
     <div class="card" id="q-range-area" hidden>
-
       <div class="res-block">
-
         <div class="q-answer-lbl">Representable Range</div>
-
         <div class="err-grid">
-
           <div>
-
             <div class="q-err-lbl">Smallest value</div>
-
             <input class="q-denary-input q-err-input" type="text" id="q-min-input"
-
                    placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
-
           </div>
-
           <div>
-
             <div class="q-err-lbl">Largest value</div>
-
             <input class="q-denary-input q-err-input" type="text" id="q-max-input"
-
                    placeholder="Enter your answer" inputmode="numeric" autocomplete="off" spellcheck="false" />
-
           </div>
-
         </div>
-
       </div>
-
     </div>
-
-
-
     <div class="quiz-actions">
-
       <button class="btn btn-submit" id="q-submit">Check Answer</button>
-
     </div>
-
   </div>
-
-
-
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
-
 </main>
-
-
-
 <dialog id="q-modal" aria-labelledby="q-modal-feedback">
-
   <div class="modal">
-
     <div class="modal-feedback" id="q-modal-feedback"></div>
-
     <div class="modal-footer">
-
       <button class="btn btn-next" id="q-next">Next Question &rarr;</button>
-
     </div>
-
   </div>
-
 </dialog>
-
-
-
 <script>
-
   const S = {
-
     bits: Array(8).fill(0)
-
   };
-
-
-
   function groupBits(bits) {
-
     const s = bits.join('');
-
     return s.replace(/\B(?=(?:[01]{4})+(?![01]))/g, ' ');
-
   }
-
-
-
   function toSuperscript(n) {
-
     const map = { '-': '\u207b', '0': '\u2070', '1': '\u00b9', '2': '\u00b2', '3': '\u00b3', '4': '\u2074', '5': '\u2075', '6': '\u2076', '7': '\u2077', '8': '\u2078', '9': '\u2079' };
-
     return String(n).split('').map(ch => map[ch] || ch).join('');
-
   }
-
-
-
   function unsignedValue(bits) {
-
     let total = 0;
-
     const n = bits.length;
-
     for (let i = 0; i < n; i++) {
-
       if (bits[i]) total += 2 ** (n - 1 - i);
-
     }
-
     return total;
-
   }
-
-
-
   function hexDigitsFor(bits) {
-
     const nibbles = Math.ceil(bits.length / 4);
-
     const raw = parseInt(bits.join('') || '0', 2).toString(16).toUpperCase();
-
     return raw.padStart(nibbles, '0');
-
   }
-
-
-
   function maxValue() {
-
     return 2 ** S.bits.length - 1;
-
   }
-
-
-
   function setValue(v) {
-
     const modulus = maxValue() + 1;
-
     const norm = ((v % modulus) + modulus) % modulus;
-
     const bin = norm.toString(2).padStart(S.bits.length, '0');
-
     S.bits = [...bin].map(ch => Number(ch));
-
   }
-
-
-
   function incrementDigitString(digits, idx, base) {
-
     const symbols = base === 16 ? '0123456789ABCDEF' : '0123456789';
-
     const chars = digits.split('');
-
     const cur = symbols.indexOf(chars[idx]);
-
     const next = (cur + 1) % base;
-
     chars[idx] = symbols[next];
-
     return chars.join('');
-
   }
-
-
-
   function weightLabelHTML(exp) {
-
     const wt = 2 ** exp;
-
     return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
-
   }
-
-
-
   function weightTermHTML(exp) {
-
     const wt = 2 ** exp;
-
     return wt >= 1000 ? `2<sup>${exp}</sup>` : String(wt);
-
   }
-
-
-
   function fitGrid(gridId, n) {
-
     const grid = document.getElementById(gridId);
-
     if (!grid || !grid.parentElement) return;
-
     const available = grid.parentElement.clientWidth;
-
     if (!available) return;
-
     const size = Math.max(24, Math.min(56, Math.floor((available - (n - 1) * 5) / n)));
-
     grid.style.setProperty('--box-size', size + 'px');
-
     grid.style.setProperty('--box-fs', Math.round(size * 26 / 56) + 'px');
-
     grid.style.setProperty('--wt-fs', Math.max(9, Math.round(size * 17 / 56)) + 'px');
-
   }
-
-
-
   function renderBitGrid() {
-
     const bits = S.bits;
-
     const n = bits.length;
-
     const grid = document.getElementById('u-grid');
-
     grid.innerHTML = '';
-
-
-
     bits.forEach((bit, i) => {
-
       const exp = n - 1 - i;
-
       const col = document.createElement('div');
-
       col.className = 'bit-col';
-
-
-
       const wtEl = document.createElement('div');
-
       wtEl.className = 'bit-wt';
-
       wtEl.innerHTML = weightLabelHTML(exp);
-
-
-
       const box = document.createElement('div');
-
       box.className = `bit-box mb${bit}`;
-
       box.textContent = bit;
-
       box.setAttribute('role', 'button');
-
       box.setAttribute('tabindex', '0');
-
       box.setAttribute('aria-label', `Bit ${i + 1} of ${n}, currently ${bit}`);
-
       const doToggle = () => {
-
         S.bits[i] ^= 1;
-
         renderAll();
-
       };
-
       box.addEventListener('click', doToggle);
-
       box.addEventListener('keydown', ev => {
-
         if (ev.key === ' ' || ev.key === 'Enter') {
-
           ev.preventDefault();
-
           doToggle();
-
         }
-
       });
-
-
-
       col.append(wtEl, box);
-
       grid.appendChild(col);
-
     });
-
-
-
     fitGrid('u-grid', n);
-
   }
-
-
-
   function renderValueGrid(gridId, digits, base, onIncrement) {
-
     const grid = document.getElementById(gridId);
-
     grid.innerHTML = '';
-
     const exponents = Array.from({ length: digits.length }, (_, i) => digits.length - 1 - i);
-
-
-
     digits.split('').forEach((digit, i) => {
-
       const col = document.createElement('div');
-
       col.className = 'bit-col';
-
-
-
       const wtEl = document.createElement('div');
-
       wtEl.className = 'bit-wt';
-
       wtEl.innerHTML = `${base}<sup>${exponents[i]}</sup>`;
-
-
-
       const box = document.createElement('div');
-
       box.className = `bit-box ${base === 10 ? 'mb1' : 'eb1'}`;
-
       box.textContent = digit;
-
       box.setAttribute('role', 'button');
-
       box.setAttribute('tabindex', '0');
-
       box.setAttribute('aria-label', `Base ${base} digit ${i + 1} of ${digits.length}, currently ${digit}. Activate to increment.`);
-
-
-
       const doIncrement = () => onIncrement(i);
-
       box.addEventListener('click', doIncrement);
-
       box.addEventListener('keydown', ev => {
-
         if (ev.key === ' ' || ev.key === 'Enter') {
-
           ev.preventDefault();
-
           doIncrement();
-
         }
-
       });
-
-
-
       col.append(wtEl, box);
-
       grid.appendChild(col);
-
     });
-
-
-
     fitGrid(gridId, digits.length);
-
   }
-
-
-
   function denaryFormula(bits, value) {
-
     const n = bits.length;
-
     const parts = [];
-
     for (let i = 0; i < n; i++) {
-
       if (bits[i]) parts.push(weightTermHTML(n - 1 - i));
-
     }
-
     return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
-
   }
-
-
-
   function hexFormula(hex, value) {
-
     const parts = [];
-
     const chars = hex.split('');
-
     chars.forEach((ch, i) => {
-
       const exp = chars.length - 1 - i;
-
       const digitVal = parseInt(ch, 16);
-
       if (digitVal === 0) return;
-
       const displayDigit = digitVal > 9 ? ch : digitVal.toString();
-
       parts.push(`${displayDigit}\u00d716${toSuperscript(exp)}`);
-
     });
-
     return (parts.length ? parts.join(' + ') : '0') + ` = ${value}`;
-
   }
-
-
-
   function renderResults() {
-
     const bits = S.bits;
-
     const max = maxValue();
-
     const denary = unsignedValue(bits);
-
     const denDigits = String(denary).padStart(String(max).length, '0');
-
     const hex = hexDigitsFor(bits);
-
-
-
     document.getElementById('den-big').textContent = denary.toLocaleString();
-
     document.getElementById('hex-big').textContent = hex;
-
-
-
     renderValueGrid('den-grid', denDigits, 10, idx => {
-
       const nextDigits = incrementDigitString(denDigits, idx, 10);
-
       setValue(parseInt(nextDigits, 10));
-
       renderAll();
-
     });
-
-
-
     renderValueGrid('hex-grid', hex, 16, idx => {
-
       const nextHex = incrementDigitString(hex, idx, 16);
-
       setValue(parseInt(nextHex, 16));
-
       renderAll();
-
     });
-
-
-
     document.getElementById('den-eq').innerHTML = denaryFormula(bits, denary.toLocaleString());
-
     document.getElementById('hex-eq').textContent = `${groupBits(bits)} = ${hex}  (${hexFormula(hex, denary.toLocaleString())})`;
-
     document.getElementById('res-range-u').innerHTML = `Range: <span class="vm">0</span> to <span class="vm">${max.toLocaleString()}</span>`;
-
   }
-
-
-
   function renderAll() {
-
     document.getElementById('u-count').textContent = S.bits.length;
-
     renderBitGrid();
-
     renderResults();
-
   }
-
-
-
   function changeBits(delta) {
-
     const cur = S.bits.length;
-
     const next = Math.max(2, Math.min(16, cur + delta));
-
     if (next === cur) return;
-
-
-
     const currentValue = unsignedValue(S.bits);
-
     S.bits = Array(next).fill(0);
-
     setValue(currentValue);
-
-
-
     renderAll();
-
   }
-
-
-
   function switchMode(mode) {
-
     const isExplore = mode === 'explore';
-
     document.getElementById('explore-section').hidden = !isExplore;
-
     document.getElementById('quiz-section').hidden = isExplore;
-
     document.getElementById('tab-explore').classList.toggle('active', isExplore);
-
     document.getElementById('tab-quiz').classList.toggle('active', !isExplore);
-
     if (!isExplore) {
-
       QS.questionNum = 1;
-
       updateScoreDisplay();
-
       generateQuizQuestion();
-
     } else {
-
       closeModal();
-
     }
-
   }
-
-
-
   const QS = {
-
     questionType: 'mixed', // 'mixed' | '1' | '2' | '3' | '4' | '5' | '6'
-
     currentType: '1',
-
     questionNum: 1,
-
     correct: 0,
-
     wrong: 0,
-
     total: 0,
-
     answered: false,
-
     prompt: '',
-
     formatHint: '',
-
     answerKind: 'den', // 'den' | 'bin' | 'hex' | 'range'
-
     expectedText: '',
-
     expectedValue: 0,
-
     rangeMax: 255,
-
     rangeBits: 8,
-
     expectedMin: 0,
-
     expectedMax: 255
-
   };
-
-
-
   const LS_SCORE_UNSIGNED = 'encodr-unsigned-score';
-
-
-
   function loadScoreUnsigned() {
-
     try {
-
       return JSON.parse(localStorage.getItem(LS_SCORE_UNSIGNED)) || { correct: 0, wrong: 0, total: 0 };
-
     } catch {
-
       return { correct: 0, wrong: 0, total: 0 };
-
     }
-
   }
-
-
-
   function saveScoreUnsigned() {
-
     localStorage.setItem(LS_SCORE_UNSIGNED, JSON.stringify({
-
       correct: QS.correct,
-
       wrong: QS.wrong,
-
       total: QS.total
-
     }));
-
   }
-
-
-
   function updateScoreDisplay() {
-
     document.getElementById('q-correct').textContent = QS.correct;
-
     document.getElementById('q-wrong').textContent = QS.wrong;
-
     document.getElementById('q-total').textContent = QS.total;
-
   }
-
-
-
   function pick(arr) {
-
     return arr[Math.floor(Math.random() * arr.length)];
-
   }
-
-
-
   function randInt(min, max) {
-
     return Math.floor(Math.random() * (max - min + 1)) + min;
-
   }
-
-
-
   function fmtBin(v, width) {
-
     return v.toString(2).padStart(width, '0');
-
   }
-
-
-
   function fmtHex(v, width = 0) {
-
     const h = v.toString(16).toUpperCase();
-
     return width > 0 ? h.padStart(width, '0') : h;
-
   }
-
-
-
   function normalizeBinary(raw) {
-
     if (!raw) return null;
-
     let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
-
     if (/^0b/i.test(s)) s = s.slice(2);
-
     if (!/^[01]+$/.test(s)) return null;
-
     return s;
-
   }
-
-
-
   function normalizeHex(raw) {
-
     if (!raw) return null;
-
     let s = raw.trim().replace(/\s+/g, '').replace(/_/g, '');
-
     if (/^0x/i.test(s)) s = s.slice(2);
-
     s = s.toUpperCase();
-
     if (!/^[0-9A-F]+$/.test(s)) return null;
-
     return s;
-
   }
-
-
-
   function openModal() {
-
     const dlg = document.getElementById('q-modal');
-
     if (!dlg.open) dlg.showModal();
-
     document.documentElement.classList.add('modal-open');
-
     document.body.classList.add('modal-open');
-
   }
-
-
-
   function closeModal() {
-
     const dlg = document.getElementById('q-modal');
-
     if (dlg.open) dlg.close();
-
     document.documentElement.classList.remove('modal-open');
-
     document.body.classList.remove('modal-open');
-
   }
-
-
-
   function setQuestion(type) {
-
     const labels = {
-
-      '1': 'BIN → DEN',
-
-      '2': 'DEN → BIN',
-
-      '3': 'DEN → HEX',
-
-      '4': 'HEX → DEN',
-
-      '5': 'BIN → HEX',
-
-      '6': 'HEX → BIN',
-
+      '1': 'BIN â†’ DEN',
+      '2': 'DEN â†’ BIN',
+      '3': 'DEN â†’ HEX',
+      '4': 'HEX â†’ DEN',
+      '5': 'BIN â†’ HEX',
+      '6': 'HEX â†’ BIN',
       '7': 'RANGE'
-
     };
-
-
-
     const generated = window.EncodrQuizGenerators.unsigned.generate(type);
-
     Object.assign(QS, generated);
-
-
-
     const badge = document.getElementById('q-type-badge');
-
     badge.className = 'badge ' + (QS.currentType === '1' || QS.currentType === '5' ? 'badge-m' : QS.currentType === '2' || QS.currentType === '6' ? 'badge-e' : 'badge-r');
-
     badge.textContent = labels[QS.currentType];
-
   }
-
-
-
   function renderQuizQuestion() {
-
     const V = window.EncodrValidation;
-
     document.getElementById('q-num').textContent = `Question ${QS.questionNum}`;
-
     document.getElementById('q-text').textContent = QS.prompt;
-
     document.getElementById('q-format-hint').textContent = QS.formatHint;
-
     document.getElementById('q-answer-lbl').textContent = 'Your Answer';
-
-
-
     const isRange = QS.answerKind === 'range';
-
     document.getElementById('q-answer-card').hidden = isRange;
-
     document.getElementById('q-range-area').hidden = !isRange;
-
-
-
     const inp = document.getElementById('q-input');
-
     inp.value = '';
-
     inp.disabled = false;
-
     inp.placeholder = 'Enter your answer';
-
     inp.inputMode = QS.answerKind === 'hex' ? 'text' : 'numeric';
-
-
-
     document.getElementById('q-min-input').value = '';
-
     document.getElementById('q-max-input').value = '';
-
     document.getElementById('q-min-input').disabled = false;
-
     document.getElementById('q-max-input').disabled = false;
-
-
-
     V.clearInputError(document.getElementById('q-input'));
-
     V.clearInputError(document.getElementById('q-min-input'));
-
     V.clearInputError(document.getElementById('q-max-input'));
-
     V.clearSummary('q-submit');
-
-
-
     closeModal();
-
     document.getElementById('q-modal-feedback').innerHTML = '';
-
     document.getElementById('q-submit').disabled = false;
-
   }
-
-
-
   function generateQuizQuestion() {
-
     QS.answered = false;
-
     setQuestion(QS.questionType);
-
     renderQuizQuestion();
-
   }
-
-
-
   function checkQuizAnswer() {
-
     if (QS.answered) return;
-
     const V = window.EncodrValidation;
-
     const qInput = document.getElementById('q-input');
-
     const qMinInput = document.getElementById('q-min-input');
-
     const qMaxInput = document.getElementById('q-max-input');
-
-
-
     V.clearInputError(qInput);
-
     V.clearInputError(qMinInput);
-
     V.clearInputError(qMaxInput);
-
     V.clearSummary('q-submit');
-
-
-
     let correct = false;
-
     let studentDisplay = '';
-
-
-
     if (QS.answerKind === 'range') {
-
       const minRaw = (qMinInput.value || '').trim();
-
       const maxRaw = (qMaxInput.value || '').trim();
-
       if (!/^-?\d+$/.test(minRaw)) {
-
         V.setInputError(qMinInput, 'Enter a valid integer for the smallest value.');
-
         V.setSummary('q-submit', 'Please fix the highlighted field.');
-
         qMinInput.focus();
-
         return;
-
       }
-
       if (!/^-?\d+$/.test(maxRaw)) {
-
         V.setInputError(qMaxInput, 'Enter a valid integer for the largest value.');
-
         V.setSummary('q-submit', 'Please fix the highlighted field.');
-
         qMaxInput.focus();
-
         return;
-
       }
-
-
-
       const minVal = parseInt(minRaw, 10);
-
       const maxVal = parseInt(maxRaw, 10);
-
       studentDisplay = `${minVal} to ${maxVal}`;
-
       correct = minVal === QS.expectedMin && maxVal === QS.expectedMax;
-
       qMinInput.disabled = true;
-
       qMaxInput.disabled = true;
-
     } else {
-
       const input = qInput;
-
       const raw = (input.value || '').trim();
-
       if (!raw) {
-
         V.setInputError(input, 'This answer is required.');
-
         V.setSummary('q-submit', 'Please fix the highlighted field.');
-
         input.focus();
-
         return;
-
       }
-
       studentDisplay = raw;
-
-
-
       if (QS.answerKind === 'den') {
-
       if (!/^-?\d+$/.test(raw)) {
-
         V.setInputError(input, 'Enter a valid denary integer.');
-
         V.setSummary('q-submit', 'Please fix the highlighted field.');
-
         input.focus();
-
         return;
-
       }
-
       const student = parseInt(raw, 10);
-
       studentDisplay = student.toString();
-
       correct = student === QS.expectedValue;
-
       } else if (QS.answerKind === 'bin') {
-
       const b = normalizeBinary(raw);
-
       if (!b) {
-
         V.setInputError(input, 'Use only 0 and 1 for a binary answer.');
-
         V.setSummary('q-submit', 'Please fix the highlighted field.');
-
         input.focus();
-
         return;
-
       }
-
       studentDisplay = b;
-
       correct = parseInt(b, 2) === QS.expectedValue;
-
       } else {
-
       const h = normalizeHex(raw);
-
       if (!h) {
-
         V.setInputError(input, 'Use hexadecimal digits 0-9 and A-F only.');
-
         V.setSummary('q-submit', 'Please fix the highlighted field.');
-
         input.focus();
-
         return;
-
       }
-
       studentDisplay = h;
-
       correct = parseInt(h, 16) === QS.expectedValue;
-
       }
-
-
-
       document.getElementById('q-input').disabled = true;
-
     }
-
-
-
     QS.answered = true;
-
     QS.total++;
-
     document.getElementById('q-submit').disabled = true;
-
-
-
     const expected = QS.answerKind === 'range' ? `${QS.expectedMin} to ${QS.expectedMax}` : QS.expectedText;
-
     const answerName = QS.answerKind === 'den' ? 'denary' : QS.answerKind === 'bin' ? 'binary' : QS.answerKind === 'hex' ? 'hexadecimal' : 'range';
-
-
-
     const html = correct
-
-      ? `✓ Correct! The ${answerName} answer is <strong>${expected}</strong>.`
-
-      : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
-
-
-
+      ? `âœ“ Correct! The ${answerName} answer is <strong>${expected}</strong>.`
+      : `<span class="fb-wrong">âœ— Incorrect â€” you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
     if (correct) QS.correct++; else QS.wrong++;
-
     updateScoreDisplay();
-
     saveScoreUnsigned();
-
-
-
     const fbEl = document.getElementById('q-modal-feedback');
-
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
-
     fbEl.innerHTML = html;
-
     if (document.activeElement) document.activeElement.blur();
-
     openModal();
-
   }
-
-
-
   document.getElementById('u-minus').addEventListener('click', () => changeBits(-1));
-
   document.getElementById('u-plus').addEventListener('click', () => changeBits(+1));
-
   document.getElementById('tab-explore').addEventListener('click', () => switchMode('explore'));
-
   document.getElementById('tab-quiz').addEventListener('click', () => switchMode('quiz'));
-
-
-
   const _score = loadScoreUnsigned();
-
   QS.correct = _score.correct;
-
   QS.wrong = _score.wrong;
-
   QS.total = _score.total;
-
   updateScoreDisplay();
-
-
-
   function wireLiveValidation() {
-
     const V = window.EncodrValidation;
-
     const qInput = document.getElementById('q-input');
-
     const qMinInput = document.getElementById('q-min-input');
-
     const qMaxInput = document.getElementById('q-max-input');
-
-
-
     qInput.addEventListener('input', () => {
-
       const raw = (qInput.value || '').trim();
-
       let valid = false;
-
       if (raw) {
-
         if (QS.answerKind === 'den') valid = /^-?\d+$/.test(raw);
-
         else if (QS.answerKind === 'bin') valid = !!normalizeBinary(raw);
-
         else if (QS.answerKind === 'hex') valid = !!normalizeHex(raw);
-
       }
-
       if (valid) {
-
         V.clearInputError(qInput);
-
         V.maybeClearSummary('q-submit');
-
       }
-
     });
-
-
-
     qMinInput.addEventListener('input', () => {
-
       const raw = (qMinInput.value || '').trim();
-
       if (/^-?\d+$/.test(raw)) {
-
         V.clearInputError(qMinInput);
-
         V.maybeClearSummary('q-submit');
-
       }
-
     });
-
-
-
     qMaxInput.addEventListener('input', () => {
-
       const raw = (qMaxInput.value || '').trim();
-
       if (/^-?\d+$/.test(raw)) {
-
         V.clearInputError(qMaxInput);
-
         V.maybeClearSummary('q-submit');
-
       }
-
     });
-
   }
-
-
-
   document.getElementById('q-submit').addEventListener('click', checkQuizAnswer);
-
   document.getElementById('q-input').addEventListener('keydown', ev => {
-
     if (ev.key === 'Enter' && !QS.answered && QS.answerKind !== 'range') {
-
       ev.preventDefault();
-
       ev.stopPropagation();
-
       checkQuizAnswer();
-
     }
-
   });
-
   document.getElementById('q-min-input').addEventListener('keydown', ev => {
-
     if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') {
-
       ev.preventDefault();
-
       ev.stopPropagation();
-
       checkQuizAnswer();
-
     }
-
   });
-
   document.getElementById('q-max-input').addEventListener('keydown', ev => {
-
     if (ev.key === 'Enter' && !QS.answered && QS.answerKind === 'range') {
-
       ev.preventDefault();
-
       ev.stopPropagation();
-
       checkQuizAnswer();
-
     }
-
   });
-
   document.getElementById('q-next').addEventListener('click', () => {
-
     closeModal();
-
     QS.questionNum++;
-
     generateQuizQuestion();
-
   });
-
   document.getElementById('q-reset-score').addEventListener('click', () => {
-
     QS.correct = 0;
-
     QS.wrong = 0;
-
     QS.total = 0;
-
     QS.questionNum = 1;
-
     localStorage.removeItem(LS_SCORE_UNSIGNED);
-
     updateScoreDisplay();
-
     generateQuizQuestion();
-
   });
-
-
-
   wireLiveValidation();
-
-
-
   let resizeTimer;
-
   window.addEventListener('resize', () => {
-
     clearTimeout(resizeTimer);
-
     resizeTimer = setTimeout(renderAll, 80);
-
   });
-
-
-
   renderAll();
-
 </script>
-
 </body>
-
 </html>
-
