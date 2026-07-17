@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="theme-color" content="#050505" />
   <meta name="description" content="Build bitmap pixel grids and explore how resolution and colour depth affect file size for clear GCSE and A Level Data Representation practice." />
-  <title>Encodr â€“ Bitmapped Images</title>
+  <title>Encodr – Bitmapped Images</title>
   <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
   <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
   <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
@@ -16,9 +16,9 @@
       async src="//gc.zgo.at/count.js"></script>
   <script src="../scripts/quiz-generators.js" defer></script>
   <style>
-    /* â”€â”€ Unified bitmap grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    /* ── Unified bitmap grid ────────────────────────────────────────
        4 columns: [pixel strip 1fr] [byte1 auto] [byte2 auto] [byte3 auto]
-       align-items:stretch â†’ each row height is set by the tallest item
+       align-items:stretch → each row height is set by the tallest item
        (the input). Pixel strip fills that height, so rows align exactly. */
     .bitmap-grid {
       display: grid;
@@ -26,7 +26,7 @@
       gap: 2px 10px;
       align-items: stretch;
     }
-    /* Single panel spanning all 21 rows in col 1 â€” gray bg fills row gaps too */
+    /* Single panel spanning all 21 rows in col 1 — gray bg fills row gaps too */
     .pixel-panel {
       grid-column: 1;
       grid-row: 1 / span 21;
@@ -35,7 +35,7 @@
       flex-direction: column;
       border-radius: 2px;
     }
-    /* â”€â”€ Pixel strip (one per row) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Pixel strip (one per row) ───────────────── */
     .pixel-strip {
       display: grid;
       grid-template-columns: repeat(24, 1fr);
@@ -62,8 +62,8 @@
       font-weight: 700;
       user-select: none;
     }
-    /* .pixel.on removed â€” colours set via inline style in renderPixels */
-    /* â”€â”€ Byte inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* .pixel.on removed — colours set via inline style in renderPixels */
+    /* ── Byte inputs ─────────────────────────────── */
     .byte-inp {
       width: 56px;
       background: #0a0a0a;
@@ -88,7 +88,7 @@
       box-shadow: 0 0 0 1.5px var(--ml);
     }
     .byte-inp.err  { border-color: #ff5555; color: #ff5555; }
-    /* â”€â”€ Controls bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Controls bar ────────────────────────────── */
     .bitmap-controls {
       display: flex;
       gap: 10px;
@@ -186,7 +186,7 @@
     .mc-only { display: none; }
     .mc .mc-only { display: block; }
     .seg-btn .dim { color: rgba(255,255,255,.3); }
-    /* â”€â”€ Outer layout: CSS grid, 2 cols, 2 rows â”€â”€â”€
+    /* ── Outer layout: CSS grid, 2 cols, 2 rows ───
        col 1: [controls row 1] [card row 2]
        col 2: [gallery spans rows 1+2]
        Gallery is always exactly as tall as controls + card. */
@@ -199,7 +199,7 @@
     }
     .bitmap-controls { grid-column: 1; grid-row: 1; }
     .card.bitmap-card { grid-column: 1; grid-row: 2; max-width: 880px; }
-    /* â”€â”€ Sprite gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Sprite gallery ──────────────────────────── */
     .sprite-gallery {
       grid-column: 2;
       grid-row: 2;            /* card row only */
@@ -260,7 +260,7 @@
       .sprite-thumb:hover  { border-color: rgba(255,255,255,.4); }
       .sprite-thumb:hover .thumb-delete { opacity: 1; }
     }
-    /* â”€â”€ Narrow: gallery moves below, horizontal â”€â”€â”€ */
+    /* ── Narrow: gallery moves below, horizontal ─── */
     @media (max-width: 1248px) {
       .bitmap-layout {
         grid-template-columns: 1fr;
@@ -282,7 +282,7 @@
         margin: 0;
       }
     }
-    /* â”€â”€ Mobile landscape: horizontal scroll if needed â”€â”€ */
+    /* ── Mobile landscape: horizontal scroll if needed ── */
     @media (max-width: 680px) and (orientation: landscape) {
       .card.bitmap-card { overflow-x: auto; }
       .bitmap-grid { min-width: 520px; }
@@ -292,7 +292,7 @@
 <body>
 <header>
   <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
-  <span class="breadcrumb-sep">â€º</span>
+  <span class="breadcrumb-sep">›</span>
   <span class="hsub">Bitmapped Images</span>
   <a class="home-btn" href="../index.html">Home</a>
 </header>
@@ -352,17 +352,17 @@
     <div class="sprite-gallery" id="sprite-gallery"></div>
   </div><!-- /.bitmap-layout -->
   </div><!-- /#explore-section -->
-  <!-- â”€â”€ Test section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Test section ─────────────────────────────────────────────── -->
   <div id="test-section" hidden>
     <div class="quiz-topbar">
       <div class="qtype-group">
         <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Units:</span>
         <button class="qtype-btn active" data-units="mix">Mix</button>
-        <button class="qtype-btn" data-units="si">kB / MBâ€¦</button>
-        <button class="qtype-btn" data-units="iec">kiB / MiBâ€¦</button>
+        <button class="qtype-btn" data-units="si">kB / MB…</button>
+        <button class="qtype-btn" data-units="iec">kiB / MiB…</button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">âœ“</span> <span id="bq-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="bq-wrong">0</span>&ensp;(<span id="bq-total">0</span> attempted)</span>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="bq-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="bq-wrong">0</span>&ensp;(<span id="bq-total">0</span> attempted)</span>
         <button class="btn btn-sm" id="bq-reset">Reset score</button>
       </div>
     </div>
@@ -390,7 +390,7 @@
       <button class="btn btn-submit" id="bq-submit">Check Answer</button>
     </div>
   </div><!-- /#test-section -->
-  <!-- â”€â”€ Name dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Name dialog ──────────────────────────────────────────────── -->
   <dialog id="save-dialog">
     <div class="modal">
       <div class="modal-feedback" style="font-size:15px;margin-bottom:12px;">Name this sprite:</div>
@@ -427,7 +427,7 @@
 <script>
   const ROWS = 21, COLS = 24, BYTES_PER_ROW = 3, BITS_PER_BYTE = 8;
   const TOTAL_BYTES = ROWS * BYTES_PER_ROW; // 63
-  // â”€â”€ Colour mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Colour mode ───────────────────────────────────────────────────
   let multicolour = false;
   let showLabels  = true;
   const colours = ['#444444', '#ffff00', '#ff4466', '#44aaff'];
@@ -440,7 +440,7 @@
     const b = parseInt(hex.slice(5,7), 16);
     return (r * 299 + g * 587 + b * 114) / 1000 > 128 ? '#000000' : '#ffffff';
   }
-  // Slightly lighter or darker version of the same colour â€” used for pixel labels
+  // Slightly lighter or darker version of the same colour — used for pixel labels
   function subtleContrast(hex) {
     const r = parseInt(hex.slice(1,3), 16);
     const g = parseInt(hex.slice(3,5), 16);
@@ -498,7 +498,7 @@
   });
   updateModeBtn();
   updateLabelsBtn();
-  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── State ─────────────────────────────────────────────────────────
   // Pre-loaded with the classic Commodore balloon sprite
   const state = new Uint8Array([
       0,127,  0,  1,255,192,  3,255,224,  3,231,224,
@@ -508,7 +508,7 @@
       0, 73,  0,  0, 62,  0,  0, 62,  0,  0, 62,  0,
       0, 28,  0,
   ]);
-  // â”€â”€ Build unified grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Build unified grid ────────────────────────────────────────────
   // .pixel-panel spans all 21 grid rows in col 1; inputs auto-place into cols 2-4
   const bitmapGrid = document.getElementById('bitmap-grid');
   const pixels = [];  // 441 pixel divs, row-major
@@ -528,7 +528,7 @@
     pixelPanel.appendChild(strip);
   }
   bitmapGrid.appendChild(pixelPanel);
-  // Build inputs â€” auto-place into cols 2-4, rows 1-21
+  // Build inputs — auto-place into cols 2-4, rows 1-21
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < BYTES_PER_ROW; col++) {
       const idx = row * BYTES_PER_ROW + col;
@@ -555,7 +555,7 @@
       inputs.push(inp);
     }
   }
-  // â”€â”€ Input handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Input handler ─────────────────────────────────────────────────
   function handleInput(inp, idx) {
     const raw = parseInt(inp.value, 10);
     if (inp.value === '' || (Number.isInteger(raw) && raw >= 0 && raw <= 255)) {
@@ -566,14 +566,14 @@
     }
     renderPixels();
   }
-  // â”€â”€ Render pixel grid from state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render pixel grid from state ──────────────────────────────────
   function renderPixels() {
     for (let byteIdx = 0; byteIdx < TOTAL_BYTES; byteIdx++) {
       const val       = state[byteIdx];
       const row       = Math.floor(byteIdx / BYTES_PER_ROW);
       const byteInRow = byteIdx % BYTES_PER_ROW;
       if (multicolour) {
-        // 2-bit: 4 pairs per byte â†’ 4 visible double-width pixels per byte
+        // 2-bit: 4 pairs per byte → 4 visible double-width pixels per byte
         for (let pair = 0; pair < 4; pair++) {
           const ci      = (val >> (6 - pair * 2)) & 0b11;
           const baseCol = byteInRow * BITS_PER_BYTE + pair * 2;
@@ -587,7 +587,7 @@
           pixels[row * COLS + baseCol + 1].style.background = bg;
         }
       } else {
-        // 1-bit: each bit â†’ one pixel
+        // 1-bit: each bit → one pixel
         for (let bit = 0; bit < BITS_PER_BYTE; bit++) {
           const on = (val >> (7 - bit)) & 1;
           const bg = colours[on];
@@ -599,7 +599,7 @@
       }
     }
   }
-  // â”€â”€ Controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Controls ──────────────────────────────────────────────────────
   document.getElementById('btn-clear').addEventListener('click', () => {
     state.fill(0);
     inputs.forEach(inp => { inp.value = ''; inp.classList.remove('err'); });
@@ -613,7 +613,7 @@
     }
     renderPixels();
   });
-  // â”€â”€ Sprite library â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sprite library ────────────────────────────────────────────────
   const SPRITES = [
     {
       name: 'Manic Miner',
@@ -663,10 +663,10 @@
       ],
     },
   ];
-  // â”€â”€ Build sprite gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Build sprite gallery ───────────────────────────────────────────
   // Canvas size derives from the gallery column's rendered width so there
   // is never a horizontal scrollbar regardless of zoom or column width.
-  // Overhead per thumb: padding 6pxÃ—2 + border 2pxÃ—2 + gallery padding 2pxÃ—2 = 20px
+  // Overhead per thumb: padding 6px×2 + border 2px×2 + gallery padding 2px×2 = 20px
   const gallery = document.getElementById('sprite-gallery');
   const thumbEntries = []; // { canvas, sprite }
   function drawThumb(canvas, sprite, px) {
@@ -754,7 +754,7 @@
     });
     gallery.appendChild(btn);
   });
-  // â”€â”€ User sprites (localStorage) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── User sprites (localStorage) ───────────────────────────────────
   const LS_KEY = 'encodr-user-sprites';
   function loadUserSprites() {
     try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
@@ -782,7 +782,7 @@
     const del = document.createElement('button');
     del.className = 'thumb-delete';
     del.title = 'Delete';
-    del.textContent = 'Ã—';
+    del.textContent = '×';
     del.addEventListener('click', (e) => {
       e.stopPropagation();
       const list = loadUserSprites();
@@ -812,7 +812,7 @@
   // Populate gallery with saved sprites on load (newest first)
   const _initSprites = loadUserSprites();
   for (let i = _initSprites.length - 1; i >= 0; i--) addUserThumb(_initSprites[i], i);
-  // â”€â”€ Save button & dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Save button & dialog ──────────────────────────────────────────
   const saveDialog  = document.getElementById('save-dialog');
   const saveNameInp = document.getElementById('save-name-inp');
   document.getElementById('btn-save').addEventListener('click', () => {
@@ -840,18 +840,18 @@
     if (firstUser && firstUser !== newBtn) gallery.insertBefore(newBtn, firstUser);
     resizeGallery();
   }
-  // â”€â”€ Dismiss keyboard when tapping outside inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Dismiss keyboard when tapping outside inputs ──────────────────
   document.addEventListener('touchstart', (e) => {
     if (e.target.tagName !== 'INPUT') document.activeElement?.blur();
   }, { passive: true });
-  // â”€â”€ Keep gallery height = card height & canvases sized to column â”€â”€
+  // ── Keep gallery height = card height & canvases sized to column ──
   const bitmapCard = document.querySelector('.bitmap-card');
   const ro = new ResizeObserver(() => {
     gallery.style.maxHeight = bitmapCard.offsetHeight + 'px';
   });
   ro.observe(bitmapCard);
   new ResizeObserver(resizeGallery).observe(gallery);
-  // â”€â”€ Section tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Section tabs ──────────────────────────────────────────────────
   function switchSection(which) {
     const isExplore = which === 'explore';
     document.getElementById('explore-section').hidden = !isExplore;
@@ -861,7 +861,7 @@
   }
   document.getElementById('tab-explore').addEventListener('click', () => switchSection('explore'));
   document.getElementById('tab-test'   ).addEventListener('click', () => switchSection('test'));
-  // â•â• Bitmap Quiz Engine â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══ Bitmap Quiz Engine ════════════════════════════════════════════
   // Units mode: 'mix' | 'si' | 'iec'
   let unitsMode = 'mix';
   // Format a number: whole numbers as integer, else as fraction string
@@ -880,7 +880,7 @@
     const dp = Math.min(decimalMatch[1].length, 6);
     return Number(given.toFixed(dp)) === Number(expected.toFixed(dp));
   }
-  // â”€â”€ Quiz state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Quiz state ────────────────────────────────────────────────────
   const LS_SCORE = 'encodr-bitmap-score';
   function loadScore() { try { return JSON.parse(localStorage.getItem(LS_SCORE)) || {correct:0,wrong:0,total:0}; } catch { return {correct:0,wrong:0,total:0}; } }
   function saveScore() { localStorage.setItem(LS_SCORE, JSON.stringify({correct:bqCorrect,wrong:bqWrong,total:bqTotal})); }
@@ -930,8 +930,8 @@
     const fb = document.getElementById('bq-modal-feedback');
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fb.innerHTML = correct
-      ? `âœ“ <strong>Correct!</strong><br>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}`
-      : `<span class="fb-wrong">âœ— <strong>Incorrect.</strong></span><br>The correct answer is <strong>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}</strong>.`;
+      ? `✓ <strong>Correct!</strong><br>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}`
+      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}</strong>.`;
     document.getElementById('bq-modal').showModal();
   }
   document.getElementById('bq-submit').addEventListener('click', checkAnswer);
@@ -975,7 +975,7 @@
   document.getElementById('tab-test').addEventListener('click', () => {
     if (!bqQuestion) nextQuestion();
   }, { once: true });
-  // â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Init ──────────────────────────────────────────────────────────
   // Populate inputs from the pre-loaded state
   state.forEach((v, i) => { inputs[i].value = v === 0 ? '' : v; });
   renderPixels();

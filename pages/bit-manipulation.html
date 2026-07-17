@@ -360,7 +360,7 @@
         <button class="qtype-btn" data-qt="mask"><span class="qt-long">Masking</span><span class="qt-short">MASK</span></button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">âœ“</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
         <button class="btn btn-sm" id="q-reset-score">Reset score</button>
       </div>
     </div>
@@ -899,8 +899,8 @@
         const expectedText = `${QS.expectedEffectOp} by ${QS.expectedFactor}`;
         const actualText = `${QS.selectedEffectOp} by ${QS.selectedFactor}`;
         feedbackHtml = correct
-          ? `âœ“ Correct! Net effect: <strong>${expectedText}</strong>.`
-          : `<span class="fb-wrong">âœ— Incorrect â€” you chose <strong>${actualText}</strong>, answer: <strong>${expectedText}</strong>.</span>`;
+          ? `✓ Correct! Net effect: <strong>${expectedText}</strong>.`
+          : `<span class="fb-wrong">✗ Incorrect — you chose <strong>${actualText}</strong>, answer: <strong>${expectedText}</strong>.</span>`;
         document.querySelectorAll('#q-shift-effect-answer-card button').forEach(btn => {
           btn.disabled = true;
         });
@@ -914,8 +914,8 @@
         }
         correct = normalized === QS.expectedBits;
         feedbackHtml = correct
-          ? `âœ“ Correct! The result is <strong>${QS.expectedBits}</strong>.`
-          : `<span class="fb-wrong">âœ— Incorrect â€” you entered <strong>${normalized}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
+          ? `✓ Correct! The result is <strong>${QS.expectedBits}</strong>.`
+          : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${normalized}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
         inputEl.disabled = true;
       }
     } else {
@@ -955,8 +955,8 @@
       const maskMatches = normalizedMask === expectedMask;
       correct = opMatches && maskMatches;
       feedbackHtml = correct
-        ? `âœ“ Correct! Answer: <strong>${expectedOperation.toUpperCase()} ${expectedMask}</strong>.`
-        : `<span class="fb-wrong">âœ— Incorrect - expected answer is <strong>${expectedOperation.toUpperCase()} ${expectedMask}</strong>. Your answer <strong>${QS.selectedOperation.toUpperCase()} ${normalizedMask}</strong> gives <strong>${studentResult}</strong>.</span>`;
+        ? `✓ Correct! Answer: <strong>${expectedOperation.toUpperCase()} ${expectedMask}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect - expected answer is <strong>${expectedOperation.toUpperCase()} ${expectedMask}</strong>. Your answer <strong>${QS.selectedOperation.toUpperCase()} ${normalizedMask}</strong> gives <strong>${studentResult}</strong>.</span>`;
       maskInputEl.disabled = true;
     }
     QS.answered = true;

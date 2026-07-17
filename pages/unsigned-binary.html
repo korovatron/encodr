@@ -139,7 +139,7 @@
         <button class="qtype-btn active" data-qt="mixed"><span class="qt-long">Mixed</span><span class="qt-short">MIX</span></button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">âœ“</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
         <button class="btn btn-sm" id="q-reset-score">Reset score</button>
       </div>
     </div>
@@ -464,12 +464,12 @@
   }
   function setQuestion(type) {
     const labels = {
-      '1': 'BIN â†’ DEN',
-      '2': 'DEN â†’ BIN',
-      '3': 'DEN â†’ HEX',
-      '4': 'HEX â†’ DEN',
-      '5': 'BIN â†’ HEX',
-      '6': 'HEX â†’ BIN',
+      '1': 'BIN → DEN',
+      '2': 'DEN → BIN',
+      '3': 'DEN → HEX',
+      '4': 'HEX → DEN',
+      '5': 'BIN → HEX',
+      '6': 'HEX → BIN',
       '7': 'RANGE'
     };
     const generated = window.EncodrQuizGenerators.unsigned.generate(type);
@@ -591,8 +591,8 @@
     const expected = QS.answerKind === 'range' ? `${QS.expectedMin} to ${QS.expectedMax}` : QS.expectedText;
     const answerName = QS.answerKind === 'den' ? 'denary' : QS.answerKind === 'bin' ? 'binary' : QS.answerKind === 'hex' ? 'hexadecimal' : 'range';
     const html = correct
-      ? `âœ“ Correct! The ${answerName} answer is <strong>${expected}</strong>.`
-      : `<span class="fb-wrong">âœ— Incorrect â€” you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
+      ? `✓ Correct! The ${answerName} answer is <strong>${expected}</strong>.`
+      : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
     saveScoreUnsigned();

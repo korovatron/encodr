@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="theme-color" content="#050505" />
   <meta name="description" content="Visualise digitised sound by changing sampling rate and sample resolution, then apply Nyquist and file size calculations for GCSE and A Level practice." />
-  <title>Encodr â€“ Digitised Sound</title>
+  <title>Encodr – Digitised Sound</title>
   <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
   <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
   <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
@@ -16,7 +16,7 @@
       async src="//gc.zgo.at/count.js"></script>
   <script src="../scripts/quiz-generators.js" defer></script>
   <style>
-    /* â”€â”€ Sound page layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Sound page layout ───────────────────── */
     .sound-layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -56,7 +56,7 @@
       font-size: 15px;
       line-height: 1.6;
     }
-    /* â”€â”€ Canvas card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Canvas card ─────────────────────────── */
     .wave-card {
       background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
       border: 1px solid var(--border);
@@ -78,7 +78,7 @@
       background: #0a0714;
       border-radius: calc(var(--r-sm) - 2px);
     }
-    /* â”€â”€ Legend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Legend ──────────────────────────────── */
     .wave-legend {
       display: flex;
       flex-wrap: wrap;
@@ -108,7 +108,7 @@
       border-radius: 0;
       flex-shrink: 0;
     }
-    /* â”€â”€ Component strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Component strip ────────────────────────── */
     .comp-strip {
       display: flex;
       flex-wrap: wrap;
@@ -181,7 +181,7 @@
         align-items: flex-start;
       }
     }
-    /* â”€â”€ Sliders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Sliders ─────────────────────────────── */
     .sliders-card {
       background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
       border: 1px solid var(--border);
@@ -292,7 +292,7 @@
       max-width: fit-content;
     }
     .nyquist-warn.visible { visibility: visible; }
-    /* â”€â”€ Wave card inner layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Wave card inner layout ──────────────── */
     .wave-main-row {
       display: flex;
       align-items: stretch;
@@ -388,7 +388,7 @@
     }
     .wave-sr-row #sr-slider::-webkit-slider-runnable-track { background: rgba(0,0,0,.50); }
     .wave-sr-row #sr-slider::-moz-range-track               { background: rgba(0,0,0,.50); }
-    /* â”€â”€ File size card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── File size card ──────────────────────── */
     .filesize-card {
       background: linear-gradient(135deg, #2e2468 0%, var(--surface2) 50%, #4a3d8f 100%);
       border: 1px solid var(--border);
@@ -469,7 +469,7 @@
       line-height: 1.1;
       word-break: break-all;
     }
-    /* â”€â”€ Quiz section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Quiz section ────────────────────────── */
     .sound-quiz-q-card { margin-bottom: 10px; }
     .sq-input {
       display: block; width: 100%;
@@ -502,7 +502,7 @@
 <body>
 <header>
   <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
-  <span class="breadcrumb-sep">â€º</span>
+  <span class="breadcrumb-sep">›</span>
   <span class="hsub">Digitised Sound</span>
   <a class="home-btn" href="../index.html">Home</a>
 </header>
@@ -512,7 +512,7 @@
     <button class="mode-tab active" id="tab-explore" role="tab">Explore</button>
     <button class="mode-tab"        id="tab-quiz"    role="tab">Test</button>
   </div>
-  <!-- â”€â”€ Explore section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Explore section ──────────────────────────────────────────── -->
   <div id="explore-section">
     <details class="intro-disclosure">
       <summary>More info</summary>
@@ -533,7 +533,7 @@
           <button class="comp-toggle comp-toggle-a" id="comp-a-toggle">ON</button>
           <div class="comp-pill comp-pill-a" id="comp-a-pill">
             <span class="comp-lbl">A</span>
-            <button class="step" id="comp-a-minus" aria-label="Lower frequency A">âˆ’</button>
+            <button class="step" id="comp-a-minus" aria-label="Lower frequency A">−</button>
             <span class="comp-freq-val" id="comp-a-freq">4 Hz</span>
             <button class="step" id="comp-a-plus"  aria-label="Raise frequency A">+</button>
           </div>
@@ -543,7 +543,7 @@
           <button class="comp-toggle comp-toggle-b" id="comp-b-toggle">ON</button>
           <div class="comp-pill comp-pill-b" id="comp-b-pill">
             <span class="comp-lbl">B</span>
-            <button class="step" id="comp-b-minus" aria-label="Lower frequency B">âˆ’</button>
+            <button class="step" id="comp-b-minus" aria-label="Lower frequency B">−</button>
             <span class="comp-freq-val" id="comp-b-freq">7 Hz</span>
             <button class="step" id="comp-b-plus"  aria-label="Raise frequency B">+</button>
           </div>
@@ -553,7 +553,7 @@
           <button class="comp-toggle comp-toggle-c" id="comp-c-toggle">OFF</button>
           <div class="comp-pill comp-pill-c inactive" id="comp-c-pill">
             <span class="comp-lbl">C</span>
-            <button class="step" id="comp-c-minus" aria-label="Lower frequency C">âˆ’</button>
+            <button class="step" id="comp-c-minus" aria-label="Lower frequency C">−</button>
             <span class="comp-freq-val" id="comp-c-freq">13 Hz</span>
             <button class="step" id="comp-c-plus"  aria-label="Raise frequency C">+</button>
           </div>
@@ -586,7 +586,7 @@
           <button class="qtype-btn" data-recon-mode="line" title="Joined (interpolated view): sample points are connected with straight lines.">Joined</button>
         </div>
         <div class="nyquist-warn" id="nyquist-warn">
-          <strong>Below Nyquist threshold</strong> â€” the sample rate must be at least
+          <strong>Below Nyquist threshold</strong> — the sample rate must be at least
           <strong>twice</strong> the highest frequency in the signal (<strong id="nyquist-min"></strong>).
           At this rate the reconstructed wave is incorrect (aliasing).
         </div>
@@ -614,7 +614,7 @@
         <div class="filesize-inner">
           <div class="filesize-title">File size calculator</div>
           <div class="filesize-formula" id="fs-formula">
-            File size (bits) = <span class="fs-var-rate">rate</span> Ã— <span class="fs-var-res">resolution</span> Ã— <span class="fs-var-secs">duration</span>
+            File size (bits) = <span class="fs-var-rate">rate</span> × <span class="fs-var-res">resolution</span> × <span class="fs-var-secs">duration</span>
           </div>
           <div class="filesize-duration-row">
             <div class="slider-lbl">
@@ -627,34 +627,34 @@
           <div class="filesize-result">
             <div class="fs-box">
               <div class="fs-box-lbl">Bits</div>
-              <div class="fs-box-val" id="fs-bits">â€”</div>
+              <div class="fs-box-val" id="fs-bits">—</div>
             </div>
             <div class="fs-box">
               <div class="fs-box-lbl">Bytes</div>
-              <div class="fs-box-val" id="fs-bytes">â€”</div>
+              <div class="fs-box-val" id="fs-bytes">—</div>
             </div>
             <div class="fs-box">
               <div class="fs-box-lbl">Kilobytes (KB)</div>
-              <div class="fs-box-val" id="fs-kb">â€”</div>
+              <div class="fs-box-val" id="fs-kb">—</div>
             </div>
             <div class="fs-box">
               <div class="fs-box-lbl">Megabytes (MB)</div>
-              <div class="fs-box-val" id="fs-mb">â€”</div>
+              <div class="fs-box-val" id="fs-mb">—</div>
             </div>
           </div>
         </div>
       </div>
     </div><!-- /.sound-layout -->
   </div><!-- /#explore-section -->
-  <!-- â”€â”€ Quiz section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Quiz section ─────────────────────────────────────────────── -->
   <div id="quiz-section" hidden>
     <div class="quiz-topbar">
       <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
         <div class="qtype-group">
           <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Units:</span>
           <button class="qtype-btn active" data-sq-units="mix">Mix</button>
-          <button class="qtype-btn" data-sq-units="si">kB / MBâ€¦</button>
-          <button class="qtype-btn" data-sq-units="iec">kiB / MiBâ€¦</button>
+          <button class="qtype-btn" data-sq-units="si">kB / MB…</button>
+          <button class="qtype-btn" data-sq-units="iec">kiB / MiB…</button>
         </div>
         <div class="qtype-group">
           <span class="chip-lbl chip-lbl-u" style="font-size:12px;">Nyquist:</span>
@@ -664,7 +664,7 @@
       </div>
       <div class="quiz-score-area">
         <span class="quiz-score-txt">
-          <span style="color:#4c4">âœ“</span> <span id="sq-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="sq-wrong">0</span>&ensp;(<span id="sq-total">0</span> attempted)
+          <span style="color:#4c4">✓</span> <span id="sq-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="sq-wrong">0</span>&ensp;(<span id="sq-total">0</span> attempted)
         </span>
         <button class="btn btn-sm" id="sq-reset">Reset score</button>
       </div>
@@ -705,20 +705,20 @@
   </div>
 </dialog>
 <script>
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     EXPLORE â€” Wave canvas
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  /* ═══════════════════════════════════════════════════════
+     EXPLORE — Wave canvas
+  ═══════════════════════════════════════════════════════ */
   const canvas = document.getElementById('wave-canvas');
   const ctx    = canvas.getContext('2d');
   const WAVE_SECS = 1;   // seconds displayed
   // Slider step values (non-linear for sample rate to give fine control at low end)
-  // We map slider index 0-30 â†’ actual Hz values
+  // We map slider index 0-30 → actual Hz values
   const SR_VALUES = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
     11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
     22, 24, 26, 28, 32, 36, 40, 48, 64, 96, 128
   ];
-  // â”€â”€ Wave components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Wave components ────────────────────────────────────────────────
   const COMP_RANGES = [
     { min: 2,  max: 8,  step: 1 },   // A
     { min: 5,  max: 14, step: 1 },   // B
@@ -744,7 +744,7 @@
   let reconMode  = 'step';        // 'step' (DAC sample-and-hold) or 'line'
   function quantise(amplitude, bits) {
     const levels = Math.pow(2, bits);
-    // amplitude in [-1, 1] â†’ quantised
+    // amplitude in [-1, 1] → quantised
     const norm    = (amplitude + 1) / 2;          // 0..1
     const stepped = Math.round(norm * (levels - 1)) / (levels - 1); // snapped
     return stepped * 2 - 1;                        // back to -1..1
@@ -754,7 +754,7 @@
     const W = canvas.width / scale;
     const H = canvas.height / scale;
     ctx.clearRect(0, 0, W, H);
-    // â”€â”€ Layout with axis margins â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Layout with axis margins ─────────────────────────────────────
     const PAD_L = 52, PAD_R = 8, PAD_T = 10, PAD_B = 30;
     const plotW  = W - PAD_L - PAD_R;
     const plotH  = H - PAD_T - PAD_B;
@@ -766,7 +766,7 @@
     const ay  = a => midY - a * ampPx;
     // Y position where quantisation level i's dot actually lands (matches ay())
     const dotY = i => levels <= 1 ? midY : midY - ((i / (levels - 1)) * 2 - 1) * ampPx;
-    // â”€â”€ Quantisation grid (capped at 5-bit density) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Quantisation grid (capped at 5-bit density) ─────────────────
     ctx.save();
     ctx.strokeStyle = 'rgba(255,255,255,.10)';
     ctx.lineWidth   = 1;
@@ -781,7 +781,7 @@
     }
     ctx.setLineDash([]);
     ctx.restore();
-    // â”€â”€ Axis lines â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Axis lines ───────────────────────────────────────────────────
     ctx.save();
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth   = 1.5;
@@ -796,7 +796,7 @@
     ctx.lineTo(PAD_L + plotW, ay(0));
     ctx.stroke();
     ctx.restore();
-    // â”€â”€ Y axis labels (signed integers, auto-thinned) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Y axis labels (signed integers, auto-thinned) ────────────────
     ctx.save();
     ctx.font      = `${Math.round(11 * (W / 900))}px 'Consolas', monospace`;
     ctx.fillStyle = '#ffffff';
@@ -830,7 +830,7 @@
     ctx.fillText('Amplitude', 0, 0);
     ctx.restore();
     ctx.restore();
-    // â”€â”€ X axis labels (time) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── X axis labels (time) ─────────────────────────────────────────
     ctx.save();
     ctx.font         = `${Math.round(11 * (W / 900))}px 'Consolas', monospace`;
     ctx.fillStyle    = '#ffffff';
@@ -852,7 +852,7 @@
     ctx.font      = `${Math.round(10 * (W / 900))}px system-ui, sans-serif`;
     ctx.fillText('Time (seconds)', PAD_L + plotW / 2, PAD_T + plotH + 18);
     ctx.restore();
-    // â”€â”€ Analogue wave â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Analogue wave ────────────────────────────────────────────────
     ctx.save();
     ctx.strokeStyle = '#b4a0f0';
     ctx.lineWidth   = 2.5;
@@ -866,7 +866,7 @@
     }
     ctx.stroke();
     ctx.restore();
-    // â”€â”€ Sample points & reconstruction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Sample points & reconstruction ──────────────────────────────
     const numSamples = Math.floor(sampleRate * WAVE_SECS) + 1;
     const sampleTs   = [];
     const sampleQs   = [];
@@ -899,7 +899,7 @@
       ctx.stroke();
       ctx.restore();
     }
-    // â”€â”€ Sample dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Sample dots ─────────────────────────────────────────────────
     ctx.save();
     for (let i = 0; i < sampleTs.length; i++) {
       const x = tx(sampleTs[i]);
@@ -931,7 +931,7 @@
       warn.classList.remove('visible');
     }
   }
-  /* â”€â”€ Component controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Component controls ───────────────────────────────────────── */
   const COMP_IDS = ['a', 'b', 'c'];
   function refreshComp(idx) {
     const id   = COMP_IDS[idx];
@@ -963,7 +963,7 @@
     });
     refreshComp(idx);
   });
-  /* â”€â”€ Slider: sample rate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Slider: sample rate ─────────────────────────────────────────── */
   const srSlider = document.getElementById('sr-slider');
   const srVal    = document.getElementById('sr-val');
   srSlider.max   = SR_VALUES.length - 1;
@@ -976,7 +976,7 @@
     updateFileSize();
   }
   srSlider.addEventListener('input', onSrChange);
-  /* â”€â”€ Slider: resolution â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Slider: resolution ──────────────────────────────────────────── */
   const resSlider = document.getElementById('res-slider');
   const resVal    = document.getElementById('res-val');
   function onResChange() {
@@ -986,7 +986,7 @@
     updateFileSize();
   }
   resSlider.addEventListener('input', onResChange);
-  /* â”€â”€ Reconstruction display mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Reconstruction display mode ───────────────────────────────── */
   document.querySelectorAll('[data-recon-mode]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('[data-recon-mode]').forEach(b => b.classList.remove('active'));
@@ -995,9 +995,9 @@
       drawWave();
     });
   });
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  /* ═══════════════════════════════════════════════════════
      FILE SIZE CALCULATOR
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  ═══════════════════════════════════════════════════════ */
   const durSlider = document.getElementById('dur-slider');
   const durVal    = document.getElementById('dur-val');
   function fmtLarge(n) {
@@ -1016,8 +1016,8 @@
     const mb    = kb / 1000;
     document.getElementById('fs-formula').innerHTML =
       `File size (bits) = ` +
-      `<span class="fs-var-rate">${rate}</span> Ã— ` +
-      `<span class="fs-var-res">${res}</span> Ã— ` +
+      `<span class="fs-var-rate">${rate}</span> × ` +
+      `<span class="fs-var-res">${res}</span> × ` +
       `<span class="fs-var-secs">${secs}</span> = ` +
       `<strong class="fs-final-answer">${bits.toLocaleString()} bits</strong>`;
     document.getElementById('fs-bits' ).textContent = bits.toLocaleString();
@@ -1032,7 +1032,7 @@
       : `${s} s`;
     updateFileSize();
   });
-  /* â”€â”€ Canvas responsive resize â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Canvas responsive resize ────────────────────────────────────── */
   function resizeCanvas() {
     const wrap = canvas.parentElement;
     const cssW = wrap.clientWidth - 8; // account for padding
@@ -1051,9 +1051,9 @@
   function scheduleResize() { clearTimeout(_resizeTimer); _resizeTimer = setTimeout(resizeCanvas, 150); }
   window.addEventListener('resize', scheduleResize);
   window.addEventListener('orientationchange', scheduleResize);
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  /* ═══════════════════════════════════════════════════════
      QUIZ ENGINE
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  ═══════════════════════════════════════════════════════ */
   const LS_SCORE_SQ = 'encodr-sound-score';
   function loadScoreSQ() {
     try { return JSON.parse(localStorage.getItem(LS_SCORE_SQ)) || {correct:0,wrong:0,total:0}; }
@@ -1071,7 +1071,7 @@
   let sqCorrect = _sc.correct, sqWrong = _sc.wrong, sqTotal = _sc.total;
   let sqQuestion = null, sqCount = 1;
   updateSqDisplay();
-  // â”€â”€ Quiz settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Quiz settings ────────────────────────────────────────────────
   let sqUnitsMode = 'mix';  // 'mix' | 'si' | 'iec'
   let sqNyquist   = true;
   function genQuestion() {
@@ -1126,8 +1126,8 @@
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     const expectedText = formatQuizAnswer(sqQuestion.answerNum);
     fb.innerHTML = correct
-      ? `âœ“ <strong>Correct!</strong><br>The answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`
-      : `<span class="fb-wrong">âœ— <strong>Incorrect.</strong></span><br>The correct answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`;
+      ? `✓ <strong>Correct!</strong><br>The answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`
+      : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`;
     document.getElementById('sq-modal').showModal();
   }
   document.getElementById('sq-submit').addEventListener('click', checkAnswer);
@@ -1174,11 +1174,11 @@
       nextQuestion();
     });
   });
-  /* â”€â”€ Modal backdrop close (not on content click) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Modal backdrop close (not on content click) ─────────────────── */
   document.getElementById('sq-modal').addEventListener('click', e => {
     if (e.target === e.currentTarget) e.currentTarget.close();
   });
-  /* â”€â”€ Mode switch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Mode switch ─────────────────────────────────────────────────── */
   document.getElementById('tab-explore').addEventListener('click', () => {
     document.getElementById('explore-section').hidden = false;
     document.getElementById('quiz-section'   ).hidden = true;
@@ -1192,7 +1192,7 @@
     document.getElementById('tab-quiz'   ).classList.add('active');
     if (!sqQuestion) nextQuestion();
   });
-  /* â”€â”€ Add modal CSS for sq-modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Add modal CSS for sq-modal ─────────────────────────── ──────── */
   const modalStyle = document.createElement('style');
   modalStyle.textContent = `
     html:has(#sq-modal[open]), body:has(#sq-modal[open]) { overflow: hidden; }
@@ -1205,7 +1205,7 @@
     #sq-modal::backdrop { background: rgba(0,0,0,.72); }
   `;
   document.head.appendChild(modalStyle);
-  /* â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Init ────────────────────────────────────────────────────────── */
   resizeCanvas();
   updateNyquistWarning();
   updateFileSize();

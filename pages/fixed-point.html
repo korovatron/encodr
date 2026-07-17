@@ -156,7 +156,7 @@
         <button class="qtype-btn" data-qt="3"><span class="qt-long">Range</span><span class="qt-short">RNG</span></button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">âœ“</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
         <button class="btn btn-sm" id="q-reset-score">Reset score</button>
       </div>
     </div>
@@ -428,10 +428,10 @@
     const badge = document.getElementById('q-type-badge');
     if (QS.currentType === '1') {
       badge.className = 'badge badge-m';
-      badge.textContent = 'BIN â†’ DEN';
+      badge.textContent = 'BIN → DEN';
     } else if (QS.currentType === '2') {
       badge.className = 'badge badge-e';
-      badge.textContent = 'DEN â†’ BIN';
+      badge.textContent = 'DEN → BIN';
     } else {
       badge.className = 'badge badge-r';
       badge.textContent = 'RANGE';
@@ -540,8 +540,8 @@
       ? `${formatNum(QS.expectedMin)} to ${formatNum(QS.expectedMax)}`
       : (QS.answerKind === 'den' ? formatNum(QS.expectedValue) : QS.expectedBits);
     const html = correct
-      ? `âœ“ Correct! The answer is <strong>${expected}</strong>.`
-      : `<span class="fb-wrong">âœ— Incorrect â€” you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
+      ? `✓ Correct! The answer is <strong>${expected}</strong>.`
+      : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${studentDisplay}</strong>, answer: <strong>${expected}</strong>.</span>`;
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
     saveScoreFixed();

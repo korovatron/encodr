@@ -148,7 +148,7 @@
         <button class="qtype-btn" data-qt="3"><span class="qt-long">Range</span><span class="qt-short">RNG</span></button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">âœ“</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
         <button class="btn btn-sm" id="q-reset-score">Reset score</button>
       </div>
     </div>
@@ -470,10 +470,10 @@
     const badge = document.getElementById('q-type-badge');
     if (QS.currentType === '1') {
       badge.className = 'badge badge-m';
-      badge.textContent = 'BIN â†’ DEN';
+      badge.textContent = 'BIN → DEN';
     } else if (QS.currentType === '2') {
       badge.className = 'badge badge-e';
-      badge.textContent = 'DEN â†’ BIN';
+      badge.textContent = 'DEN → BIN';
     } else {
       badge.className = 'badge badge-r';
       badge.textContent = 'RANGE';
@@ -537,8 +537,8 @@
       const maxVal = parseInt(maxRaw, 10);
       correct = minVal === QS.expectedMin && maxVal === QS.expectedMax;
       html = correct
-        ? `âœ“ Correct! Range is <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.`
-        : `<span class="fb-wrong">âœ— Incorrect â€” you entered <strong>${minVal}</strong> to <strong>${maxVal}</strong>, ` +
+        ? `✓ Correct! Range is <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${minVal}</strong> to <strong>${maxVal}</strong>, ` +
           `answer: <strong>${QS.expectedMin}</strong> to <strong>${QS.expectedMax}</strong>.</span>`;
       qMinInput.disabled = true;
       qMaxInput.disabled = true;
@@ -555,8 +555,8 @@
       const student = parseInt(raw, 10);
       correct = student === QS.expectedValue;
       html = correct
-        ? `âœ“ Correct! Denary value is <strong>${QS.expectedValue}</strong>.`
-        : `<span class="fb-wrong">âœ— Incorrect â€” you entered <strong>${student}</strong>, answer: <strong>${QS.expectedValue}</strong>.</span>`;
+        ? `✓ Correct! Denary value is <strong>${QS.expectedValue}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${student}</strong>, answer: <strong>${QS.expectedValue}</strong>.</span>`;
       qInput.disabled = true;
       document.getElementById('q-sign-btn').disabled = true;
     } else {
@@ -578,8 +578,8 @@
       }
       correct = sameLen && sameValue;
       html = correct
-        ? `âœ“ Correct! ${QS.expectedValue} in ${QS.bits} bits is <strong>${QS.expectedBits}</strong>.`
-        : `<span class="fb-wrong">âœ— Incorrect â€” you entered <strong>${parsed}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
+        ? `✓ Correct! ${QS.expectedValue} in ${QS.bits} bits is <strong>${QS.expectedBits}</strong>.`
+        : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${parsed}</strong>, answer: <strong>${QS.expectedBits}</strong>.</span>`;
       qInput.disabled = true;
       document.getElementById('q-sign-btn').disabled = true;
     }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="theme-color" content="#050505" />
   <meta name="description" content="Explore floating point representation by adjusting mantissa and exponent bits, then investigate normalisation and rounding error in focused A Level practice." />
-  <title>Encodr â€“ Floating Point Numbers</title>
+  <title>Encodr – Floating Point Numbers</title>
   <link rel="icon" href="../encodr-favicon-eo.svg" type="image/svg+xml" />
   <link rel="icon" href="../icons/icon-192.png" sizes="192x192" type="image/png" />
   <link rel="apple-touch-icon" href="../icons/icon-180.png" sizes="180x180" />
@@ -199,7 +199,7 @@
 <body>
 <header>
   <a class="logo" href="../index.html">Enc<em>o</em>dr</a>
-  <span class="breadcrumb-sep">â€º</span>
+  <span class="breadcrumb-sep">›</span>
   <span class="hsub">Floating Point Numbers</span>
   <a class="home-btn" href="../index.html">Home</a>
 </header>
@@ -218,14 +218,14 @@
   <div class="controls">
     <div class="chip chip-m">
       <span class="chip-lbl chip-lbl-m">Mantissa</span>
-      <button class="step" id="m-minus" aria-label="Fewer mantissa bits">âˆ’</button>
+      <button class="step" id="m-minus" aria-label="Fewer mantissa bits">−</button>
       <span class="step-val" id="m-count">8</span>
       <button class="step" id="m-plus"  aria-label="More mantissa bits">+</button>
       <span class="chip-lbl chip-lbl-u">bits</span>
     </div>
     <div class="chip chip-e">
       <span class="chip-lbl chip-lbl-e">Exponent</span>
-      <button class="step" id="e-minus" aria-label="Fewer exponent bits">âˆ’</button>
+      <button class="step" id="e-minus" aria-label="Fewer exponent bits">−</button>
       <span class="step-val" id="e-count">4</span>
       <button class="step" id="e-plus"  aria-label="More exponent bits">+</button>
       <span class="chip-lbl chip-lbl-u">bits</span>
@@ -286,7 +286,7 @@
     </div>
   </div><!-- /.result-card -->
   </div><!-- /#explore-section -->
-  <!-- â”€â”€ Quiz section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+  <!-- ── Quiz section ──────────────────────────────────────────────── -->
   <div id="quiz-section" hidden>
     <div class="quiz-topbar">
       <div class="qtype-group">
@@ -297,7 +297,7 @@
         <button class="qtype-btn" data-qt="extrema"><span class="qt-long">Extrema</span><span class="qt-short">EXT</span></button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">âœ“</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
         <button class="btn btn-sm" id="q-reset-score">Reset score</button>
       </div>
     </div>
@@ -366,7 +366,7 @@
   </div><!-- /#quiz-section -->
   <p class="site-credit"><span>&copy; 2026 Neil Kendall</span><span>More @ <a href="https://www.korovatron.co.uk" target="_blank" rel="noopener">www.korovatron.co.uk</a></span></p>
 </main>
-<!-- Feedback modal â€” native <dialog> renders in top layer, immune to scroll/overflow/z-index on iOS -->
+<!-- Feedback modal — native <dialog> renders in top layer, immune to scroll/overflow/z-index on iOS -->
 <dialog id="q-modal" aria-labelledby="q-modal-feedback">
   <div class="modal">
     <div class="modal-feedback" id="q-modal-feedback"></div>
@@ -393,29 +393,29 @@
   </div>
 </dialog>
 <script>
-  /* â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── State ─────────────────────────────────────────────────────── */
   const S = {
     m: Array(8).fill(0),
     e: Array(4).fill(0),
   };
-  /* â”€â”€ Maths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Maths ─────────────────────────────────────────────────────── */
   function mVal(bits) {
-    // Two's complement binary fraction: bit 0 = âˆ’1, bit i = 2^âˆ’i (i â‰¥ 1)
+    // Two's complement binary fraction: bit 0 = −1, bit i = 2^−i (i ≥ 1)
     let v = bits[0] ? -1 : 0;
     for (let i = 1; i < bits.length; i++) if (bits[i]) v += 2 ** -i;
     return v;
   }
   function eVal(bits) {
-    // Two's complement integer: bit 0 = âˆ’2^(nâˆ’1), bit i = 2^(nâˆ’1âˆ’i)
+    // Two's complement integer: bit 0 = −2^(n−1), bit i = 2^(n−1−i)
     const n = bits.length;
     let v = bits[0] ? -(2 ** (n - 1)) : 0;
     for (let i = 1; i < n; i++) if (bits[i]) v += 2 ** (n - 1 - i);
     return v;
   }
-  /* â”€â”€ Formatting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Formatting ────────────────────────────────────────────────── */
   function fmtNum(n) {
-    if (n === Infinity)  return '+âˆž';
-    if (n === -Infinity) return 'âˆ’âˆž';
+    if (n === Infinity)  return '+∞';
+    if (n === -Infinity) return '−∞';
     if (!isFinite(n))    return 'Undefined';
     if (n === 0)         return '0';
     const r = parseFloat(n.toPrecision(10));
@@ -437,7 +437,7 @@
   }
   // Plain-text breakdown formulas (no HTML needed, just Unicode)
   function toSuperscript(n) {
-    const map = { '-': 'â»', '0': 'â°', '1': 'Â¹', '2': 'Â²', '3': 'Â³', '4': 'â´', '5': 'âµ', '6': 'â¶', '7': 'â·', '8': 'â¸', '9': 'â¹' };
+    const map = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
     return String(n).split('').map(ch => map[ch] || ch).join('');
   }
   function fracPower(i) {
@@ -445,7 +445,7 @@
   }
   function mFormula(bits) {
     const parts = [];
-    if (bits[0]) parts.push('âˆ’1');
+    if (bits[0]) parts.push('−1');
     for (let i = 1; i < bits.length; i++) {
       if (!bits[i]) continue;
       parts.push(fracPower(i));
@@ -455,7 +455,7 @@
   function eFormula(bits) {
     const n = bits.length;
     const parts = [];
-    if (bits[0]) parts.push(`âˆ’${2 ** (n - 1)}`);
+    if (bits[0]) parts.push(`−${2 ** (n - 1)}`);
     for (let i = 1; i < n; i++) {
       if (bits[i]) parts.push(String(2 ** (n - 1 - i)));
     }
@@ -599,7 +599,7 @@
     renderGrid('e');
     updateResult();
   }
-  /* â”€â”€ Rendering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Rendering ─────────────────────────────────────────────────── */
   function renderGrid(type) {
     const bits = S[type];
     const grid = document.getElementById(`${type}-grid`);
@@ -656,7 +656,7 @@
     const max = (1 - 2 ** (-(mBits - 1))) * (2 ** eMax);
     // Big value
     document.getElementById('res-big').textContent = fmtNum(r);
-    // Equation line (values are computed numbers â€” safe to inject via innerHTML)
+    // Equation line (values are computed numbers — safe to inject via innerHTML)
     document.getElementById('res-eq').innerHTML =
       `<span class="vm">${fmtNum(m)}</span>&thinsp;&times;&thinsp;` +
       `2<sup><span class="ve">${e}</span></sup>&ensp;=&ensp;${fmtNum(r)}`;
@@ -668,13 +668,13 @@
     if (bits.every(b => b === 0) && S.e.every(b => b === 0)) {
       cls = 'norm norm-z'; txt = 'Zero';
     } else if (bits.length < 2 || bits[0] !== bits[1]) {
-      cls = 'norm norm-y'; txt = 'âœ“ Normalised';
+      cls = 'norm norm-y'; txt = '✓ Normalised';
     } else {
       cls = 'norm norm-n'; txt = 'Not Normalised';
     }
     normEl.innerHTML = `<span class="${cls}">${txt}</span>`;
   }
-  /* â”€â”€ Bit-count controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Bit-count controls ────────────────────────────────────────── */
   function changeBits(type, delta) {
     const cur  = S[type].length;
     const next = Math.max(2, Math.min(16, cur + delta));
@@ -689,7 +689,7 @@
   document.getElementById('m-plus' ).addEventListener('click', () => changeBits('m', +1));
   document.getElementById('e-minus').addEventListener('click', () => changeBits('e', -1));
   document.getElementById('e-plus' ).addEventListener('click', () => changeBits('e', +1));
-  /* â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Init ──────────────────────────────────────────────────────── */
   renderGrid('m');
   renderGrid('e');
   updateResult();
@@ -810,16 +810,16 @@
       fitGrid('e-grid', S.e.length);
     }, 80);
   });
-  /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  /* ══════════════════════════════════════════════════════════════════
      QUIZ MODE
-  â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-  /* â”€â”€ Modal open / close â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-     Native <dialog>.showModal() renders in the browser top layer â€”
+  ══════════════════════════════════════════════════════════════════ */
+  /* ── Modal open / close ───────────────────────────────────────
+     Native <dialog>.showModal() renders in the browser top layer —
      above all content, unaffected by scroll position, overflow, or
      z-index. Eliminates all iOS Safari position:fixed quirks. */
   function openModal() {
     // Add class synchronously BEFORE showModal() so overflow:hidden is
-    // applied immediately â€” :has() recalculates async and would leave a
+    // applied immediately — :has() recalculates async and would leave a
     // brief window where background scroll is still possible.
     document.documentElement.classList.add('modal-open');
     document.body.classList.add('modal-open');
@@ -831,8 +831,8 @@
     document.body.classList.remove('modal-open');
   }
   // Weighted bit-width pools matching AQA paper distribution
-  const M_LENS_T1 = [6, 7, 7, 8, 8, 9, 10]; // Binaryâ†’Denary: full range
-  const M_LENS_T2 = [6, 7, 7, 8, 8];         // Denaryâ†’Binary: max 8 bits
+  const M_LENS_T1 = [6, 7, 7, 8, 8, 9, 10]; // Binary→Denary: full range
+  const M_LENS_T2 = [6, 7, 7, 8, 8];         // Denary→Binary: max 8 bits
   const E_LENS    = [4, 4, 4, 5, 5, 6];       // weighted toward 4
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
   function randomBits(n) { return Array.from({length: n}, () => Math.round(Math.random())); }
@@ -919,7 +919,7 @@
         errArea.hidden = true;
       }
     } else if (['3', '4', '5', '6'].includes(t)) {
-      // Extrema types: all are binary â†’ denary format with custom questions
+      // Extrema types: all are binary → denary format with custom questions
       const typeNames = {
         '3': 'smallest positive',
         '4': 'largest positive',
@@ -1070,7 +1070,7 @@
     let correct, html;
     const target = QS.targetDenary;
     if (['1', '3', '4', '5', '6'].includes(QS.currentType)) {
-      // â”€â”€ Type 1 & extrema types: Binary â†’ Denary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Type 1 & extrema types: Binary → Denary ──────────────────────────────
       const tol     = Math.abs(target) > 1e-12 ? Math.abs(target) * 1e-6 : 1e-9;
       const typeLabel = ['3', '4', '5', '6'].includes(QS.currentType)
         ? `<strong>${QS.extremaType === '3' ? 'smallest positive' : QS.extremaType === '4' ? 'largest positive' : QS.extremaType === '5' ? 'largest negative' : 'most negative'}</strong> `
@@ -1092,7 +1092,7 @@
       document.getElementById('q-denary-input').disabled = true;
       document.getElementById('q-denary-sign-btn').disabled = true;
     } else if (!QS.isInexact) {
-      // â”€â”€ Type 2 exact: Denary â†’ Binary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Type 2 exact: Denary → Binary ────────────────────────────
       const smv = mVal(QS.studentM);
       const sev = eVal(QS.studentE);
       const sv  = smv === 0 ? 0 : smv * 2 ** sev;
@@ -1117,7 +1117,7 @@
         renderQuizGrid('e', QS.eBits, false);
       }
     } else {
-      // â”€â”€ Type 2 inexact: Denary â†’ Binary + error calculation â”€â”€â”€â”€â”€â”€â”€
+      // ── Type 2 inexact: Denary → Binary + error calculation ───────
       const smv   = mVal(QS.studentM);
       const sev   = eVal(QS.studentE);
       const sv    = smv === 0 ? 0 : smv * 2 ** sev;
@@ -1128,7 +1128,7 @@
       // Expected errors (computed from the correct stored value)
       const expAbsErr = Math.abs(target - stored);
       const expRelErr = expAbsErr / Math.abs(target) * 100;
-      // Tolerances: 5% relative on abs error; Â±0.5 percentage points on rel error
+      // Tolerances: 5% relative on abs error; ±0.5 percentage points on rel error
       const absCorrect = !isNaN(stuAbs) && Math.abs(stuAbs - expAbsErr) <= Math.max(expAbsErr * 0.05, 1e-12);
       const relCorrect = !isNaN(stuRel) && Math.abs(stuRel - expRelErr) <= 0.5;
       correct = bitsCorrect && absCorrect && relCorrect;
@@ -1183,7 +1183,7 @@
     if (document.activeElement) document.activeElement.blur();
     openModal();
   }
-  /* â”€â”€ Mode-switch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Mode-switch ─────────────────────────────── */
   function switchMode(mode) {
     const isExplore = mode === 'explore';
     document.getElementById('explore-section').hidden = !isExplore;

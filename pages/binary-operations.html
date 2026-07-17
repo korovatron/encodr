@@ -377,7 +377,7 @@
             <div id="mul-overflow-badge" class="norm norm-n" hidden>Overflow</div>
           </div>
           <div class="arith-stack" id="mul-arith-stack">
-            <span id="mul-op-times" class="arith-op-symbol" aria-hidden="true">Ã—</span>
+            <span id="mul-op-times" class="arith-op-symbol" aria-hidden="true">×</span>
             <div class="arith-rowline tight">
               <div class="arith-row-main"><div class="grid-wrap"><div class="bit-grid" id="mul-a-grid"></div></div></div>
               <div class="arith-row-den" id="mul-a-den">0</div>
@@ -412,7 +412,7 @@
         <button class="qtype-btn" data-qt="mul"><span class="qt-long">Multiplication</span><span class="qt-short">MUL</span></button>
       </div>
       <div class="quiz-score-area">
-        <span class="quiz-score-txt"><span style="color:#4c4">âœ“</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">âœ—</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
+        <span class="quiz-score-txt"><span style="color:#4c4">✓</span> <span id="q-correct">0</span>&ensp;<span style="color:#c44">✗</span> <span id="q-wrong">0</span>&ensp;(<span id="q-total">0</span> attempted)</span>
         <button class="btn btn-sm" id="q-reset-score">Reset score</button>
       </div>
     </div>
@@ -951,8 +951,8 @@
       ? (normalized + ' (overflow: ' + studentOverflowText + ')')
       : normalized;
     const html = correct
-      ? `âœ“ Correct! The answer is <strong>${expected}</strong>.`
-      : `<span class="fb-wrong">âœ— Incorrect â€” you entered <strong>${student}</strong>, answer: <strong>${expected}</strong>.</span>`;
+      ? `✓ Correct! The answer is <strong>${expected}</strong>.`
+      : `<span class="fb-wrong">✗ Incorrect — you entered <strong>${student}</strong>, answer: <strong>${expected}</strong>.</span>`;
     const fbEl = document.getElementById('q-modal-feedback');
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fbEl.innerHTML = html;
