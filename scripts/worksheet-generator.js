@@ -2395,6 +2395,13 @@
       var pdf = await buildPdf(items, title, layoutMode);
       var filename = slugify(title) + "-" + new Date().toISOString().slice(0, 10) + ".pdf";
       pdf.save(filename);
+      try {
+        if (window.goatcounter && typeof window.goatcounter.count === "function") {
+          window.goatcounter.count({ event: true, title: "ENCODR - Worksheet Generated" });
+        }
+      } catch (e) {
+        // ignore telemetry errors
+      }
       setStatus("Downloaded " + filename, "success");
     } catch (err) {
       console.error(err);
