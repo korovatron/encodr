@@ -980,6 +980,9 @@
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
     saveScoreBinaryArith();
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ event: true, title: 'Encodr-binary-operations-' + (correct ? 'correct' : 'incorrect') + '-answer' });
+    }
     const expectedOverflowText = QS.expectedOverflow ? 'Yes' : 'No';
     const studentOverflowText = studentOverflow ? 'Yes' : 'No';
     const expected = needsOverflow

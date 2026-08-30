@@ -965,6 +965,9 @@
     if (correct) bqCorrect++; else bqWrong++;
     updateScoreDisplay();
     saveScore();
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ event: true, title: 'Encodr-bitmap-' + (correct ? 'correct' : 'incorrect') + '-answer' });
+    }
     const fb = document.getElementById('bq-modal-feedback');
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fb.innerHTML = correct

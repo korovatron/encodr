@@ -1003,6 +1003,9 @@
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
     saveScoreBitManip();
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ event: true, title: 'Encodr-bit-manipulation-' + (correct ? 'correct' : 'incorrect') + '-answer' });
+    }
     const fbEl = document.getElementById('q-modal-feedback');
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fbEl.innerHTML = feedbackHtml;

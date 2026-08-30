@@ -627,6 +627,9 @@
     if (correct) Quiz.correct += 1;
     else Quiz.wrong += 1;
     updateQuizScore();
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ event: true, title: 'Encodr-huffman-' + (correct ? 'correct' : 'incorrect') + '-answer' });
+    }
     setQuizFeedback(correct, feedback);
     setQuizLocked(true);
     openQuizModal();

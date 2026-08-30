@@ -1160,6 +1160,9 @@
     if (correct) sqCorrect++; else sqWrong++;
     updateSqDisplay();
     saveScoreSQ();
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ event: true, title: 'Encodr-sound-' + (correct ? 'correct' : 'incorrect') + '-answer' });
+    }
     const fb = document.getElementById('sq-modal-feedback');
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     const expectedText = formatQuizAnswer(sqQuestion.answerNum);
