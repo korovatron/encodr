@@ -965,14 +965,14 @@
     if (correct) bqCorrect++; else bqWrong++;
     updateScoreDisplay();
     saveScore();
-    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-      window.goatcounter.count({ event: true, title: 'Encodr-bitmap-' + (correct ? 'correct' : 'incorrect') + '-answer' });
-    }
     const fb = document.getElementById('bq-modal-feedback');
     fb.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fb.innerHTML = correct
       ? `✓ <strong>Correct!</strong><br>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}`
       : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}</strong>.`;
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ event: true, title: 'Encodr-bitmap-' + (fb.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer' });
+    }
     document.getElementById('bq-modal').showModal();
   }
   document.getElementById('bq-submit').addEventListener('click', checkAnswer);

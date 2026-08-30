@@ -980,9 +980,6 @@
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
     saveScoreBinaryArith();
-    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-      window.goatcounter.count({ event: true, title: 'Encodr-binary-operations-' + (correct ? 'correct' : 'incorrect') + '-answer' });
-    }
     const expectedOverflowText = QS.expectedOverflow ? 'Yes' : 'No';
     const studentOverflowText = studentOverflow ? 'Yes' : 'No';
     const expected = needsOverflow
@@ -998,6 +995,9 @@
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fbEl.innerHTML = html;
     if (document.activeElement) document.activeElement.blur();
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ event: true, title: 'Encodr-binary-operations-' + (fbEl.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer' });
+    }
     openModal();
   }
   window.addEventListener('resize', () => {

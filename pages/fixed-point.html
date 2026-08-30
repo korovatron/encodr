@@ -583,13 +583,13 @@
     if (correct) QS.correct++; else QS.wrong++;
     updateScoreDisplay();
     saveScoreFixed();
-    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-      window.goatcounter.count({ event: true, title: 'Encodr-fixed-point-' + (correct ? 'correct' : 'incorrect') + '-answer' });
-    }
     const fbEl = document.getElementById('q-modal-feedback');
     fbEl.className = `modal-feedback ${correct ? 'modal-feedback-correct' : 'modal-feedback-wrong'}`;
     fbEl.innerHTML = html;
     if (document.activeElement) document.activeElement.blur();
+    if (window.goatcounter && typeof window.goatcounter.count === 'function') {
+      window.goatcounter.count({ event: true, title: 'Encodr-fixed-point-' + (fbEl.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer' });
+    }
     openModal();
   }
   function renderAll() {
