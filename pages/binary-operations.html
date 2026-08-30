@@ -996,7 +996,7 @@
     fbEl.innerHTML = html;
     if (document.activeElement) document.activeElement.blur();
     if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-      window.goatcounter.count({ event: true, title: 'Encodr-binary-operations-' + (fbEl.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer' });
+      window.goatcounter.count({ path: 'Encodr-binary-operations-' + (fbEl.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer', event: true });
     }
     openModal();
   }

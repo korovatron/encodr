@@ -630,7 +630,7 @@
     setQuizFeedback(correct, feedback);
     if (window.goatcounter && typeof window.goatcounter.count === 'function') {
       var hfFb = byId('hf-q-modal-feedback');
-      window.goatcounter.count({ event: true, title: 'Encodr-huffman-' + (hfFb && hfFb.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer' });
+      window.goatcounter.count({ path: 'Encodr-huffman-' + (hfFb && hfFb.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer', event: true });
     }
     setQuizLocked(true);
     openQuizModal();

@@ -971,7 +971,7 @@
       ? `✓ <strong>Correct!</strong><br>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}`
       : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${fmtAnswer(bqQuestion.answerNum)} ${bqQuestion.unitLabel}</strong>.`;
     if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-      window.goatcounter.count({ event: true, title: 'Encodr-bitmap-' + (fb.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer' });
+      window.goatcounter.count({ path: 'Encodr-bitmap-' + (fb.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer', event: true });
     }
     document.getElementById('bq-modal').showModal();
   }

@@ -494,7 +494,7 @@
       updateQuizScore();
       setQuizFeedback(type2Correct, type2Feedback);
       if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-        window.goatcounter.count({ event: true, title: 'Encodr-rle-' + (type2Correct ? 'correct' : 'incorrect') + '-answer' });
+        window.goatcounter.count({ path: 'Encodr-rle-' + (type2Correct ? 'correct' : 'incorrect') + '-answer', event: true });
       }
       setQuizLocked(true);
       openQuizModal();
@@ -520,7 +520,7 @@
       updateQuizScore();
       setQuizFeedback(t3Correct, t3Feedback);
       if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-        window.goatcounter.count({ event: true, title: 'Encodr-rle-' + (t3Correct ? 'correct' : 'incorrect') + '-answer' });
+        window.goatcounter.count({ path: 'Encodr-rle-' + (t3Correct ? 'correct' : 'incorrect') + '-answer', event: true });
       }
       setQuizLocked(true);
       openQuizModal();
@@ -545,7 +545,7 @@
       updateQuizScore();
       setQuizFeedback(t4Correct, t4Feedback);
       if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-        window.goatcounter.count({ event: true, title: 'Encodr-rle-' + (t4Correct ? 'correct' : 'incorrect') + '-answer' });
+        window.goatcounter.count({ path: 'Encodr-rle-' + (t4Correct ? 'correct' : 'incorrect') + '-answer', event: true });
       }
       setQuizLocked(true);
       openQuizModal();
@@ -591,7 +591,7 @@
     updateQuizScore();
     setQuizFeedback(correct, feedback);
     if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-      window.goatcounter.count({ event: true, title: 'Encodr-rle-' + (correct ? 'correct' : 'incorrect') + '-answer' });
+      window.goatcounter.count({ path: 'Encodr-rle-' + (correct ? 'correct' : 'incorrect') + '-answer', event: true });
     }
     setQuizLocked(true);
     openQuizModal();

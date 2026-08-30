@@ -1167,7 +1167,7 @@
       ? `✓ <strong>Correct!</strong><br>The answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`
       : `<span class="fb-wrong">✗ <strong>Incorrect.</strong></span><br>The correct answer is <strong>${expectedText} ${sqQuestion.unitLabel}</strong>.`;
     if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-      window.goatcounter.count({ event: true, title: 'Encodr-sound-' + (fb.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer' });
+      window.goatcounter.count({ path: 'Encodr-sound-' + (fb.classList.contains('modal-feedback-correct') ? 'correct' : 'incorrect') + '-answer', event: true });
     }
     document.getElementById('sq-modal').showModal();
   }
